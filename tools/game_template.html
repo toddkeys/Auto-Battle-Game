@@ -10,7 +10,7 @@
 body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,"Segoe UI",sans-serif;font-size:14px}
 h1{font-size:18px;margin:12px 16px 0;text-align:center}
 .wrap{display:flex;gap:16px;padding:16px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
-#cv{background:#3d6b34;border-radius:8px;display:block;width:512px;max-width:100%;touch-action:none;cursor:pointer;image-rendering:pixelated}
+#cv{background:#3d6b34;border-radius:8px;display:block;width:512px;max-width:100%;touch-action:pan-y;cursor:pointer;image-rendering:pixelated}
 .side{width:340px;max-width:100%;display:flex;flex-direction:column;gap:12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px}
 .card h3{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:600}
@@ -20,13 +20,13 @@ h1{font-size:18px;margin:12px 16px 0;text-align:center}
 .shophead .lockbtn{padding:3px 9px;font-size:12px;font-weight:400}
 .shop.locked{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
 .shop{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.su{min-width:0;overflow:hidden;background:#1f2232;border:2px solid var(--line);border-radius:6px;padding:4px;text-align:center;cursor:pointer;min-height:92px;color:var(--text);font:inherit}
+.su{min-width:0;overflow:hidden;background:#1f2232;border:2px solid var(--line);border-radius:6px;padding:4px 2px;text-align:center;cursor:pointer;min-height:92px;color:var(--text);font:inherit;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .su:hover{border-color:var(--acc)}
 .su:disabled{opacity:.35;cursor:default}
 .su .th{width:44px;height:44px;margin:0 auto 2px;display:flex;align-items:flex-end;justify-content:center}
 .su .th img{max-width:44px;max-height:44px;image-rendering:pixelated}
 .dot{width:30px;height:30px;border-radius:50%;margin-bottom:6px}
-.su .nm{font-size:10px;line-height:1.2;overflow-wrap:anywhere}
+.su .nm{font-size:10px;line-height:1.2;letter-spacing:-.2px}
 .su .c{font-size:12px;color:var(--gold)}
 .row{display:flex;gap:6px;flex-wrap:wrap}
 button.b{background:#33395a;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer;font:inherit}
@@ -50,12 +50,12 @@ h3 .hint{font-weight:400;font-size:11px}
 #meter td{padding:2px 4px;white-space:nowrap}
 #meter td.b{background:linear-gradient(90deg,var(--c) var(--w),transparent var(--w));border-radius:3px}
 #info{font-size:13px;line-height:1.5;color:var(--muted);min-height:96px}
-#info .ih{display:flex;gap:10px;align-items:center;margin-bottom:6px;color:var(--text)}
-#info .ih .th{width:44px;height:48px;display:flex;align-items:flex-end;justify-content:center}
-#info .ih img{max-width:44px;max-height:48px;image-rendering:pixelated}
-#info .sk{margin-top:6px;padding:6px 8px;background:#1f2232;border-radius:6px;color:var(--text)}
-#info .sk b{color:#8fd0ff}
-#info .mp{color:var(--muted);font-size:12px}
+#info .ih,#tip .ih{display:flex;gap:10px;align-items:center;margin-bottom:6px;color:var(--text)}
+#info .ih .th,#tip .ih .th{width:44px;height:48px;display:flex;align-items:flex-end;justify-content:center}
+#info .ih img,#tip .ih img{max-width:44px;max-height:48px;image-rendering:pixelated}
+#info .sk,#tip .sk{margin-top:6px;padding:6px 8px;background:#1f2232;border-radius:6px;color:var(--text)}
+#info .sk b,#tip .sk b{color:#8fd0ff}
+#info .mp,#tip .mp{color:var(--muted);font-size:12px}
 .help{color:var(--muted);font-size:13px;line-height:1.55;margin:0;padding-left:18px}
 details summary{cursor:pointer;font-weight:600}
 .spl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
@@ -71,6 +71,21 @@ details summary{cursor:pointer;font-weight:600}
 #prevCv{background:repeating-conic-gradient(#444 0 25%,#555 0 50%) 0 0/12px 12px;image-rendering:pixelated;border-radius:6px}
 label{user-select:none}
 select{background:#1f2232;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:3px}
+/* press-and-hold a shop unit (touch screens) to peek at its stats */
+#tip{position:fixed;z-index:15;width:min(320px,calc(100vw - 16px));background:var(--panel);border:1px solid var(--acc);border-radius:8px;padding:10px;font-size:13px;line-height:1.5;color:var(--muted);box-shadow:0 6px 20px #000a;pointer-events:none}
+#tip[hidden]{display:none}
+/* phones: keep field, shop and Start battle on one screen */
+@media (max-width:620px){
+  h1{display:none}
+  .wrap{padding:8px;gap:8px}
+  .side{gap:8px}
+  .card{padding:8px 10px}
+  .su{min-height:84px}
+  .row{gap:4px}
+  .row button.b{flex:1 1 auto;font-size:12px;padding:7px 4px}
+  .row button.go{font-size:14px;padding:9px}
+  #msg{margin-top:6px!important;min-height:18px}
+}
 </style>
 </head>
 <body>
@@ -120,6 +135,8 @@ select{background:#1f2232;color:var(--text);border:1px solid var(--line);border-
           <li>Status effects: 💫 Stun (can't act), 🤐 Silence (can't cast skills), 🌫️ Blind (50% of attacks miss), 🐌 Slow (-40% move and attack speed), 🟢 Poison (damage over time). Holy healers cleanse them.</li>
           <li>Assassins leap behind the enemy front line when a battle starts — keep your back line protected.</li>
           <li>Drag a unit onto the shop to sell it.</li>
+          <li>Shop odds: 1💰 units only at first, 2💰 from round 4, 3💰 from round 8, and the strongest 4💰 units from round 12.</li>
+          <li>Phone: press and hold a shop unit to see its stats; swipe on empty grass to scroll.</li>
           <li>3 copies of the same unit merge into ★★ automatically (3 × ★★ = ★★★).</li>
           <li>You start with 3 field slots. Press "+1 slot" to buy more (up to 9); each slot costs more than the last (6, 10, 15, 21, 28, 36 gold).</li>
           <li>Each round gives 5 gold + 1 interest per 10 gold saved (max 5).</li>
@@ -130,6 +147,7 @@ select{background:#1f2232;color:var(--text);border:1px solid var(--line);border-
   </div>
 </div>
 
+<div id="tip" hidden></div>
 <input type="file" id="file" accept="image/*" hidden>
 <div id="cropModal" hidden>
   <div class="mbox">
@@ -161,7 +179,7 @@ const CLASSES = {
   rogue:  {name:'Rogue',   color:'#b07ad8', desc:['Team 20% crit chance (x2)','Team 40% crit chance (x2)']},
   magic:  {name:'Arcane',  color:'#5aa9ff', desc:['Team damage +30%','Team damage +60%']},
 };
-// second trait: each origin mixes three classes, one unit per cost tier
+// second trait: each origin mixes four classes, one unit per cost tier
 const ORIGINS = {
   wildheart:{name:'Wildheart', icon:'🐺', color:'#8fcf5a', desc:['Each enemy defeated: team attack speed +8% (stacks)','Each enemy defeated: team attack speed +15% (stacks)']},
   moonblood:{name:'Moonblood', icon:'🌙', color:'#c07ae8', desc:['Team heals for 15% of damage dealt','Team heals for 30% of damage dealt']},
@@ -186,6 +204,11 @@ const UNITS = [
   {id:'highpriest',  name:'High Priest',  cls:'holy',org:'wildheart',   cost:3,hp:900, atk:60, range:3,as:0.9, ms:1.4,heal:180},
   {id:'assassincross',name:'Assassin Cross',cls:'rogue',leap:1,org:'moonblood',cost:3,hp:950, atk:150,range:1,as:0.55,ms:2.6},
   {id:'highwizard',  name:'High Wizard',  cls:'magic',org:'starborn',  cost:3,hp:780, atk:110,range:4,as:1.2, ms:1.3,splash:1.5},
+  {id:'starwarden',  name:'Star Warden',  cls:'warrior',org:'starborn',cost:4,hp:2000,atk:150,range:1,as:0.9, ms:1.7},
+  {id:'stormranger', name:'Storm Ranger', cls:'archer',org:'ironvow',  cost:4,hp:1050,atk:170,range:5,as:0.75,ms:1.4},
+  {id:'dawnoracle',  name:'Dawn Oracle',  cls:'holy',org:'gilded',     cost:4,hp:1200,atk:80, range:3,as:0.9, ms:1.4,heal:240},
+  {id:'nightreaper', name:'Night Reaper', cls:'rogue',leap:1,org:'wildheart',cost:4,hp:1300,atk:195,range:1,as:0.55,ms:2.6},
+  {id:'voidsage',    name:'Void Sage',    cls:'magic',org:'moonblood', cost:4,hp:1000,atk:150,range:4,as:1.2, ms:1.3,splash:1},
 ];
 const STAR_MULT = [1, 1.8, 3.2];
 // monster rounds (every 5th round); stats grow with the round
@@ -203,6 +226,7 @@ const ITEMS = {
   boots:{name:'Swift Boots',    icon:'👢', desc:'+20% attack speed and move speed',  apply:x=>{ x.asM*=1.2; x.ms*=1.2; }},
   fang: {name:'Vampire Fang',   icon:'🦷', desc:'Heal for 12% of damage dealt',      apply:x=>{ x.leech+=.12; }},
   gem:  {name:'Lucky Gem',      icon:'💎', desc:'+20% crit chance',                  apply:x=>{ x.crit+=.2; }},
+  thorns:{name:'Thorn Mail',    icon:'🌵', desc:'Melee attackers take 30% of the damage they deal back', apply:x=>{ x.thorns+=.3; }},
   scroll:{name:'Unbinding Scroll',icon:'📜', desc:'Use on a unit to take off all its items (the scroll is used up)', use:true},
 };
 const MANA_ATTACK = 12, MANA_HIT = 4;   // mana gained per attack / per hit taken
@@ -250,6 +274,26 @@ const SKILLS = {
     cast(a,t){ hit(a,t,2.2); inflict(t,'blind',2); burst(t.x,t.y,'#ff9a40',10,3,3,3); }},
   golem:{name:'Quake Slam', mp:80, desc:'Slams the ground: 160% damage and a 1s stun to enemies within 2 cells.',
     cast(a){ for(const e of foes(a)) if(dist(e,a)<=2){ hit(a,e,1.6); stun(e,1); } V({k:'ring',x:a.x,y:a.y+.3,r:2,c:'#c8a070'}); V({k:'burst',x:a.x,y:a.y+.3,r:2,c:'#a08060'}); burst(a.x,a.y+.3,'#c0a080',18,4,4,5); hitStop(.08); }},
+  starwarden:{name:'Starfall Bulwark', mp:90, desc:'Gains a shield worth 35% of its max HP, then taunts enemies within 2.5 cells (they attack it) and stuns them for 0.8s.',
+    cast(a){ a.shield+=a.max*.35; for(const e of foes(a)) if(dist(e,a)<=2.5){ e.tgt=a; stun(e,.8); }
+      V({k:'ring',x:a.x,y:a.y+.3,r:2.5,c:'#ffe27a'}); burst(a.x,a.y-.4,'#fff3a0',16,3,3,-1); hitStop(.06); }},
+  stormranger:{name:'Arrow Storm', mp:80, desc:'Fires an arrow at every enemy within 2 cells of the target for 180% damage each, slowing them for 2s.',
+    cast(a,t){ const ts=foes(a).filter(e=>dist(e,t)<=2); ts.forEach((e,i)=>later(i*.05,()=>{ if(a.hp>0&&e.hp>0) shoot(a,e,1.8,'#ffe45a',false,x=>inflict(x,'slow',2)); }));
+      V({k:'ring',x:t.x,y:t.y,r:2,c:'#ffe45a'}); }},
+  dawnoracle:{name:'Rebirth', mp:100, desc:'Brings the strongest fallen ally back with 40% HP. If no ally has fallen, heals every ally for 150% of its heal.',
+    cast(a){ const d=S.fight.f.filter(b=>b.team===a.team&&b.hp<=0&&!b.reborn&&!b.summon).sort((p,q)=>q.max-p.max)[0];
+      if(!d){ for(const b of friends(a)) heal(b,a.heal*1.5,a); V({k:'ring',x:a.x,y:a.y,r:3,c:'#ffd27a'}); return; }
+      Object.assign(d,{hp:d.max*.4,hpLag:d.max*.4,dead:false,dieT:0,reborn:true,spawnT:.3,stun:0,sil:0,blind:0,slow:0,psn:null,mp:0,castT:0,tgt:null,leap:null,leapDelay:0});
+      a.hl+=d.hp; pop(d,'Reborn!','#ffe27a',true); V({k:'pillar',x:d.x,y:d.y+.35,c:'#ffd27a',m:.6}); V({k:'ring',x:d.x,y:d.y+.3,r:.9,c:'#ffe27a'}); hitStop(.08); }},
+  nightreaper:{name:'Reap', mp:70, desc:'Strikes for 280% damage. A target left under 30% HP (bosses: 15%) is executed, and the Reaper gets half its mana back.',
+    cast(a,t){ hit(a,t,2.8,true); V({k:'slash',x:t.x,y:t.y,c:'#5ee08a',dir:a.face});
+      if(t.hp>0&&t.hp<t.max*(U[t.type].boss?.15:.3)){ a.dd+=t.hp; t.dtk+=t.hp; t.hp=0; pop(t,'Executed','#5ee08a',true); burst(t.x,t.y,'#5ee08a',14,3,3,2); hitStop(.08); }
+      if(t.hp<=0) a.mp=a.mpMax*.5; }},
+  voidsage:{name:'Void Chain', mp:90, desc:'Lightning jumps between up to 5 enemies (3 cells per jump): 260% damage, 15% less each jump, and a 1s silence.',
+    cast(a,t){ const hitSet=new Set(); let from=a, cur=t, m=2.6;
+      for(let i=0;i<5&&cur;i++){ hitSet.add(cur); const f0=from, c0=cur, m0=m;
+        later(i*.08,()=>{ V({k:'beam',x:f0.x,y:f0.y-.2,x2:c0.x,y2:c0.y,c:'#b070ff'}); if(a.hp>0&&c0.hp>0){ hit(a,c0,m0); inflict(c0,'sil',1); } });
+        from=cur; m*=.85; cur=foes(a).filter(e=>!hitSet.has(e)&&dist(e,from)<=3).sort((p,q)=>dist(p,from)-dist(q,from))[0]; } }},
   highwizard:{name:'Meteor Rain', mp:90, desc:'Calls 3 meteors onto random enemies, each dealing 220% damage in an area.',
     cast(a){ const es=foes(a); for(let i=0;i<3&&es.length;i++){ const t=es[Math.floor(Math.random()*es.length)], x=t.x, y=t.y;
       V({k:'meteor',x,y,m:.55,t:.55+i*.18}); later(.55+i*.18,()=>{ V({k:'burst',x,y,r:1,c:'#ff8a3a'}); burst(x,y,'#ffb050',14,4,4,5); hitStop(.07); for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1) hit(a,e,2.2); }); } }},
@@ -354,8 +398,8 @@ function giveItem(u){
   msg(`${U[u.type].name} equipped ${ITEMS[k].icon} ${ITEMS[k].name}`);
 }
 
-function odds(r){ if(r<4) return [1,0,0]; if(r<8) return [.7,.3,0]; if(r<12) return [.45,.4,.15]; return [.3,.4,.3]; }
-function randUnit(r){ const o=odds(r), x=Math.random(); const t = x<o[0]?1 : x<o[0]+o[1]?2 : 3; const pool=UNITS.filter(u=>u.cost===t); return pool[Math.floor(Math.random()*pool.length)].id; }
+function odds(r){ if(r<4) return [1,0,0,0]; if(r<8) return [.7,.3,0,0]; if(r<12) return [.45,.4,.15,0]; if(r<16) return [.3,.38,.25,.07]; return [.22,.33,.3,.15]; }
+function randUnit(r){ const o=odds(r); let x=Math.random(), t=0; while(t<o.length-1&&x>=o[t]){ x-=o[t]; t++; } const pool=UNITS.filter(u=>u.cost===t+1); return pool[Math.floor(Math.random()*pool.length)].id; }
 function rollShop(){ S.shop=Array.from({length:5},()=>randUnit(S.round)); }
 
 function freeBench(){ for(let i=0;i<BENCH;i++) if(!S.units.some(u=>u.loc.w==='bench'&&u.loc.i===i)) return i; return -1; }
@@ -456,6 +500,11 @@ cv.addEventListener('pointerup',e=>{
   render(); renderUI();
 });
 cv.addEventListener('pointercancel',()=>{ dragU=null; shopCard.classList.remove('sellzone'); });
+// the field fills most of a phone screen: swipes scroll the page, except when they start on one of your units
+cv.addEventListener('touchstart',e=>{
+  const l=cellAt(e.touches[0]);
+  if(S.phase==='prep'&&l&&S.units.some(v=>sameLoc(v.loc,l))) e.preventDefault();
+},{passive:false});
 
 // ====== combat ======
 function mkF(type,star,cx,cy,team,mult=1){
@@ -464,7 +513,7 @@ function mkF(type,star,cx,cy,team,mult=1){
     splash:b.splash||0,cd:Math.random()*.5,tgt:null,red:0,crit:0,dmgM:1,asM:1,regen:0,lunge:0,flash:0,face:1,
     mp:0,mpMax:SKILLS[type].mp,stun:0,shield:0,psn:null,glow:0,
     atkT:0,castT:0,castTgt:null,kx:0,ky:0,hpLag:b.hp*m,dieT:0,dead:false,walk:0,moving:0,ph:Math.random()*6.28,
-    dd:0,dtk:0,hl:0,sil:0,blind:0,slow:0,spawnT:0,leapDelay:0,leap:null,leapP:0};
+    dd:0,dtk:0,hl:0,thorns:0,sil:0,blind:0,slow:0,spawnT:0,leapDelay:0,leap:null,leapP:0};
 }
 // duplicates count once: 2 Swordsmen = 1 Warrior. 2 different units = tier 1, 3 = tier 2
 function synLevels(types){
@@ -568,6 +617,7 @@ function deal(t,dmg,crit,src){
   if(src) src.dd+=dmg; t.dtk+=dmg;
   if(t.shield>0){ const ab=Math.min(t.shield,dmg); t.shield-=ab; dmg-=ab; }
   t.hp-=dmg; t.flash=1; t.mp=Math.min(t.mpMax,t.mp+MANA_HIT);
+  if(t.thorns&&src&&src.hp>0&&src.range<=1) deal(src,dmg*t.thorns,false,null);   // Thorn Mail: no src, so it never bounces back
   if(src&&src.leech&&src.hp>0){ const h=Math.min(dmg*src.leech,src.max-src.hp); src.hp+=h; src.hl+=h; }
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
@@ -680,7 +730,7 @@ function tickFx(dt){
     if(U[a.type].boss&&!a.enraged&&a.hp>0&&a.hp<a.max*.5){
       a.enraged=true; a.asM*=1.5; a.atk*=1.3; a.mp=a.mpMax;
       V({k:'ring',x:a.x,y:a.y+.3,r:2.2,c:'#ff4030',m:.6}); burst(a.x,a.y-.3,'#ff5040',20,4,4,0); hitStop(.1);
-      for(const dx of [-1,1]){ const m=mkF('mossling',1,0,0,a.team,a.mult||1); m.x=Math.min(COLS-.5,Math.max(.5,a.x+dx)); m.y=a.y+.4; m.spawnT=.3; m.items=[]; F.f.push(m); }
+      for(const dx of [-1,1]){ const m=mkF('mossling',1,0,0,a.team,a.mult||1); m.x=Math.min(COLS-.5,Math.max(.5,a.x+dx)); m.y=a.y+.4; m.spawnT=.3; m.items=[]; m.summon=true; F.f.push(m); }
     }
   }
   for(const p of F.parts){ p.life-=dt; p.vy+=p.g*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=Math.exp(-dt*3); }
@@ -928,7 +978,7 @@ function renderMeter(){
 }
 function renderInfo(){
   const sel=S.units.find(v=>v.uid===S.sel);
-  $('#info').innerHTML = hoverId? infoHTML(hoverId,1) : sel? infoHTML(sel.type,sel.star,sel.items) : 'Hover a unit in the shop or click one of yours to see its stats and skill.';
+  $('#info').innerHTML = hoverId? infoHTML(hoverId,1) : sel? infoHTML(sel.type,sel.star,sel.items) : 'Hover a unit in the shop (press and hold on a phone) or click one of yours to see its stats and skill.';
 }
 function renderUI(){
   $('#sRound').textContent=S.round; $('#sHp').textContent=S.hp; $('#sGold').textContent=S.gold;
@@ -950,7 +1000,20 @@ function renderUI(){
     +'<div class="sh">Origins</div>'+Object.entries(ORIGINS).map(([k,o])=>row(o,ocnt[k],olv[k],o.icon)).join('');
   renderInfo();
 }
-$('#shop').addEventListener('click',e=>{ const b=e.target.closest('.su'); if(b) buy(+b.dataset.k); });
+// touch screens have no hover: press and hold a shop unit to see its stats, tap to buy
+let peekTimer=null, peeked=false;
+function showTip(b){
+  const tip=$('#tip'); tip.innerHTML=infoHTML(b.dataset.id,1); tip.hidden=false;
+  const r=b.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight;
+  tip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';
+  tip.style.top=(r.top-h-8>=8?r.top-h-8:r.bottom+8)+'px';
+}
+function hideTip(){ clearTimeout(peekTimer); $('#tip').hidden=true; }
+$('#shop').addEventListener('pointerdown',e=>{ const b=e.target.closest('.su'); peeked=false; if(!b||e.pointerType==='mouse') return;
+  peekTimer=setTimeout(()=>{ peeked=true; showTip(b); },350); });
+for(const ev of ['pointerup','pointercancel','pointerleave']) $('#shop').addEventListener(ev,hideTip);
+$('#shop').addEventListener('contextmenu',e=>{ if(e.target.closest('.su')) e.preventDefault(); });
+$('#shop').addEventListener('click',e=>{ const b=e.target.closest('.su'); if(!b) return; if(peeked){ peeked=false; return; } buy(+b.dataset.k); });
 $('#shop').addEventListener('mouseover',e=>{ const b=e.target.closest('.su'); const id=b?b.dataset.id:null; if(id!==hoverId){ hoverId=id; renderInfo(); } });
 $('#shop').addEventListener('mouseleave',()=>{ hoverId=null; renderInfo(); });
 $('#bLock').onclick=()=>{ S.locked=!S.locked; msg(S.locked?'Shop locked — it will not reroll next round':'Shop unlocked'); renderUI(); };

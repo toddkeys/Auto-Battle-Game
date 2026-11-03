@@ -5,7 +5,7 @@ A single-file auto battler (original anime-style pixel art). Open `ro-autobattle
 ## Editing
 
 - Game code: `tools/game_template.html` (do not edit `ro-autobattler.html` by hand, it is generated)
-- Sprites: `tools/kit.py`, `tools/classes.py`, `tools/monsters.py` (engine in `tools/pixel.py`)
+- Sprites: `tools/kit.py`, `tools/classes.py`, `tools/tier4.py`, `tools/monsters.py` (engine in `tools/pixel.py`)
 
 Rebuild (needs Python with Pillow and numpy):
 

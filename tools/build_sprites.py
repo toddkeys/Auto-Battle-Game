@@ -1,4 +1,4 @@
-"""Builds all 15 anime-style unit sprites -> assets/units/<id>.png + assets/preview.png
+"""Builds every unit and monster sprite -> assets/units/<id>.png + assets/preview.png
 Run:  python tools/build_sprites.py   then   python tools/build_game.py"""
 import os
 import sys
@@ -8,10 +8,11 @@ sys.path.insert(0, os.path.dirname(__file__))
 import kit  # noqa: E402
 import classes  # noqa: E402
 import monsters  # noqa: E402
+import tier4  # noqa: E402
 from pixel import W, H  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets')
-CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **monsters.MONSTERS)
+CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **monsters.MONSTERS)
 
 
 def preview(sprites, scale=4, cols=5):
