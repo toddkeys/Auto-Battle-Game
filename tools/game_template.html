@@ -260,7 +260,8 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Items</b>: drag onto a hero (1 each). Drop the <i>same</i> item on it, or two of the same on each other, to <b>enchant</b> it (+1, +2). 📜 Unbinding Scroll takes a hero's item off.</li>
         <li><b>Samurai</b> hit harder below half HP (Bushido). <b>Frost Healers</b> heal over time and can wrap an ally in <b>Ice Ward</b>: it can't act, heals, ignores physical damage but takes 20% more magic damage.</li>
         <li><b>Occultists</b> curse enemies: armor break (+25% damage taken), mana drain, slows, and Dispel strips shields and buffs.</li>
-        <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round.</li>
+        <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
+        <li><b>Sell items</b> by dragging them onto the shop or right-clicking: 2 gold (rare 4, scroll 1), times the enchant level.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run.</li>
         <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ Poison · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. "Lock" keeps the shop for next round.</li>
@@ -849,7 +850,7 @@ function sellUnit(u){
   msg(`Sold ${U[u.type].name} for ${val} gold`+(u.items.length?' (items returned)':'')); render(); renderUI();
 }
 function sell(){ sellUnit(S.units.find(v=>v.uid===S.sel)); }
-function reroll(){ if(S.phase!=='prep') return; if(S.gold<2) return msg('Not enough gold'); S.gold-=2; SND.play('reroll'); rollShop(); renderUI(); }
+function reroll(){ if(S.phase!=='prep') return; if(S.gold<2) return msg('Not enough gold'); S.gold-=2; S.locked=false; SND.play('reroll'); rollShop(); renderUI(); }   // rerolling also releases the lock
 
 // ====== clicking the field ======
 function canvasPos(e){ const r=cv.getBoundingClientRect(); return {x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*H/r.height}; }
@@ -896,13 +897,23 @@ cv.addEventListener('pointerdown',e=>{
   if(u){ dragU={u,x0:e.clientX,y0:e.clientY,moved:false,pos:canvasPos(e),over:l}; cv.setPointerCapture(e.pointerId); return; }
   clickCell(l); render(); renderUI();
 });
+// small "Sell X for N gold?" popup at the cursor
+function askSell(e,what,gold,onYes){
+  const c=$('#confirm'); c.innerHTML=`<div>Sell <b>${what}</b> for <b>${gold} gold</b>?</div><div class="row"><button class="b" data-yes>Sell</button><button class="b" data-no>Cancel</button></div>`;
+  c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
+  c.onclick=ev=>{ if(ev.target.closest('[data-yes]')) onYes(); if(ev.target.closest('button')) c.hidden=true; };
+}
 cv.addEventListener('contextmenu',e=>{   // right-click a hero: confirm, then sell
   e.preventDefault(); if(S.phase!=='prep') return;
   const l=cellAt(e), u=l&&S.units.find(v=>sameLoc(v.loc,l)); if(!u) return;
-  const c=$('#confirm'); c.innerHTML=`<div>Sell <b>${U[u.type].name} ${'★'.repeat(u.star)}</b> for <b>${sellValue(u)} gold</b>?</div><div class="row"><button class="b" data-yes>Sell</button><button class="b" data-no>Cancel</button></div>`;
-  c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
-  c.onclick=ev=>{ if(ev.target.closest('[data-yes]')) sellUnit(u); if(ev.target.closest('button')) c.hidden=true; };
+  askSell(e,`${U[u.type].name} ${'★'.repeat(u.star)}`,sellValue(u),()=>sellUnit(u));
 });
+// items sell for 2 gold (rare 4, scroll 1), times the enchant level: an enchanted item used up several copies
+const itemValue=k=>IT(k).use?1:(IT(k).rare?4:2)*ILV(k);
+function sellItem(i){ const k=S.inv[i]; if(!k) return; const v=itemValue(k); S.gold+=v; S.inv.splice(i,1); SND.play('sell');
+  msg(`Sold ${IT(k).icon} ${INAME(k)} for ${v} gold`); renderUI(); }
+$('#items').addEventListener('contextmenu',e=>{ const b=e.target.closest('.it'); if(!b) return; e.preventDefault(); const k=S.inv[+b.dataset.i];
+  askSell(e,`${IT(k).icon} ${INAME(k)}`,itemValue(k),()=>sellItem(+b.dataset.i)); });
 document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#confirm')) $('#confirm').hidden=true; },true);
 addEventListener('keydown',e=>{ if(e.key==='Escape') $('#confirm').hidden=true; });
 cv.addEventListener('pointermove',e=>{
@@ -1681,7 +1692,7 @@ function infoHTML(id,star,items,live){
     <div class="sk">${sk.mp<1e9?`<b>${sk.names?sk.names.join(' / '):sk.name}</b> <span class="mp">${sk.mp} mana</span><br>${sk.desc}`:'No skill — fights until the battle ends.'}</div>`+
     (items&&items.length?`<div class="held">Holding: ${items.map(k=>`<span class="hi" data-item="${k}">${IT(k).icon} ${INAME(k)}</span>`).join(' ')}</div>`:'');
 }
-const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare?' <span class="rare">RARE</span>':''}<div>${IDESC(k)}</div>${IT(k).use?'':ILV(k)<MAX_ILV?'<div class="ench">Combine with another '+IT(k).name+' to enchant it</div>':'<div class="ench">Fully enchanted</div>'}</div>`;
+const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare?' <span class="rare">RARE</span>':''}<div>${IDESC(k)}</div>${IT(k).use?'':ILV(k)<MAX_ILV?'<div class="ench">Combine with another '+IT(k).name+' to enchant it</div>':'<div class="ench">Fully enchanted</div>'}<div class="ench">Sells for ${itemValue(k)} gold (drag to the shop or right-click)</div></div>`;
 // a speech-bubble tooltip next to the element (items in the inventory and in the hero panel)
 let bubbleFor=null;
 const hideBubble=()=>{ $('#bubble').hidden=true; bubbleFor=null; };
@@ -1767,15 +1778,18 @@ $('#items').addEventListener('pointerdown',e=>{ const b=e.target.closest('.it');
 $('#items').addEventListener('pointermove',e=>{ const d=itemDrag; if(!d) return;
   if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>6&&S.phase==='prep'){
     d.moved=true; d.ghost=document.createElement('div'); d.ghost.className='dragghost'; d.ghost.textContent=IT(S.inv[d.i]).icon; $('#bubble').hidden=true; document.body.appendChild(d.ghost); }
-  if(d.moved){ d.ghost.style.left=e.clientX+'px'; d.ghost.style.top=e.clientY+'px'; d.over=cellAt(e); } });
-$('#items').addEventListener('pointerup',e=>{ const d=itemDrag; itemDrag=null; if(!d) return; if(d.ghost) d.ghost.remove();
-  if(!d.moved) return msg('Drag the item onto a hero to equip it');   // items are given by dragging only
+  if(d.moved){ d.ghost.style.left=e.clientX+'px'; d.ghost.style.top=e.clientY+'px'; d.over=cellAt(e);
+    const r=shopCard.getBoundingClientRect(); d.sell=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom; shopCard.classList.toggle('sellzone',d.sell); } });
+$('#items').addEventListener('pointerup',e=>{ const d=itemDrag; itemDrag=null; if(!d) return; if(d.ghost) d.ghost.remove(); shopCard.classList.remove('sellzone');
+  if(e.button===2) return;   // right-click: handled by contextmenu (sell)
+  if(!d.moved) return msg('Drag the item onto a hero to equip it, or onto the shop to sell it');   // items are given by dragging only
+  if(d.sell) return sellItem(d.i);
   const onItem=document.elementFromPoint(e.clientX,e.clientY)?.closest('#items .it');
   if(onItem){ combineItems(d.i,+onItem.dataset.i); renderUI(); return; }
   const l=cellAt(e), u=l&&S.units.find(v=>sameLoc(v.loc,l));
   if(!u) return msg('Drop the item on one of your heroes');
   giveItem(u,d.i); render(); renderUI(); });
-$('#items').addEventListener('pointercancel',()=>{ if(itemDrag&&itemDrag.ghost) itemDrag.ghost.remove(); itemDrag=null; });
+$('#items').addEventListener('pointercancel',()=>{ if(itemDrag&&itemDrag.ghost) itemDrag.ghost.remove(); itemDrag=null; shopCard.classList.remove('sellzone'); });
 $('#vMus').value=Math.round(SND.musVol*100); $('#vSfx').value=Math.round(SND.sfxVol*100);
 $('#vMus').oninput=e=>{ SND.init(); SND.setMusic(e.target.value/100); };   // music volume eases in SND.update
 $('#vSfx').oninput=e=>{ SND.init(); SND.setSfx(e.target.value/100); };
