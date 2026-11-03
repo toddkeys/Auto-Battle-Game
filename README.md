@@ -1,6 +1,6 @@
 # Auto Battle Game
 
-A single-file auto battler (original anime-style pixel art). Open `ro-autobattler.html` in a browser to play.
+A single-file auto battler (original anime-style pixel art). Open `ro-autobattler.html` in a browser to play, or play online at https://toddkeys.github.io/Auto-Battle-Game/ (GitHub Pages serves `index.html`, which forwards to the game). Your best round is saved in your browser.
 
 ## Editing
 

@@ -49,6 +49,18 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 #confirm{position:fixed;z-index:40;padding:10px 12px;border:2px solid var(--ink);border-radius:8px;background:linear-gradient(180deg,var(--oak),var(--oak3));box-shadow:inset 0 0 0 2px var(--brass-lo),0 10px 24px #000a;font-size:14px}
 #confirm[hidden]{display:none}#confirm .row{margin-top:8px}#confirm button.b{font-size:18px;padding:5px 12px 6px}
 #confirm [data-yes]{background:linear-gradient(180deg,#e06050,#a02a20)}
+#summary{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(30,18,8,.78),rgba(0,0,0,.9))}
+#summary[hidden]{display:none}
+.sumbox{width:min(520px,92vw);padding:26px 30px;text-align:center;border:3px solid var(--ink);border-radius:14px;
+  background:radial-gradient(ellipse at 50% 0,rgba(255,220,130,.18),transparent 60%),linear-gradient(180deg,#4a321e,#1e130b);box-shadow:inset 0 0 0 3px var(--brass),inset 0 0 0 5px var(--ink),0 16px 40px #000}
+.sumbox h2{margin:0 0 14px;font:400 56px var(--pixel);color:var(--gold);text-shadow:0 3px 0 #7a4a10,0 6px 0 var(--ink)}
+.newrec{font:400 30px var(--pixel);color:#fff3b0;text-shadow:0 0 18px rgba(255,210,90,.9);animation:goPulse 1.4s infinite}
+.sumgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.sumgrid div{padding:8px 10px;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.28)}
+.sumgrid span{display:block;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.sumgrid b{font:400 26px var(--pixel);letter-spacing:.03em}
+.sumbox p{color:var(--muted);margin:0 0 14px}
+.sumbox .go{width:100%}
 #cards{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(30,18,8,.75),rgba(0,0,0,.88))}
 #cards[hidden]{display:none}
 .cardsbox{text-align:center}.cardsbox h2{margin:0;font:400 52px var(--pixel);color:var(--gold);text-shadow:0 3px 0 #7a4a10,0 6px 0 var(--ink)}
@@ -225,7 +237,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><label title="Music volume">🎵<input type="range" id="vMus" min="0" max="100"></label><label title="Sound effect volume">🔊<input type="range" id="vSfx" min="0" max="100"></label></div>
-      <div class="next"><div>Next: <b id="sNext"></b></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div></div>
     </div>
     <div class="board"><canvas id="cv"></canvas><div id="msg"></div></div>
   </main>
@@ -277,6 +289,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 <div id="tip" hidden></div>
 <div id="bubble" hidden></div>
 <div id="confirm" hidden></div>
+<div id="summary" hidden></div>
 <div id="cards" hidden><div class="cardsbox"><h2>Choose a blessing</h2><p>The boss is down! Pick one blessing for the rest of the run.</p><div class="cardrow" id="cardrow"></div></div></div>
 <input type="file" id="file" accept="image/*" hidden>
 <div id="cropModal" hidden>
@@ -850,7 +863,24 @@ addEventListener('pointerdown',()=>{ SND.init(); },{once:true});
 // ====== game state ======
 let S, speed=1, last=0, msgTimer, hoverId=null;
 function msg(t){ const m=$('#msg'); m.textContent=t; m.classList.add('show'); clearTimeout(msgTimer); msgTimer=setTimeout(()=>m.classList.remove('show'),3500); }
-function newGame(){ $('#cards').hidden=true; S={buffs:[],round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; rollShop(); render(); renderUI(); }
+// ====== best run (kept in this browser) ======
+function readBest(){ try{ return JSON.parse(localStorage.getItem('ab_best')||'null'); }catch(e){ return null; } }
+function showSummary(){
+  const best=readBest(), rec=!best||S.round>best.round;
+  const top=m=>Object.entries(m).sort((a,b)=>b[1]-a[1])[0];
+  const tc=top(S.clsUse), to=top(S.orgUse);
+  if(rec) try{ localStorage.setItem('ab_best',JSON.stringify({round:S.round,bosses:S.bosses,date:new Date().toISOString().slice(0,10)})); }catch(e){}
+  $('#summary').innerHTML=`<div class="sumbox">${rec?'<div class="newrec">🏆 New record!</div>':''}<h2>Run over</h2>
+    <div class="sumgrid"><div><span>Reached</span><b>Round ${S.round}</b></div><div><span>Best</span><b>${rec?'Round '+S.round:'Round '+best.round}</b></div>
+    <div><span>Bosses beaten</span><b>${S.bosses}</b></div><div><span>Blessings</span><b>${S.buffs.length}</b></div>
+    <div><span>Main class</span><b style="color:${tc?CLASSES[tc[0]]?.color:''}">${tc&&CLASSES[tc[0]]?CLASSES[tc[0]].name:'–'}</b></div>
+    <div><span>Main origin</span><b>${to&&ORIGINS[to[0]]?ORIGINS[to[0]].icon+' '+ORIGINS[to[0]].name:'–'}</b></div></div>
+    ${!rec&&best?`<p>Your best is round ${best.round}${best.date?` (${best.date})`:''} — ${best.round-S.round} more to beat it.</p>`:''}
+    <button class="b go" id="bAgain">⚔ Play again</button></div>`;
+  $('#summary').hidden=false; $('#bAgain').onclick=()=>{ newGame(); };
+  if(rec) SND.play('star');
+}
+function newGame(){ $('#cards').hidden=true; $('#summary').hidden=true; S={bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -1094,6 +1124,7 @@ function startFight(){
   if(!onBoard().length) return msg('Place units on the field first');
   S.sel=null; S.selItem=null;
   const kind=roundKind(S.round);
+  for(const u of onBoard()){ const b=U[u.type]; S.clsUse[b.cls]=(S.clsUse[b.cls]||0)+1; S.orgUse[b.org]=(S.orgUse[b.org]||0)+1; }   // for the end-of-run summary
   const f=onBoard().map(u=>Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items}));
   for(const e of (kind==='pvp'?genEnemies(S.round):genMonsters(S.round))) f.push(Object.assign(mkF(e.type,e.star,e.cx,e.cy,1,e.mult||1),{items:e.items||[],mult:e.mult||1}));
   for(const x of f) clampOnBoard(x);
@@ -1397,7 +1428,7 @@ function endFight(win){
   S.streak=win?Math.max(0,S.streak||0)+1:Math.min(0,S.streak||0)-1;   // win streak > 0, lose streak < 0
   F.winner=win?0:F.f.some(x=>x.team===1&&x.hp>0)&&!F.f.some(x=>x.team===0&&x.hp>0)?1:null;
   S.meter=F.f.filter(x=>x.team===0).map(x=>({type:x.type,star:x.star,dd:x.dd,dt:x.dtk,hl:x.hl}));
-  if(win&&F.kind==='boss') S.cardsDue=true;
+  if(win&&F.kind==='boss'){ S.cardsDue=true; S.bosses++; }
   if(win){ const coins=Math.round(F.f.filter(x=>x.team===0&&x.hp>0).reduce((g,x)=>g+(x.coin||0),0)); S.gold+=1+coins; S.result=`Victory! +${1+gb+coins} gold`;
     if(F.kind!=='pvp'){ const keys=Object.keys(ITEMS), got=[];
       const drops=F.kind==='boss'?[pick(RARE),pick(EQUIP)]:[Math.random()<.25?pick(RARE):pick(COMMON)];
@@ -1408,7 +1439,7 @@ function endFight(win){
      S.hp=Math.max(0,S.hp-loss); S.result=`Defeat... -${loss} HP`+(gb?` (+${gb} gold)`:''); }
   SND.play(win?'victory':'defeat'); render(); renderUI();
   setTimeout(()=>{
-    if(S.hp<=0){ S.phase='over'; render(); renderUI(); return; }
+    if(S.hp<=0){ S.phase='over'; showSummary(); render(); renderUI(); return; }
     const interest=Math.min(5,Math.floor(S.gold/10)), base=5+Math.min(4,Math.floor(S.round/5)), st=Math.abs(S.streak), sb=st>=6?3:st>=4?2:st>=2?1:0;
     S.gold+=base+interest+sb+(S.bounty||0); S.round++; if(!S.locked) rollShop(); S.locked=false; S.phase='prep'; S.fight=null;   // a lock holds the shop for one round
     if(S.cardsDue){ S.cardsDue=false; offerBlessings(); }
@@ -1857,6 +1888,7 @@ function renderUI(){
   SND.music(S.phase==='fight'||S.phase==='result'?'battle':'prep');
   if($('#sGold').textContent!==String(S.gold)){ const c=$('#coins'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
   $('#sRound').textContent=S.round; $('#sHp').textContent=S.hp; $('#sGold').textContent=S.gold; $('#hpFill').style.width=Math.max(0,S.hp)+'%';
+  const best=readBest(); $('#sBest').textContent=best?'round '+best.round:'–';
   $('#sCap').textContent=`${onBoard().length} / ${cap()}`; $('#sInt').textContent=`+${Math.min(5,Math.floor(S.gold/10))}`;
   $('#sStreak').textContent=S.streak>1?`🔥${S.streak}`:S.streak<-1?`💧${-S.streak}`:'–';
   $('#sNext').textContent=KIND_LABEL[roundKind(S.round)]+(roundKind(S.round)==='pvp'&&S.round>2?` · enemy power +${Math.round((enemyPower(S.round)-1)*100)}%`:'');
