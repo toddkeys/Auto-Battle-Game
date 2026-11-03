@@ -1505,7 +1505,7 @@ function rigPose(o,type,b){
   R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
   R.wingL=J(); R.wingR=J();
   if(st==='bat'){ const f=Math.sin(t*14); R.wingL.r=f*.45; R.wingR.r=-f*.45; R.body.y=Math.sin(t*14+1.2)*1.4; }
-  if(st==='slash') R.weapon.r=-.75;   // a held blade leans forward at rest, toward the enemy
+  if(st==='slash'){ R.armR.r-=.2; R.weapon.r=.18+br*.04; }   // ready stance: hand out from the hip, blade up beside the body (forward would hide it behind the head)
   if(st==='golem'){ R.armL.r=Math.sin(t*1.6)*.06; R.armR.r=-Math.sin(t*1.6)*.06; }
   if(st==='blob') R.head.r=Math.sin(t*2.5)*.12;
   if(o.moving){   // walk cycle: legs step in turn, arms swing against them, body bobs, cape trails
