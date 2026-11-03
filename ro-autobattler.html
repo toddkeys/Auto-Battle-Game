@@ -1490,10 +1490,14 @@ function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=k
 // overhead sword cut, angles in radians from the rest pose: the arm lifts the hand above the shoulder while the blade
 // drops back over it, then both whip forward and the blade sweeps over the head down in front, then settles.
 // blade = absolute blade turn; the wrist (weapon) turns by blade - arm because it rides on the arm.
-const SWING={arm:[[0,0],[.35,-2.3],[.52,.8],[.62,.95],[1,0]], blade:[[0,0],[.35,2],[.52,-2],[.62,-2.3],[1,0]], lean:[[0,0],[.35,1.2],[.52,-1.6],[1,0]]};
-const SWING_BIG={arm:[[0,0],[.35,-2.5],[.5,1],[.62,1.1],[1,0]], blade:[[0,0],[.35,2.3],[.5,-2.3],[.62,-2.5],[1,0]], lean:[[0,0],[.35,1.6],[.5,-2.2],[1,0]]};
+// Both start and end in the guard stance (arm +.55, blade -1.6 from neutral), so the blade never passes behind the head.
+const SWING={arm:[[0,.55],[.35,-2.3],[.52,.8],[.62,.95],[1,.55]], blade:[[0,-1.6],[.35,2],[.52,-2],[.62,-2.3],[1,-1.6]], lean:[[0,0],[.35,1.2],[.52,-1.6],[1,0]]};
+const SWING_BIG={arm:[[0,.55],[.35,-2.5],[.5,1],[.62,1.1],[1,.55]], blade:[[0,-1.6],[.35,2.3],[.5,-2.3],[.62,-2.5],[1,-1.6]], lean:[[0,0],[.35,1.6],[.5,-2.2],[1,0]]};
 function swing(R,p,K){ const arm=KF(p,K.arm), blade=KF(p,K.blade); R.armR.r+=arm; R.weapon.r+=blade-arm; R.body.x+=KF(p,K.lean);
   R.armL.r+=KF(p,[[0,0],[.35,.4],[.52,-.3],[1,0]]); R.head.r+=KF(p,[[0,0],[.35,-.08],[.52,.1],[1,0]]); }
+// 1 = full guard stance, 0 = neutral (the pose the swing / thrust keyframes start from)
+function guardOf(o){ const out=p=>KF(p,[[0,1],[.2,0],[.8,0],[1,1]]);
+  if(o.rel>0) return out(1-o.rel/REL_T); if(o.atkT>0) return out(1-o.atkT/ATK_T); if(o.cast>0) return 1-easeOut(Math.min(1,(1-o.cast/CAST_T)*3)); return 1; }
 function thrust(R,p,k){ R.weapon.r+=KF(p,[[0,0],[.3,-1.25],[.45,-1.5],[.7,-1.5],[1,0]]); R.armR.r+=KF(p,[[0,0],[.3,.5],[.45,-.2],[1,0]]);
   R.armR.x+=k*KF(p,[[0,0],[.3,1.5],[.45,-3.5],[.65,-3],[1,0]]); R.body.x+=k*KF(p,[[0,0],[.3,.8],[.45,-1.5],[1,0]]); R.armL.r+=KF(p,[[0,0],[.3,.3],[.45,-.3],[1,0]]); }
 // 3-beat move: ease toward `wind` (anticipation), snap to `hit`, settle back to 0
@@ -1508,8 +1512,10 @@ function rigPose(o,type,b){
   R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
   R.wingL=J(); R.wingR=J();
   if(st==='bat'){ const f=Math.sin(t*14); R.wingL.r=f*.45; R.wingR.r=-f*.45; R.body.y=Math.sin(t*14+1.2)*1.4; }
-  if(st==='slash'){ R.armR.r-=.15; R.weapon.r=.45+br*.04; }   // ready stance: hand at the hip, blade out on a diagonal, clear of the body
-  if(st==='spear') R.weapon.r=br*.02;   // spear upright beside the body, gripped mid-shaft
+  if(st==='slash'||st==='spear'){   // guard stance: weapon held in front of the body, pointing forward; it eases out of the guard to attack
+    const g=st==='slash'&&(o.rel>0||o.atkT>0)?0:guardOf(o); R.front=1;   // swings carry their own guard start/end
+    if(st==='slash'){ R.armR.r+=-.15+.55*g; R.weapon.r=.45-2.15*g+br*.03; }
+    else { R.armR.r+=.35*g; R.weapon.r=-.75*g+br*.02; } }
   if(st==='golem'){ R.armL.r=Math.sin(t*1.6)*.06; R.armR.r=-Math.sin(t*1.6)*.06; }
   if(st==='blob') R.head.r=Math.sin(t*2.5)*.12;
   if(o.moving){   // walk cycle: legs step in turn, arms swing against them, body bobs, cape trails
@@ -1564,7 +1570,11 @@ function exprOf(o){
 }
 function buildRig(rig,R,tints,expr){
   const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=false;
-  rig.layers.forEach((g,i)=>{
+  let order=rig.layers.map((g,i)=>i);
+  if(R.front&&rig.piv.weapon){   // weapon held in front of the body: blade, then the hand gripping it, go just under the head
+    const mv=order.filter(i=>rig.layers[i]==='weapon'||rig.layers[i]==='armR').sort((x,y)=>(rig.layers[x]==='armR')-(rig.layers[y]==='armR'));
+    order=order.filter(i=>!mv.includes(i)); let h=order.length; while(h>0&&rig.layers[order[h-1]]!=='head') h--; order.splice(h?h-1:order.length,0,...mv); }   // before the last head layer (back hair is a head layer too)
+  order.forEach(i=>{ const g=rig.layers[i];
     if(g==='weapon'&&rig.piv.weapon){   // shoulder -> arm turn -> wrist -> weapon turn
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon;
       rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
