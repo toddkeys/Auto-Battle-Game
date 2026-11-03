@@ -95,7 +95,7 @@ select{background:#1f2232;color:var(--text);border:1px solid var(--line);border-
       <div id="msg" style="margin-top:8px"></div>
     </div>
     <div class="card"><h3>Unit info</h3><div id="info"></div></div>
-    <div class="card"><h3>Items <span class="hint">drag onto a unit (max 3 each) · 📜 takes items off</span></h3><div id="items" class="items"></div></div>
+    <div class="card"><h3>Items <span class="hint">drag onto a unit (1 per hero) · 📜 takes items off</span></h3><div id="items" class="items"></div></div>
     <div class="card" id="meterCard" hidden><h3>Last battle</h3><div id="meter"></div></div>
     <div class="card syn"><h3>Bonuses (different units on the field)</h3><div id="syn"></div></div>
     <div class="card">
@@ -195,7 +195,7 @@ const MONSTERS = [
   {id:'emberbat',  name:'Emberbat',  cls:'monster',cost:2,hp:380, atk:55, range:1,as:0.8,ms:2.2},
   {id:'golem',     name:'Cragmaw Golem',cls:'monster',cost:5,hp:4200,atk:140,range:1,as:1.4,ms:1.0,scale:1.4,boss:1},
 ];
-// items: dropped by monster rounds, up to 3 per unit
+// items: dropped by monster rounds, one per hero
 const ITEMS = {
   sword:{name:'Iron Sword',     icon:'🗡️', desc:'+20% attack damage',                apply:x=>{ x.atk*=1.2; }},
   plate:{name:'Guardian Plate', icon:'🛡️', desc:'+25% max HP',                       apply:x=>{ x.max*=1.25; x.hp=x.hpLag=x.max; }},
@@ -341,6 +341,7 @@ function buyCap(){
 const onBoard=()=>S.units.filter(u=>u.loc.w==='board');
 const roundKind=r=>r%5===0?(r>=15?'boss':'monster'):'pvp';
 const KIND_LABEL={pvp:'⚔ Battle',monster:'👾 Monster round (item drop)',boss:'💀 Boss round (2 item drops)'};
+const MAX_ITEMS=1;   // one item per hero
 function giveItem(u){
   const k=S.inv[S.selItem]; if(k===undefined) return;
   if(ITEMS[k].use){   // Unbinding Scroll: return every item on the unit to the inventory
@@ -348,7 +349,7 @@ function giveItem(u){
     S.inv.splice(S.selItem,1); S.selItem=null; S.inv.push(...u.items);
     msg(`Took ${u.items.map(i=>ITEMS[i].icon).join(' ')} off ${U[u.type].name}`); u.items=[]; return;
   }
-  if(u.items.length>=3) return msg(`${U[u.type].name} already has 3 items`);
+  if(u.items.length>=MAX_ITEMS) return msg(`${U[u.type].name} already holds ${ITEMS[u.items[0]].icon} — use 📜 to take it off first`);
   u.items.push(k); S.inv.splice(S.selItem,1); S.selItem=null;
   msg(`${U[u.type].name} equipped ${ITEMS[k].icon} ${ITEMS[k].name}`);
 }
@@ -377,7 +378,7 @@ function merge(){
         const keep=g.find(v=>v.loc.w==='board')||g[0];
         const rm=g.filter(v=>v!==keep).slice(0,2);
         S.units=S.units.filter(v=>!rm.includes(v));
-        const all=[...keep.items,...rm.flatMap(v=>v.items)]; keep.items=all.slice(0,3); S.inv.push(...all.slice(3));
+        const all=[...keep.items,...rm.flatMap(v=>v.items)]; keep.items=all.slice(0,MAX_ITEMS); S.inv.push(...all.slice(MAX_ITEMS));
         keep.star++; msg(`${U[keep.type].name} upgraded to ${'★'.repeat(keep.star)}!`);
         S.ufx.push({k:'star',uid:keep.uid,t:1.1,m:1.1});
         again=true; break;
@@ -495,7 +496,7 @@ function genEnemies(r){
     let type=randUnit(r);
     if(Math.random()<.55){ const maxCost=U[type].cost, pool=UNITS.filter(u=>u.cost<=maxCost&&(u.cls===themeCls||u.org===themeOrg)); if(pool.length) type=pool[Math.floor(Math.random()*pool.length)].id; }
     const rr=Math.random(), star=rr<s3?3:rr<s3+s2?2:1;
-    const items=[]; for(let k=0;k<(r>=14?2:1);k++) if(Math.random()<itemChance) items.push(EQUIP[Math.floor(Math.random()*EQUIP.length)]);
+    const items=[]; if(Math.random()<itemChance) items.push(EQUIP[Math.floor(Math.random()*EQUIP.length)]);
     const rows=U[type].range<=1?[3,2,1,0]:[0,1,2,3]; let cx,cy;
     outer: for(const row of rows){ const xs=[...Array(COLS).keys()].sort(()=>Math.random()-.5); for(const x of xs) if(!used.has(x+','+row)){cx=x;cy=row;break outer;} }
     used.add(cx+','+cy); out.push({type,star,cx,cy,items,mult:enemyPower(r)});
