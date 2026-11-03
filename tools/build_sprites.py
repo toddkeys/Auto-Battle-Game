@@ -15,10 +15,11 @@ import tier4  # noqa: E402
 import summoners  # noqa: E402
 import creatures  # noqa: E402
 import crusaders  # noqa: E402
+import occultists  # noqa: E402
 from pixel import W, H  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets')
-CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **crusaders.CRUSADERS, **summoners.SUMMONERS,
+CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **crusaders.CRUSADERS, **occultists.OCCULTISTS, **summoners.SUMMONERS,
              **monsters.MONSTERS, **creatures.CREATURES)
 
 
