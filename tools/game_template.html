@@ -151,6 +151,14 @@ details summary::before{content:'▸ ';color:var(--brass)}details[open] summary:
 #tip{position:fixed;z-index:15;width:min(330px,calc(100vw - 16px));padding:10px;border:2px solid var(--ink);border-radius:8px;background:linear-gradient(180deg,var(--oak),var(--oak3));
   box-shadow:inset 0 0 0 2px var(--brass-lo),0 8px 22px #000a;font-size:13px;color:var(--muted);pointer-events:none}
 #tip[hidden]{display:none}
+#bubble{position:fixed;z-index:30;max-width:260px;padding:8px 11px;border:2px solid var(--ink);border-radius:8px;pointer-events:none;
+  background:linear-gradient(180deg,#fbe9bd,#e6c47c);color:#2a1607;font:500 13px/1.35 var(--body);box-shadow:0 4px 0 var(--ink),0 10px 24px rgba(0,0,0,.5)}
+#bubble[hidden]{display:none}
+#bubble::after{content:'';position:absolute;left:calc(var(--ax) - 7px);bottom:-9px;border:7px solid transparent;border-top-color:#e6c47c;border-bottom:0}
+#bubble.below::after{bottom:auto;top:-9px;border:7px solid transparent;border-bottom-color:#fbe9bd;border-top:0}
+#bubble b{font:400 19px/1 var(--pixel);letter-spacing:.02em}
+#bubble .rare{font:400 14px var(--pixel);color:#8a2ad0}
+.held .hi{display:inline-block;margin:2px 4px 0 0;padding:1px 7px;border:1px solid #5a4024;border-radius:12px;background:rgba(0,0,0,.3);cursor:help}
 /* sprite cropper */
 #cropModal{position:fixed;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:9}
 #cropModal[hidden]{display:none}
@@ -177,7 +185,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <h3>How to play</h3>
       <ol class="help">
         <li><b>Buy</b> heroes in the shop. They wait on the bench (the wooden deck).</li>
-        <li><b>Drag</b> a hero onto your half of the field (or click it, then a cell). Drop it on another hero to swap; drop it on the shop to sell.</li>
+        <li><b>Drag</b> a hero to move it (drop on another hero to swap). Click selects; click empty ground to cancel. <b>Right-click</b> a hero or drop it on the shop to sell.</li>
         <li><b>3 copies</b> merge into ★★ automatically (3 × ★★ = ★★★).</li>
         <li><b>Bonuses</b>: 2 or 3 <i>different</i> heroes of the same class or origin unlock a bonus (copies count once).</li>
         <li>Press <b>Start battle</b> — heroes fight on their own. A full blue mana bar casts their skill.</li>
@@ -190,14 +198,15 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ Poison · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
-        <li><b>Gold</b>: 5 per round + 1 interest per 10 saved (max 5). Losing costs HP; at 0 the run ends.</li>
+        <li><b>Gold</b>: 5 per round, +1 every 5 rounds (9 from round 20) + 1 interest per 10 saved (max 5) + a streak bonus for 2/4/6 wins or losses in a row (+1/+2/+3). Losing costs HP; at 0 the run ends.</li>
       </ol>
     </div>
     <div class="card">
       <details>
         <summary>Credits</summary>
         <p class="help" style="padding:0;margin-top:8px">Art, code and game design: original. Music: <b>Town Theme RPG</b> by cynicmusic, <b>JRPG Epic Rock Battle Theme #1</b> by HydroGene (CC0).
-        Sound effects: <b>Spell Sounds Starter Pack</b> by p0ss (CC-BY-SA 3.0), <b>RPG Sound Pack</b> by artisticdude, <b>80 CC0 RPG SFX</b> and <b>25 CC0 bang SFX</b> by rubberduck, <b>50 RPG sound effects</b> by Kenney (CC0) — all via OpenGameArt.org. Details in assets/audio/CREDITS.txt.</p>
+        Sound effects: <b>Spell Sounds Starter Pack</b> by p0ss (CC-BY-SA 3.0), <b>RPG Sound Pack</b> by artisticdude, <b>80 CC0 RPG SFX</b> and <b>25 CC0 bang SFX</b> by rubberduck, <b>50 RPG sound effects</b> by Kenney (CC0) — all via OpenGameArt.org. Details in assets/audio/CREDITS.txt.
+        Effects: <b>2D Spell Effects</b> by Mikodrak, <b>Ring Explosion</b> by BenHickling, <b>Pixel Art Spells</b> by DevWizard (CC0) — assets/vfx/CREDITS.txt.</p>
       </details>
     </div>
     <div class="card">
@@ -213,7 +222,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><button class="b" id="bMus" title="Music on/off">🎵</button><button class="b" id="bSfx" title="Sound effects on/off">🔊</button></div>
-      <div class="next"><div>Next: <b id="sNext"></b></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div></div>
     </div>
     <div class="board"><canvas id="cv"></canvas><div id="msg"></div></div>
   </main>
@@ -236,6 +245,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 </div>
 
 <div id="tip" hidden></div>
+<div id="bubble" hidden></div>
 <input type="file" id="file" accept="image/*" hidden>
 <div id="cropModal" hidden>
   <div class="mbox">
@@ -360,7 +370,7 @@ function summon(a,type,max){
   m.x=Math.min(COLS-.5,Math.max(.5,a.x+(Math.random()<.5?-.8:.8))); m.y=Math.min(ROWS-.5,Math.max(.5,a.y+(a.team===0?-.5:.5)));
   for(const k of ['red','asM','regen','crit','dmgM','killAS','leech']) if(a[k]!==undefined) m[k]=a[k];
   Object.assign(m,{summon:true,owner:a,items:[],spawnT:.3,mult:a.mult||1});
-  F.f.push(m); SND.play('summon'); V({k:'rune',x:m.x,y:m.y+.35,r:.7,c:'#7fe8d0',m:.8}); V({k:'pillar',x:m.x,y:m.y+.35,c:'#7fe8d0',m:.5});
+  F.f.push(m); SND.play('summon'); FX('strike',m.x,m.y+.35,{s:.7,tint:'#7fe8d0',m:.5}); V({k:'rune',x:m.x,y:m.y+.35,r:.7,c:'#7fe8d0',m:.8}); V({k:'pillar',x:m.x,y:m.y+.35,c:'#7fe8d0',m:.5});
   return m;
 }
 const BOSS_ENRAGE={
@@ -368,7 +378,7 @@ const BOSS_ENRAGE={
   lich:a=>{ a.asM*=1.3; a.manaMul=2; for(let i=0;i<3;i++) summon(a,'skeleton',6); },
   wyrm:a=>{ a.asM*=1.4; a.atk*=1.25; const es=foes(a);   // meteor storm
     for(let i=0;i<5&&es.length;i++){ const t=pick(es), x=t.x, y=t.y; V({k:'meteor',x,y,m:.55,t:.55+i*.2});
-      later(.55+i*.2,()=>{ V({k:'burst',x,y,r:1,c:'#ff6a20'}); V({k:'quake',x,y:y+.2,r:1,c:'#4a1a0a',m:.8}); burst(x,y,'#ffa040',14,4,4,5); hitStop(.07);
+      later(.55+i*.2,()=>{ FX('boom',x,y-.2,{s:1.6,m:.6}); V({k:'burst',x,y,r:1,c:'#ff6a20'}); V({k:'quake',x,y:y+.2,r:1,c:'#4a1a0a',m:.8}); burst(x,y,'#ffa040',14,4,4,5); hitStop(.07);
         for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.1) hit(a,e,2.5); }); } },
 };
 const densest=(a,r)=>foes(a).sort((p,q)=>foes(a).filter(e=>dist(e,q)<=r).length-foes(a).filter(e=>dist(e,p)<=r).length)[0];
@@ -405,7 +415,7 @@ const SKILLS = {
       V({k:'burst',x:a.x,y:a.y,r:.7,c:'#ff4060'}); hit(a,t,3.5,true); inflict(t,'sil'); }},
   mage:{name:'Flame Burst', mp:60, desc:'Hurls a fire bolt that explodes: 220% damage to the target and 120% to enemies within 1.3 cells, all burning for 3s.',
     cast(a,t){ shoot(a,t,2.2,'#ff7a2a',true,x=>{ poison(x,a.atk*.25,3,a); for(const e of foes(a)) if(e!==x&&dist(e,x)<=1.3){ hit(a,e,1.2); poison(e,a.atk*.25,3,a); }
-      V({k:'ring',x:x.x,y:x.y,r:1.3,c:'#ff9a40'}); burst(x.x,x.y,'#ffb050',16,4,3,2); }); }},
+      V({k:'ring',x:x.x,y:x.y,r:1.3,c:'#ff9a40'}); FX('blaze',x.x,x.y-.2,{s:.8,m:.55}); burst(x.x,x.y,'#ffb050',16,4,3,2); }); }},
   wizard:{name:'Frost Nova', mp:80, desc:'Blasts enemies within 2.2 cells of the target with ice for 180% damage. Each has a 35% chance to be Frozen for 3s (breaks when it takes damage); the rest are slowed for 2s.',
     cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=2.2){ hit(a,e,1.8); if(!freeze(e,.35,3)) inflict(e,'slow',2); } V({k:'ring',x:t.x,y:t.y,r:2.2,c:'#aee8ff'}); V({k:'burst',x:t.x,y:t.y,r:2.2,c:'#bfefff'}); burst(t.x,t.y,'#dff6ff',16,4,3,1); hitStop(.06); }},
   mossling:{name:'Sticky Bounce', mp:70, desc:'Bounces on the target for 160% damage and slows it for 3s.',
@@ -425,7 +435,7 @@ const SKILLS = {
   dawnoracle:{name:'Rebirth', mp:100, desc:'Brings the strongest fallen ally back with 40% HP. If no ally has fallen, heals every ally for 150% of its heal.',
     cast(a){ const d=S.fight.f.filter(b=>b.team===a.team&&b.hp<=0&&!b.reborn&&!b.summon).sort((p,q)=>q.max-p.max)[0];
       if(!d){ for(const b of friends(a)) heal(b,a.heal*1.5,a); V({k:'ring',x:a.x,y:a.y,r:3,c:'#ffd27a'}); return; }
-      Object.assign(d,{hp:d.max*.4,hpLag:d.max*.4,dead:false,dieT:0,reborn:true,spawnT:.3,stun:0,sil:0,blind:0,slow:0,psn:null,mp:0,castT:0,tgt:null,leap:null,leapDelay:0});
+      FX('strike',d.x,d.y+.35,{s:.9,tint:'#ffe27a',m:.7}); Object.assign(d,{hp:d.max*.4,hpLag:d.max*.4,dead:false,dieT:0,reborn:true,spawnT:.3,stun:0,sil:0,blind:0,slow:0,psn:null,mp:0,castT:0,tgt:null,leap:null,leapDelay:0});
       a.hl+=d.hp; pop(d,'Reborn!','#ffe27a',true); V({k:'pillar',x:d.x,y:d.y+.35,c:'#ffd27a',m:.6}); V({k:'ring',x:d.x,y:d.y+.3,r:.9,c:'#ffe27a'}); hitStop(.08); }},
   nightreaper:{name:'Reap', mp:70, desc:'Strikes for 280% damage. A target left under 30% HP (bosses: 15%) is executed, and the Reaper gets half its mana back.',
     cast(a,t){ hit(a,t,2.8,true); V({k:'slash',x:t.x,y:t.y,c:'#5ee08a',dir:a.face});
@@ -434,19 +444,19 @@ const SKILLS = {
   voidsage:{name:'Void Chain', mp:90, desc:'Lightning jumps between up to 6 enemies (3 cells per jump): 260% damage, 15% less each jump, and a 2s silence.',
     cast(a,t){ const hitSet=new Set(); let from=a, cur=t, m=2.6;
       for(let i=0;i<6&&cur;i++){ hitSet.add(cur); const f0=from, c0=cur, m0=m;
-        later(i*.08,()=>{ V({k:'bolt',x:f0.x,y:f0.y-.2,x2:c0.x,y2:c0.y,c:'#b070ff',m:.35}); burst(c0.x,c0.y-.2,'#d8b0ff',6,2.5,2,0); if(a.hp>0&&c0.hp>0){ hit(a,c0,m0); inflict(c0,'sil'); } });
+        later(i*.08,()=>{ V({k:'bolt',x:f0.x,y:f0.y-.2,x2:c0.x,y2:c0.y,c:'#b070ff',m:.35}); FX('strike',c0.x,c0.y+.3,{s:.55,tint:'#c080ff',m:.45}); burst(c0.x,c0.y-.2,'#d8b0ff',6,2.5,2,0); if(a.hp>0&&c0.hp>0){ hit(a,c0,m0); inflict(c0,'sil'); } });
         from=cur; m*=.85; cur=foes(a).filter(e=>!hitSet.has(e)&&dist(e,from)<=3).sort((p,q)=>dist(p,from)-dist(q,from))[0]; } }},
   bulwark:{name:'Bastion', mp:70, desc:'Gains a shield worth 25% of its max HP and shields its linked ally and allies within 2 cells for 12% of its max HP. Guardian Link: takes 30% of the damage its linked back-line ally would take.',
-    cast(a){ a.shield+=a.max*.25; V({k:'dome',x:a.x,y:a.y,c:'#ffe0a0',r:.75,m:.8});
+    cast(a){ a.shield+=a.max*.25; V({k:'dome',x:a.x,y:a.y,c:'#ffe0a0',r:.75,m:.8}); FX('nova',a.x,a.y-.3,{s:1.2,tint:'#ffd890',m:.55}); addTrauma(.2);
       for(const b of friends(a)) if(b!==a&&(b.guard===a||dist(a,b)<=2)){ b.shield+=a.max*.12; V({k:'dome',x:b.x,y:b.y,c:'#ffe0a0',r:.6,m:.7}); } }},
   templar:{name:'Holy Charge', mp:80, desc:'Charges the enemy closest to your back line: 220% damage, a 1s stun, and enemies within 1.5 cells must attack it. Guardian Link: takes 30% of its linked ally\'s damage.',
     cast(a){ const back=friends(a).filter(b=>b.back), t=foes(a).sort((p,q)=>Math.min(...back.map(b=>dist(b,p)),99)-Math.min(...back.map(b=>dist(b,q)),99))[0]; if(!t) return;
       V({k:'burst',x:a.x,y:a.y,r:.7,c:'#ffe0a0'}); a.x=Math.min(COLS-.5,Math.max(.5,t.x+(a.x<t.x?-.7:.7))); a.y=t.y; a.tgt=t; a.face=t.x<a.x?-1:1;
-      hit(a,t,2.2,true); stun(t); for(const e of foes(a)) if(dist(e,a)<=1.5) e.tgt=a;
+      hit(a,t,2.2,true); stun(t); for(const e of foes(a)) if(dist(e,a)<=1.5) e.tgt=a; FX('slash',t.x,t.y-.25,{s:.9,tint:'#ffe0a0',flip:a.face<0});
       V({k:'arc',x:t.x,y:t.y,c:'#ffe0a0',r:1.2,dir:a.face,m:.35}); V({k:'cross',x:a.x,y:a.y,c:'#ffe0a0',m:.6}); hitStop(.06); }},
   aegispaladin:{name:'Sacred Aegis', mp:100, desc:'Every ally in the back rows gains a shield worth 20% of its max HP and enemies near them are knocked back for 100% damage; heals itself for 20% max HP. Guardian Link: takes 40% of its linked ally\'s damage.',
-    cast(a){ V({k:'flash',x:0,y:0,c:'#fff0c0',m:.3}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe0a0',r:1.6,m:.8}); heal(a,a.max*.2,a);
-      for(const b of friends(a)) if(b.back){ b.shield+=a.max*.2; V({k:'dome',x:b.x,y:b.y,c:'#fff0c0',r:.7,m:.9});
+    cast(a){ V({k:'flash',x:0,y:0,c:'#fff0c0',m:.3}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe0a0',r:1.6,m:.8}); heal(a,a.max*.2,a); FX('geyser',a.x,a.y+.3,{s:1.2,tint:'#fff0c0',m:.7});
+      for(const b of friends(a)) if(b.back){ b.shield+=a.max*.2; V({k:'dome',x:b.x,y:b.y,c:'#fff0c0',r:.7,m:.9}); FX('strike',b.x,b.y+.3,{s:.55,tint:'#fff0c0',m:.55});
         for(const e of foes(a)) if(dist(e,b)<=1.5){ hit(a,e,1); const d=dist(e,b)||1; e.x=Math.min(COLS-.5,Math.max(.5,e.x+(e.x-b.x)/d*1.2)); e.y=Math.min(ROWS-.5,Math.max(.5,e.y+(e.y-b.y)/d*1.2)); } } }},
   spiritcaller:{name:'Wisp Pact', mp:60, desc:'Summons a Wisp that shoots magic bolts (up to 2). With 2 already out, they are healed to full instead.',
     cast(a){ if(!summon(a,'wisp',2)) for(const w of friends(a)) if(w.owner===a) heal(w,w.max,a); }},
@@ -457,10 +467,10 @@ const SKILLS = {
       const m=summon(a,'guardian',1); if(m){ for(const e of foes(a)) if(dist(e,m)<=2) e.tgt=m; V({k:'quake',x:m.x,y:m.y+.3,r:1.2,m:.8}); } }},
   starcaller:{name:'Starfall Drake', mp:100, desc:'Calls a Star Drake (1 at a time) that breathes starfire on an area. If it is already out, a falling star hits the target area for 300% damage.',
     cast(a,t){ if(summon(a,'drake',1)) return; const x=t.x, y=t.y; V({k:'meteor',x,y,m:.45});
-      later(.45,()=>{ V({k:'burst',x,y,r:1.2,c:'#9ad0ff'}); V({k:'shards',x,y,c:'#fff3a0',r:1.3,n:10}); hitStop(.07); for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.2) hit(a,e,3); }); }},
+      later(.45,()=>{ FX('strike',x,y+.3,{s:.9,tint:'#bfe0ff',m:.6}); V({k:'burst',x,y,r:1.2,c:'#9ad0ff'}); V({k:'shards',x,y,c:'#fff3a0',r:1.3,n:10}); hitStop(.07); for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.2) hit(a,e,3); }); }},
   lich:{name:'Blizzard', names:['Blizzard','Raise Dead'], mp:70, desc:'Alternates Blizzard (180% ice damage around the most crowded spot; 30% chance to Freeze for 3s, otherwise slowed) and Raise Dead (2 skeletons). At half HP it enrages: more skeletons and casts twice as often.',
     cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ summon(a,'skeleton',6); summon(a,'skeleton',6); return; }
-      const c=densest(a,1.6); if(!c) return; V({k:'flash',x:0,y:0,c:'#bfefff',m:.3}); V({k:'ring',x:c.x,y:c.y,r:1.8,c:'#bfefff'}); V({k:'shards',x:c.x,y:c.y,c:'#e8fbff',r:1.8,n:16,m:.5});
+      const c=densest(a,1.6); if(!c) return; V({k:'flash',x:0,y:0,c:'#bfefff',m:.3}); FX('nova',c.x,c.y-.2,{s:2.3,tint:'#9ae8ff',m:.8}); FX('strike',c.x,c.y+.3,{s:.9,tint:'#bff2ff',m:.6}); V({k:'ring',x:c.x,y:c.y,r:1.8,c:'#bfefff'}); V({k:'shards',x:c.x,y:c.y,c:'#e8fbff',r:1.8,n:16,m:.5});
       burst(c.x,c.y-.5,'#e8fbff',24,3,3,2);
       for(const e of foes(a)) if(dist(e,c)<=1.8){ hit(a,e,1.8); if(!freeze(e,.3,3)) inflict(e,'slow',2); } }},
   wyrm:{name:'Inferno Breath', names:['Inferno Breath','Wing Gust'], mp:75, desc:'Alternates Inferno Breath (220% fire damage in a cone up to 3.5 cells + burning for 4s) and Wing Gust (120% damage, knocks back and blinds enemies within 2.2 cells). At half HP it enrages and calls down a meteor storm.',
@@ -468,13 +478,14 @@ const SKILLS = {
         V({k:'ring',x:a.x,y:a.y+.3,r:2.2,c:'#ffd0a0'}); burst(a.x,a.y,'#ffe0c0',20,5,3,0); return; }
       if(!t) return; const an=Math.atan2(t.y-a.y,t.x-a.x);
       for(let i=1;i<=7;i++) later(i*.03,()=>burst(a.x+Math.cos(an)*i*.5,a.y+Math.sin(an)*i*.5,i%2?'#ff7a20':'#ffd040',6,2,4,-1));
+      for(let i=1;i<=3;i++) later(i*.08,()=>FX('blaze',a.x+Math.cos(an)*i*1.05,a.y+Math.sin(an)*i*1.05-.2,{s:.55+i*.1,m:.5}));
       V({k:'flash',x:0,y:0,c:'#ff7020',m:.3});
       for(const e of foes(a)){ const d=dist(e,a), da=Math.abs(((Math.atan2(e.y-a.y,e.x-a.x)-an+Math.PI*3)%(Math.PI*2))-Math.PI);
         if(d<=3.5&&da<=.5){ hit(a,e,2.2); poison(e,a.atk*.3,4,a); } } }},
   wisp:{name:'',mp:1e9,desc:'',cast(){}}, wolf:{name:'',mp:1e9,desc:'',cast(){}}, guardian:{name:'',mp:1e9,desc:'',cast(){}}, drake:{name:'',mp:1e9,desc:'',cast(){}}, skeleton:{name:'',mp:1e9,desc:'',cast(){}},
   highwizard:{name:'Meteor Rain', mp:90, desc:'Calls 5 meteors onto random enemies, each dealing 200% damage within 1.1 cells.',
     cast(a){ const es=foes(a); for(let i=0;i<5&&es.length;i++){ const t=es[Math.floor(Math.random()*es.length)], x=t.x, y=t.y;
-      V({k:'meteor',x,y,m:.55,t:.55+i*.18}); later(.55+i*.18,()=>{ V({k:'burst',x,y,r:1,c:'#ff8a3a'}); V({k:'quake',x,y:y+.2,r:1,c:'#4a2a1a',m:.8}); burst(x,y,'#ffb050',14,4,4,5); hitStop(.07); for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.1) hit(a,e,2); }); } }},
+      V({k:'meteor',x,y,m:.55,t:.55+i*.18}); later(.55+i*.18,()=>{ FX('boom',x,y-.2,{s:1.5,m:.6}); V({k:'burst',x,y,r:1,c:'#ff8a3a'}); V({k:'quake',x,y:y+.2,r:1,c:'#4a2a1a',m:.8}); burst(x,y,'#ffb050',14,4,4,5); hitStop(.07); for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.1) hit(a,e,2); }); } }},
 };
 
 // ====== screen constants ======
@@ -622,7 +633,7 @@ const SND=(()=>{
   const save=()=>{ try{ localStorage.setItem('ab_sound',JSON.stringify({music:musicOn,sfx:sfxOn})); }catch(e){} };
   const FILES=['hit1','hit2','hit3','crit','shoot','zapshot','cast','skill','hdie','mdie','shatter','freeze','boom','slam','quake','heal','bless','shield',
     'fire','flame','ice','zap','curse','poison','teleport','summon','stun','arrows','snipe','steal','flurry','trap','slime','roar_golem','roar_lich','roar',
-    'click','buy','sell','reroll','star','equip','slot','start','victory','defeat'];
+    'bash','click','buy','sell','reroll','star','equip','slot','start','victory','defeat'];
   const ALIAS={hit:['hit1','hit2','hit3']};
   const GAP={hit:.06,crit:.08,shoot:.06,zapshot:.07,heal:.15,cast:.1,boom:.15,freeze:.12,shatter:.12,click:.04,hdie:.1,mdie:.1};
   const VOL={click:.5,cast:.6,hit:.75,shoot:.7,zapshot:.6,buy:.8,sell:.8,reroll:.8};
@@ -655,8 +666,8 @@ const SND=(()=>{
 })();
 // which sound each skill makes when it goes off
 const SKILL_SND={swordsman:'slam',knight:'stun',lordknight:'slam',archer:'shoot',hunter:'trap',sniper:'snipe',acolyte:'heal',priest:'heal',highpriest:'bless',
-  thief:'steal',assassin:'flurry',assassincross:'teleport',mage:'fire',wizard:'ice',highwizard:'fire',starwarden:'shield',stormranger:'arrows',dawnoracle:'bless',
-  nightreaper:'curse',voidsage:'zap',bulwark:'shield',templar:'teleport',aegispaladin:'bless',spiritcaller:'summon',beastmaster:'summon',stonebinder:'quake',
+  thief:'steal',assassin:'flurry',assassincross:'teleport',mage:'fire',wizard:'ice',highwizard:'fire',starwarden:'bash',stormranger:'arrows',dawnoracle:'bless',
+  nightreaper:'curse',voidsage:'zap',bulwark:'bash',templar:'teleport',aegispaladin:'bless',spiritcaller:'summon',beastmaster:'summon',stonebinder:'quake',
   starcaller:'summon',mossling:'slime',shroomkin:'poison',emberbat:'fire',golem:'quake',lich:'ice',wyrm:'flame'};
 addEventListener('pointerdown',()=>{ SND.init(); },{once:true});
 
@@ -757,28 +768,31 @@ function place(sel,l){
   if(u===sel) return;
   if(u){ const t=u.loc; u.loc=sel.loc; sel.loc=t; } else sel.loc=l;
 }
+// clicks only select (to see stats / sell); heroes move by dragging. Clicking empty ground clears the selection.
 function clickCell(l){
-  if(l.w==='board'&&l.cy<4) return msg('The top half belongs to the enemy');
-  const u=S.units.find(v=>sameLoc(v.loc,l)), sel=S.units.find(v=>v.uid===S.sel);
-  if(!sel){ if(u) S.sel=u.uid; }
-  else if(u===sel){ S.sel=null; }
-  else { if(placeError(sel,l)) return msg(placeError(sel,l)); place(sel,l); S.sel=null; }
+  const u=S.units.find(v=>sameLoc(v.loc,l));
+  S.sel=u&&u.uid!==S.sel?u.uid:null; S.selItem=null;
 }
 // press on a unit and drag it to a cell; a press without moving still works as a click
 let dragU=null;
 const shopCard=document.getElementById('shop').closest('.card');
 cv.addEventListener('pointerdown',e=>{
+  if(e.button===2) return;   // right button: handled by contextmenu (sell)
   if(S.phase==='over'){ newGame(); return; }
   if(S.fight&&S.phase!=='prep'){   // battle: click a fighter to see its stats and skill
     const {x,y}=canvasPos(e), cx=x/CELL, cy=(y+10)/CELL;
     const f=S.fight.f.filter(u=>u.hp>0).sort((p,q)=>Math.hypot(p.x-cx,p.y-cy)-Math.hypot(q.x-cx,q.y-cy))[0];
     S.inspect=f&&Math.hypot(f.x-cx,f.y-cy)<.8?f:null; hoverId=null; renderInfo(); return; }
   if(S.phase!=='prep') return;
-  const l=cellAt(e); if(!l) return;
+  const l=cellAt(e); if(!l){ S.sel=null; S.selItem=null; render(); renderUI(); return; }
   const u=S.units.find(v=>sameLoc(v.loc,l));
   if(u&&S.selItem!==null){ giveItem(u); render(); renderUI(); return; }
   if(u){ dragU={u,x0:e.clientX,y0:e.clientY,moved:false,pos:canvasPos(e),over:l}; cv.setPointerCapture(e.pointerId); return; }
   clickCell(l); render(); renderUI();
+});
+cv.addEventListener('contextmenu',e=>{   // right-click a hero to sell it
+  e.preventDefault(); if(S.phase!=='prep') return;
+  const l=cellAt(e), u=l&&S.units.find(v=>sameLoc(v.loc,l)); if(u) sellUnit(u);
 });
 cv.addEventListener('pointermove',e=>{
   if(!dragU) return;
@@ -805,6 +819,8 @@ cv.addEventListener('touchstart',e=>{
 },{passive:false});
 
 // ====== combat ======
+// sprites stand on their feet and are ~1 cell tall (bosses 1.5): keep the head and bars inside the field
+const clampOnBoard=a=>{ const sc=U[a.type].scale||1; a.x=Math.min(COLS-.45*sc,Math.max(.45*sc,a.x)); a.y=Math.min(ROWS-.5,Math.max(.95+(sc-1)*1.3,a.y)); };
 function mkF(type,star,cx,cy,team,mult=1){
   const b=U[type], m=STAR_MULT[star-1]*mult;
   return {type,star,team,x:cx+.5,y:cy+.5,hp:b.hp*m,max:b.hp*m,atk:b.atk*m,heal:(b.heal||0)*m,range:b.range,as:b.as,ms:b.ms,
@@ -834,13 +850,13 @@ function applySynergy(f){
   }
 }
 // difficulty: enemy stats grow 6% per round, teams build around a class/origin, and carry items later on
-const enemyPower=r=>1+Math.max(0,r-2)*0.03;
+const enemyPower=r=>1+Math.max(0,Math.min(r,20)-2)*0.03+Math.max(0,r-20)*0.015;   // grows slower after round 20
 const EQUIP=Object.keys(ITEMS).filter(k=>!ITEMS[k].use), COMMON=EQUIP.filter(k=>!ITEMS[k].rare), RARE=EQUIP.filter(k=>ITEMS[k].rare);
 const ENEMY_EQUIP=EQUIP.filter(k=>k!=='coin');
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function genEnemies(r){
   const n=Math.min(2+Math.floor(r*0.33),9), used=new Set(), out=[];
-  const s3=Math.min(Math.max((r-15)*0.04,0),.4), s2=Math.min(Math.max((r-6)*0.055,0),.65);
+  const s3=Math.min(Math.max((r-19)*0.025,0),.25), s2=Math.min(Math.max((r-6)*0.045,0),.55);   // enemy star chances
   const themeCls=pick(Object.keys(CLASSES)), themeOrg=pick(Object.keys(ORIGINS));
   const itemChance=Math.min(.7,Math.max(0,(r-9)*0.06));
   for(let i=0;i<n;i++){
@@ -871,6 +887,7 @@ function startFight(){
   const kind=roundKind(S.round);
   const f=onBoard().map(u=>Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items}));
   for(const e of (kind==='pvp'?genEnemies(S.round):genMonsters(S.round))) f.push(Object.assign(mkF(e.type,e.star,e.cx,e.cy,1,e.mult||1),{items:e.items||[],mult:e.mult||1}));
+  for(const x of f) clampOnBoard(x);
   applySynergy(f);
   const ITEM_STATS=['atk','max','hp','asM','ms','leech','crit','thorns','regen','manaAtk','exec','frostOn','phoenix','cloak','spellblade','coin'];
   f.forEach((x,i)=>{ const before=Object.fromEntries(ITEM_STATS.map(k=>[k,x[k]||0])); for(const k of x.items||[]) ITEMS[k].apply(x);
@@ -937,18 +954,20 @@ function burst(x,y,c,n,spd=2.5,size=3,g=6){
     S.fight.parts.push({x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-(g>0?1.5:0),life,max:life,c,size,g}); }
 }
 function heal(u,amt,src){ if(u.hp<=0) return; if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal'); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
+const PROJ={mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
+  acolyte:'p_light',priest:'p_light',highpriest:'p_light',dawnoracle:'p_light',spiritcaller:'p_arcane',starcaller:'p_arcane',stonebinder:'p_arcane',wisp:'p_arcane',shroomkin:'p_plant'};
 function shoot(a,t,mult=1,c,big,onHit){
   const arrow=!big&&U[a.type].cls==='archer';
   const d0=Math.max(.5,Math.hypot(t.x-a.x,t.y-a.y+.2));
   SND.play(arrow?'shoot':'zapshot');
-  S.fight.proj.push({x:a.x,y:a.y-.2,bx:a.x,by:a.y-.2,d0,h:arrow?Math.min(1.1,d0*.2):0,src:a,t,c:c||colorOf(a.type),mult,big,arrow,onHit,tr:[]});
+  S.fight.proj.push({x:a.x,y:a.y-.2,bx:a.x,by:a.y-.2,d0,h:arrow?Math.min(1.1,d0*.2):0,src:a,t,c:c||colorOf(a.type),mult,big,arrow,onHit,tr:[],spr:!arrow&&PROJ[a.type]});
 }
 function deal(t,dmg,crit,src){
   dmg*=(1-t.red)*(0.9+Math.random()*.2);
   if(U[t.type].armor&&t.hp>t.max*.5) dmg*=1-U[t.type].armor;   // boss stoneskin while above half HP
   if(t.backRed) dmg*=1-t.backRed;   // Crusader bonus
   if(t.guard&&t.guard.hp>0&&t.guard!==src){ const sh=dmg*t.guardPct; dmg-=sh; deal(t.guard,sh,false,null); }   // Guardian Link takes a share
-  if(t.frz>0){ t.frz=0; SND.play('shatter'); pop(t,'Shatter!','#dff8ff',true); V({k:'shards',x:t.x,y:t.y,c:'#dff8ff',r:.9,n:10,m:.35}); }   // damage breaks Frozen
+  if(t.frz>0){ t.frz=0; SND.play('shatter'); FX('nova',t.x,t.y-.3,{s:.8,tint:'#cff4ff',m:.45}); pop(t,'Shatter!','#dff8ff',true); V({k:'shards',x:t.x,y:t.y,c:'#dff8ff',r:.9,n:10,m:.35}); }   // damage breaks Frozen
   if(src) src.dd+=dmg; t.dtk+=dmg;
   if(t.shield>0){ const ab=Math.min(t.shield,dmg); t.shield-=ab; dmg-=ab; }
   t.hp-=dmg; t.flash=1; t.mp=Math.min(t.mpMax,t.mp+MANA_HIT);
@@ -979,26 +998,27 @@ function tryCast(a,t,inRange){
 }
 // extra show on top of each skill's own effect (positions taken before the skill moves anyone)
 const SKILL_FX={
-  swordsman:(a,t)=>V({k:'shards',x:t.x,y:t.y,c:'#fff3c0',r:1,n:8}),
-  knight:(a,t)=>{ V({k:'quake',x:t.x,y:t.y+.3,r:1.3,m:.8}); V({k:'shards',x:t.x,y:t.y,c:'#cfe2ff',r:1.3,n:8}); },
-  lordknight:(a,t)=>{ V({k:'flash',x:0,y:0,c:'#ffd23f',m:.3}); V({k:'arc',x:t.x,y:t.y,c:'#ffd23f',r:1.6,dir:a.face,m:.45}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.2,m:.6}); },
+  swordsman:(a,t)=>{ V({k:'shards',x:t.x,y:t.y,c:'#fff3c0',r:1,n:8}); FX('slash',t.x,t.y-.25,{s:.75,flip:a.face<0,m:.5}); },
+  knight:(a,t)=>{ FX('nova',t.x,t.y-.2,{s:1.1,tint:'#9cc7ff'}); V({k:'quake',x:t.x,y:t.y+.3,r:1.3,m:.8}); V({k:'shards',x:t.x,y:t.y,c:'#cfe2ff',r:1.3,n:8}); },
+  lordknight:(a,t)=>{ V({k:'flash',x:0,y:0,c:'#ffd23f',m:.3}); FX('slash',t.x,t.y-.25,{s:1.05,flip:a.face<0,m:.55}); V({k:'arc',x:t.x,y:t.y,c:'#ffd23f',r:1.6,dir:a.face,m:.45}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.2,m:.6}); },
   archer:(a,t)=>V({k:'reticle',x:t.x,y:t.y,c:'#9dff9d',m:.5}),
   hunter:(a,t)=>{ V({k:'quake',x:t.x,y:t.y+.3,r:.7,c:'#6a4a2a',m:.7}); V({k:'shards',x:t.x,y:t.y,c:'#d8b070',r:.8,n:6}); },
-  sniper:a=>{ const w=foes(a).sort((p,q)=>p.hp-q.hp)[0]; if(w) V({k:'reticle',x:w.x,y:w.y,c:'#8fe8ff',m:.6}); V({k:'flash',x:0,y:0,c:'#bff4ff',m:.25}); },
-  acolyte:a=>{ for(const b of friends(a).sort(byHurt).slice(0,2)) V({k:'cross',x:b.x,y:b.y,c:'#9dffb0',m:.7}); },
-  priest:a=>{ V({k:'cross',x:a.x,y:a.y,c:'#b8ffcc',m:.8}); V({k:'rays',x:a.x,y:a.y+.3,c:'#d8ffe0',r:2.5,m:.7}); },
-  highpriest:a=>{ V({k:'flash',x:0,y:0,c:'#fff3c0',m:.3}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:2.2,m:.9}); for(const b of friends(a)) V({k:'cross',x:b.x,y:b.y,c:'#ffe27a',m:.8}); },
-  thief:(a,t)=>{ V({k:'burst',x:t.x,y:t.y,r:.9,c:'#5ad04a'}); burst(t.x,t.y,'#7af06a',14,2.5,3,-1.5); },
-  assassin:(a,t)=>{ for(let i=0;i<4;i++) later(i*.09,()=>V({k:'arc',x:t.x,y:t.y,c:'#d8c8ff',r:.8,dir:i%2?-1:1,m:.22})); },
-  assassincross:(a,t)=>{ const w=foes(a).sort((p,q)=>p.hp-q.hp)[0]||t; V({k:'flash',x:0,y:0,c:'#ff2040',m:.2}); V({k:'arc',x:w.x,y:w.y,c:'#ff4060',r:1.3,dir:a.face,m:.4}); },
-  wizard:(a,t)=>{ V({k:'shards',x:t.x,y:t.y,c:'#dff6ff',r:1.8,n:14,m:.5}); V({k:'quake',x:t.x,y:t.y+.3,r:1.6,c:'#9fd8ff',m:.9}); },
+  sniper:a=>{ const w=foes(a).sort((p,q)=>p.hp-q.hp)[0]; if(w){ V({k:'reticle',x:w.x,y:w.y,c:'#8fe8ff',m:.6}); FX('spark',w.x,w.y-.3,{s:1.1,tint:'#8fe8ff'}); } V({k:'flash',x:0,y:0,c:'#bff4ff',m:.25}); },
+  acolyte:a=>{ for(const b of friends(a).sort(byHurt).slice(0,2)){ V({k:'cross',x:b.x,y:b.y,c:'#9dffb0',m:.7}); FX('sigil',b.x,b.y-.1,{s:.45,tint:'#9dffb0',m:.7}); } },
+  priest:a=>{ FX('sigil',a.x,a.y,{s:.9,m:.8}); V({k:'cross',x:a.x,y:a.y,c:'#b8ffcc',m:.8}); V({k:'rays',x:a.x,y:a.y+.3,c:'#d8ffe0',r:2.5,m:.7}); },
+  highpriest:a=>{ V({k:'flash',x:0,y:0,c:'#fff3c0',m:.3}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:2.2,m:.9}); for(const b of friends(a)){ V({k:'cross',x:b.x,y:b.y,c:'#ffe27a',m:.8}); FX('strike',b.x,b.y+.3,{s:.6,tint:'#ffe27a',m:.6}); } },
+  thief:(a,t)=>{ FX('scissor',t.x,t.y-.3,{s:.5,tint:'#ffb060',m:.45}); burst(t.x,t.y,'#7af06a',14,2.5,3,-1.5); },
+  assassin:(a,t)=>{ FX('scissor',t.x,t.y-.3,{s:.55,tint:'#c8a0ff',m:.5}); for(let i=0;i<4;i++) later(i*.09,()=>V({k:'arc',x:t.x,y:t.y,c:'#d8c8ff',r:.8,dir:i%2?-1:1,m:.22})); },
+  assassincross:(a,t)=>{ const w=foes(a).sort((p,q)=>p.hp-q.hp)[0]||t; V({k:'flash',x:0,y:0,c:'#ff2040',m:.2}); V({k:'arc',x:w.x,y:w.y,c:'#ff4060',r:1.3,dir:a.face,m:.4});
+    FX('smoke',a.x,a.y-.3,{s:1.4,add:false,m:.6}); FX('smoke',w.x,w.y-.3,{s:1.4,add:false,m:.6}); FX('slash',w.x,w.y-.25,{s:.8,tint:'#ff3050',flip:a.face<0}); },
+  wizard:(a,t)=>{ FX('nova',t.x,t.y-.2,{s:2.2,tint:'#8fe0ff',m:.7}); V({k:'shards',x:t.x,y:t.y,c:'#dff6ff',r:1.8,n:14,m:.5}); V({k:'quake',x:t.x,y:t.y+.3,r:1.6,c:'#9fd8ff',m:.9}); },
   highwizard:()=>V({k:'flash',x:0,y:0,c:'#ff8a3a',m:.3}),
-  golem:a=>{ V({k:'quake',x:a.x,y:a.y+.4,r:2.2,m:1.2}); V({k:'shards',x:a.x,y:a.y+.3,c:'#a08060',r:2,n:12}); addTrauma(.5); },
-  starwarden:a=>{ V({k:'dome',x:a.x,y:a.y,c:'#ffe27a',r:.75,m:.9}); V({k:'shards',x:a.x,y:a.y,c:'#fff3a0',r:2.5,n:10}); },
+  golem:a=>{ FX('geyser',a.x,a.y+.4,{s:1.3,tint:'#c0a070',m:.7}); V({k:'quake',x:a.x,y:a.y+.4,r:2.2,m:1.2}); V({k:'shards',x:a.x,y:a.y+.3,c:'#a08060',r:2,n:12}); addTrauma(.5); },
+  starwarden:a=>{ FX('geyser',a.x,a.y+.3,{s:1.1,tint:'#ffe27a',m:.7}); V({k:'dome',x:a.x,y:a.y,c:'#ffe27a',r:.75,m:.9}); V({k:'shards',x:a.x,y:a.y,c:'#fff3a0',r:2.5,n:10}); },
   stormranger:a=>{ const c=densest(a,2); if(c) V({k:'reticle',x:c.x,y:c.y,c:'#ffe45a',m:.45}); },
-  dawnoracle:a=>{ V({k:'flash',x:0,y:0,c:'#ffe0a0',m:.35}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffd27a',r:2.6,m:1.1}); },
-  nightreaper:(a,t)=>V({k:'arc',x:t.x,y:t.y,c:'#5ee08a',r:1.7,dir:a.face,m:.45}),
-  voidsage:a=>V({k:'rays',x:a.x,y:a.y+.3,c:'#b070ff',r:1.4,m:.6}),
+  dawnoracle:a=>{ FX('geyser',a.x,a.y+.3,{s:1.4,tint:'#ffd27a',m:.8}); V({k:'flash',x:0,y:0,c:'#ffe0a0',m:.35}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffd27a',r:2.6,m:1.1}); },
+  nightreaper:(a,t)=>{ V({k:'arc',x:t.x,y:t.y,c:'#5ee08a',r:1.7,dir:a.face,m:.45}); FX('slash',t.x,t.y-.25,{s:1.1,tint:'#40ff90',flip:a.face<0,m:.5}); FX('smoke',t.x,t.y-.2,{s:1.2,add:false,m:.6}); },
+  voidsage:a=>{ V({k:'rays',x:a.x,y:a.y+.3,c:'#b070ff',r:1.4,m:.6}); FX('spark',a.x,a.y-.5,{s:1.2,tint:'#c080ff',m:.6}); },
 };
 const bigCaster=x=>U[x.type].cost>=3||U[x.type].boss;   // these dim the field while they charge
 function releaseCast(a){
@@ -1071,10 +1091,10 @@ function step(dt){
     if(a===b) continue; const d=dist(a,b);
     if(d<.7&&d>0){ const p=(.7-d)*.25; a.x+=(a.x-b.x)/d*p; a.y+=(a.y-b.y)/d*p; }
   }
-  for(const a of alive){ a.x=Math.min(COLS-.5,Math.max(.5,a.x)); a.y=Math.min(ROWS-.5,Math.max(.5,a.y)); }
+  for(const a of alive) clampOnBoard(a);
   F.proj=F.proj.filter(p=>{
     if(p.t.hp<=0) return false;
-    const d=Math.hypot(p.t.x-p.bx,p.t.y-p.by); if(d<.25){ hit(p.src,p.t,p.mult); if(p.onHit) p.onHit(p.t); if(p.big){ V({k:'burst',x:p.t.x,y:p.t.y,r:.8,c:p.c}); burst(p.t.x,p.t.y,p.c,10,3,3,3); hitStop(.05); } return false; }
+    const d=Math.hypot(p.t.x-p.bx,p.t.y-p.by); if(d<.25){ if(p.spr&&p.big) FX('blaze',p.t.x,p.t.y-.2,{s:.6,m:.45}); hit(p.src,p.t,p.mult); if(p.onHit) p.onHit(p.t); if(p.big){ V({k:'burst',x:p.t.x,y:p.t.y,r:.8,c:p.c}); burst(p.t.x,p.t.y,p.c,10,3,3,3); hitStop(.05); } return false; }
     p.tr.push({x:p.x,y:p.y}); if(p.tr.length>7) p.tr.shift();
     const mv=Math.min((p.big?7:p.arrow?11:9)*dt,d); p.bx+=(p.t.x-p.bx)/d*mv; p.by+=(p.t.y-p.by)/d*mv;
     const q=Math.max(0,Math.min(1,1-(d-mv)/p.d0)), ny=p.by-Math.sin(q*Math.PI)*p.h;   // arrows fly in an arc
@@ -1096,7 +1116,7 @@ function tickFx(dt){
       a.dead=true; a.dieT=DIE_T; SND.play(a.team===1&&(U[a.type].cls==='monster'||U[a.type].cls==='summon')?'mdie':'hdie'); burst(a.x,a.y-.2,'#ffffff',10,2,3,2); burst(a.x,a.y,colorOf(a.type),8,1.5,3,-1); }
     if(a.dieT>0) a.dieT-=dt;
     if(U[a.type].boss&&!a.enraged&&a.hp>0&&a.hp<a.max*.5){
-      a.enraged=true; a.mp=a.mpMax; pop(a,'ENRAGED','#ff5040',true); SND.play({golem:'roar_golem',lich:'roar_lich'}[a.type]||'roar');
+      a.enraged=true; a.mp=a.mpMax; FX('geyser',a.x,a.y+.4,{s:1.6,tint:'#ff4020',m:.8}); pop(a,'ENRAGED','#ff5040',true); SND.play({golem:'roar_golem',lich:'roar_lich'}[a.type]||'roar');
       V({k:'ring',x:a.x,y:a.y+.3,r:2.2,c:'#ff4030',m:.6}); V({k:'flash',x:0,y:0,c:'#ff3020',m:.35}); burst(a.x,a.y-.3,'#ff5040',20,4,4,0); hitStop(.1);
       BOSS_ENRAGE[a.type](a);
     }
@@ -1110,6 +1130,7 @@ function endFight(win){
   S.phase='result';
   const surv=S.fight.f.filter(x=>x.team===1&&x.hp>0&&!x.summon);
   const F=S.fight, gb=(S.goldBonus||[0,0])[win?0:1]; S.gold+=gb;
+  S.streak=win?Math.max(0,S.streak||0)+1:Math.min(0,S.streak||0)-1;   // win streak > 0, lose streak < 0
   F.winner=win?0:F.f.some(x=>x.team===1&&x.hp>0)&&!F.f.some(x=>x.team===0&&x.hp>0)?1:null;
   S.meter=F.f.filter(x=>x.team===0).map(x=>({type:x.type,star:x.star,dd:x.dd,dt:x.dtk,hl:x.hl}));
   if(win){ const coins=2*F.f.filter(x=>x.team===0&&x.hp>0&&x.coin).length; S.gold+=1+coins; S.result=`Victory! +${1+gb+coins} gold`;
@@ -1123,9 +1144,9 @@ function endFight(win){
   SND.play(win?'victory':'defeat'); render(); renderUI();
   setTimeout(()=>{
     if(S.hp<=0){ S.phase='over'; render(); renderUI(); return; }
-    const interest=Math.min(5,Math.floor(S.gold/10));
-    S.gold+=5+interest; S.round++; if(!S.locked) rollShop(); S.phase='prep'; S.fight=null;
-    msg(`Round ${S.round}: +${5+interest} gold (interest ${interest})`);
+    const interest=Math.min(5,Math.floor(S.gold/10)), base=5+Math.min(4,Math.floor(S.round/5)), st=Math.abs(S.streak), sb=st>=6?3:st>=4?2:st>=2?1:0;
+    S.gold+=base+interest+sb; S.round++; if(!S.locked) rollShop(); S.phase='prep'; S.fight=null;
+    msg(`Round ${S.round}: +${base+interest+sb} gold (income ${base}, interest ${interest}${sb?`, ${S.streak>0?'win':'lose'} streak ${sb}`:''})`);
     render(); renderUI();
   },1600/speed);
 }
@@ -1274,6 +1295,7 @@ function drawUnit(type,star,px,py,o={}){
   drawStatus(o,px,py);
   ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
   ctx.fillText('★'.repeat(star),px,py-24);
+  if(o.org&&ORIGINS[b.org]){ ctx.font='11px system-ui'; ctx.textAlign='left'; ctx.fillText(ORIGINS[b.org].icon,px+star*5+2,py-23); ctx.textAlign='center'; }   // origin badge
   if(o.hp!==undefined){
     ctx.fillStyle='#000'; ctx.fillRect(px-22,py-36,44,8);
     ctx.fillStyle='#fff6d0'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hpLag),5);   // recent damage drains away
@@ -1306,6 +1328,17 @@ function drawStatus(o,px,py){
     ctx.strokeStyle=STATUS[k].c; ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(x,y,7.5,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(0,left)); ctx.stroke();
     ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(STATUS[k].icon,x,y+.5); ctx.textBaseline='alphabetic'; });
 }
+// ---- sprite-sheet effects (VFX_DATA): drawn additively so they glow; optional tint recolours them ----
+const FXI={}; for(const [k,v] of Object.entries(VFX_DATA)){ const im=new Image(); im.src=v.src; FXI[k]={im,...v}; }
+FXI.strike&&(FXI.strike.ay=.93); FXI.geyser&&(FXI.geyser.ay=.8);   // these hit the ground at the bottom of the frame
+const TINT=document.createElement('canvas'), tg=TINT.getContext('2d');
+function fxFrame(name,i,tint){
+  const f=FXI[name]; if(!f||!f.im.naturalWidth) return null; if(!tint) return [f.im,i*f.fw,0];
+  TINT.width=f.fw; TINT.height=f.fh; tg.clearRect(0,0,f.fw,f.fh); tg.globalCompositeOperation='source-over'; tg.drawImage(f.im,i*f.fw,0,f.fw,f.fh,0,0,f.fw,f.fh);
+  tg.globalCompositeOperation='source-atop'; tg.globalAlpha=.65; tg.fillStyle=tint; tg.fillRect(0,0,f.fw,f.fh); tg.globalAlpha=1; return [TINT,0,0];
+}
+// FX(name,x,y,{s:scale,m:seconds,tint,flip,rot,add:false for smoke}) — x/y in cells, anchored where the effect hits
+const FX=(fx,x,y,o={})=>V({k:'anim',fx,x,y,s:o.s||1,m:o.m||.55,tint:o.tint,flip:o.flip,rot:o.rot||0,add:o.add!==false});
 function drawVfx(v){
   const p=1-v.t/v.m, x=v.x*CELL, y=v.y*CELL;
   ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,v.t/v.m*1.5));
@@ -1369,6 +1402,9 @@ function drawVfx(v){
       ctx.strokeStyle='#efe2c0'; ctx.lineWidth=1.6; ctx.globalAlpha=1;
       for(let i=0;i<16;i++){ const px=x+(rnd()-.5)*2*v.r*CELL, py=y+(rnd()-.5)*v.r*CELL*.9, d=Math.min(1,q*1.4-rnd()*.4), fy=py-(1-d)*150;
         if(d<=0) continue; ctx.beginPath(); ctx.moveTo(px-4,fy-16); ctx.lineTo(px,fy); ctx.stroke(); ctx.fillStyle='#9a8a70'; ctx.fillRect(px-1.5,fy-1.5,3,3); } } }
+  else if(v.k==='anim'){ const f=FXI[v.fx]; if(f){ const i=Math.min(f.n-1,Math.floor(p*f.n)), fr=fxFrame(v.fx,i,v.tint);
+      if(fr){ ctx.globalAlpha=1; if(v.add) ctx.globalCompositeOperation='lighter'; ctx.translate(x,y); ctx.rotate(v.rot); ctx.scale(v.flip?-v.s:v.s,v.s);
+        ctx.drawImage(fr[0],fr[1],fr[2],f.fw,f.fh,-f.fw*f.ax,-f.fh*f.ay,f.fw,f.fh); } } }
   else if(v.k==='flash'){ ctx.globalAlpha=.2*(1-p); ctx.fillStyle=v.c; ctx.fillRect(-20,-20,W+40,BOARD_H+40); }   // soft, one-off: never strobes
   else if(v.k==='meteor'){ if(v.t<=v.m){ const q=1-v.t/v.m, my=y-(1-q)*260; ctx.globalAlpha=1;
       ctx.strokeStyle='rgba(255,170,80,.6)'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(x+40*(1-q)+30,my-40); ctx.lineTo(x+40*(1-q),my); ctx.stroke();
@@ -1402,7 +1438,7 @@ function render(){
     if(S.phase!=='prep'&&S.phase!=='over'&&u.loc.w==='board') continue;
     const px=u.loc.w==='board'?u.loc.cx*CELL+32:u.loc.i*CELL+32, py=u.loc.w==='board'?u.loc.cy*CELL+32:BENCH_Y+32;
     if(dragging&&dragging.u===u){ drawUnit(u.type,u.star,px,py,{team:0,ph:u.uid*1.7,ghost:1}); continue; }
-    drawUnit(u.type,u.star,px,py,{team:0,sel:u.uid===S.sel,ph:u.uid*1.7,items:u.items});
+    drawUnit(u.type,u.star,px,py,{team:0,sel:u.uid===S.sel,ph:u.uid*1.7,items:u.items,org:1});
   }
   if(itemDrag&&itemDrag.moved&&itemDrag.over){   // where a dragged item will land
     const l=itemDrag.over, u=S.units.find(v=>sameLoc(v.loc,l)), x=l.w==='board'?l.cx*CELL:l.i*CELL, y=l.w==='board'?l.cy*CELL:BENCH_Y;
@@ -1451,6 +1487,10 @@ function render(){
         ctx.strokeStyle='#e8d8b0'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-12,0); ctx.lineTo(4,0); ctx.stroke();
         ctx.fillStyle='#d0d8e8'; ctx.beginPath(); ctx.moveTo(9,0); ctx.lineTo(2,-3.5); ctx.lineTo(2,3.5); ctx.fill();
         ctx.fillStyle=p.c; ctx.fillRect(-14,-3,5,6); ctx.restore(); }
+      else if(p.spr&&FXI[p.spr]&&FXI[p.spr].im.naturalWidth){ const f=FXI[p.spr], an=p.ang??Math.atan2(p.t.y-p.y,p.t.x-p.x), z=p.big?3.2:2.2;   // pixel spell sprite
+        ctx.save(); ctx.translate(px,py); ctx.rotate(an); ctx.imageSmoothingEnabled=false; ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=.35;
+        ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(0,0,r*2.4,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+        ctx.drawImage(f.im,(Math.floor(ANIM*14)%f.n)*f.fw,0,f.fw,f.fh,-f.fw*z*.5,-f.fh*z*.5,f.fw*z,f.fh*z); ctx.restore(); }
       else { ctx.fillStyle=p.c; ctx.globalAlpha=.3; ctx.beginPath(); ctx.arc(px,py,r*2,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
         ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
         ctx.fillStyle='#fff8e0'; ctx.beginPath(); ctx.arc(px-r*.25,py-r*.25,r*.45,0,Math.PI*2); ctx.fill(); }
@@ -1490,10 +1530,21 @@ function infoHTML(id,star,items,live){
       :`<span>❤ ${Math.round(u.hp*m)}</span><span>⚔ ${Math.round(u.atk*m)}</span>`}${u.heal?`<span>✚ ${Math.round(u.heal*m)}</span>`:''}<span>🎯 ${u.range}</span><span>⏱ ${u.as}s</span></div>
     ${st.length?`<div class="chips">${st.map(x=>`<span>${x}</span>`).join('')}</div>`:''}
     <div class="sk">${sk.mp<1e9?`<b>${sk.names?sk.names.join(' / '):sk.name}</b> <span class="mp">${sk.mp} mana</span><br>${sk.desc}`:'No skill — fights until the battle ends.'}</div>`+
-    (items&&items.length?`<div class="held">Holding: ${items.map(k=>`${ITEMS[k].icon} ${ITEMS[k].name}`).join(', ')}</div>`:'');
+    (items&&items.length?`<div class="held">Holding: ${items.map(k=>`<span class="hi" data-item="${k}">${ITEMS[k].icon} ${ITEMS[k].name}</span>`).join(' ')}</div>`:'');
 }
+const itemTip=k=>`<div class="tipi"><b>${ITEMS[k].icon} ${ITEMS[k].name}</b>${ITEMS[k].rare?' <span class="rare">RARE</span>':''}<div>${ITEMS[k].desc}</div></div>`;
+// a speech-bubble tooltip next to the element (items in the inventory and in the hero panel)
+function bubble(el,html){
+  const b=$('#bubble'); b.innerHTML=html; b.hidden=false;
+  const r=el.getBoundingClientRect(), w=b.offsetWidth, h=b.offsetHeight;
+  const above=r.top-h-12>=6, x=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2));
+  b.style.left=x+'px'; b.style.top=(above?r.top-h-12:r.bottom+12)+'px'; b.classList.toggle('below',!above);
+  b.style.setProperty('--ax',(r.left+r.width/2-x)+'px');
+}
+document.addEventListener('mouseover',e=>{ const el=e.target.closest('[data-item]'); if(el) bubble(el,itemTip(el.dataset.item)); });
+document.addEventListener('mouseout',e=>{ const el=e.target.closest('[data-item]'); if(el&&!el.contains(e.relatedTarget)) $('#bubble').hidden=true; });
 function renderItems(){
-  $('#items').innerHTML=S.inv.length?S.inv.map((k,i)=>`<button class="it ${ITEMS[k].rare?'rare':''} ${S.selItem===i?'on':''}" data-i="${i}" title="${ITEMS[k].name}${ITEMS[k].rare?' (rare)':''}: ${ITEMS[k].desc}">${ITEMS[k].icon}</button>`).join('')
+  $('#items').innerHTML=S.inv.length?S.inv.map((k,i)=>`<button class="it ${ITEMS[k].rare?'rare':''} ${S.selItem===i?'on':''}" data-i="${i}" data-item="${k}">${ITEMS[k].icon}</button>`).join('')
     :'Win a monster round (every 5th round) to get items.';
 }
 function renderMeter(){
@@ -1513,6 +1564,7 @@ function renderUI(){
   if($('#sGold').textContent!==String(S.gold)){ const c=$('#coins'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
   $('#sRound').textContent=S.round; $('#sHp').textContent=S.hp; $('#sGold').textContent=S.gold; $('#hpFill').style.width=Math.max(0,S.hp)+'%';
   $('#sCap').textContent=`${onBoard().length} / ${cap()}`; $('#sInt').textContent=`+${Math.min(5,Math.floor(S.gold/10))}`;
+  $('#sStreak').textContent=S.streak>1?`🔥${S.streak}`:S.streak<-1?`💧${-S.streak}`:'–';
   $('#sNext').textContent=KIND_LABEL[roundKind(S.round)]+(roundKind(S.round)==='pvp'&&S.round>2?` · enemy power +${Math.round((enemyPower(S.round)-1)*100)}%`:'');
   renderItems(); renderMeter();
   const prep=S.phase==='prep';
@@ -1558,7 +1610,7 @@ $('#items').addEventListener('pointermove',e=>{ const d=itemDrag; if(!d) return;
   if(d.moved){ d.ghost.style.left=e.clientX+'px'; d.ghost.style.top=e.clientY+'px'; d.over=cellAt(e); } });
 $('#items').addEventListener('pointerup',e=>{ const d=itemDrag; itemDrag=null; if(!d) return; if(d.ghost) d.ghost.remove();
   if(!d.moved){ S.selItem=S.selItem===d.i?null:d.i;
-    if(S.selItem!==null){ const k=S.inv[d.i]; msg(`${ITEMS[k].name}: ${ITEMS[k].desc} — drag it onto a unit (or click a unit)`); }
+    if(S.selItem!==null) msg(`Click a hero to give it ${ITEMS[S.inv[d.i]].icon} (or drag the item onto one)`);
     renderUI(); return; }
   const l=cellAt(e), u=l&&S.units.find(v=>sameLoc(v.loc,l));
   if(!u) return msg('Drop the item on one of your units');

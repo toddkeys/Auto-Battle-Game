@@ -1,0 +1,11 @@
+Effect credits (all CC0, from opengameart.org) — cropped, re-timed and packed into strips by tools/build_vfx.py
+
+- strike, slash, blaze, sigil, scissor, geyser, nova, spark, smoke:
+  "2D Spell Effects" by Mikodrak (Martin Jelinek, www.nyrthos.com) — CC0
+  https://opengameart.org/content/2d-spell-effects
+- boom: "Ring Explosion" by BenHickling — CC0
+  https://opengameart.org/content/ring-explosion
+- p_fire, p_ice, p_light, p_dark, p_arcane, p_plant: "Pixel Art Spells" by DevWizard — CC0
+  https://opengameart.org/content/pixel-art-spells
+- (downloaded, not used yet) "Spell Effects" by StarsteelGaming — CC0
+  https://opengameart.org/content/spell-effects-by-starsteelgaming
