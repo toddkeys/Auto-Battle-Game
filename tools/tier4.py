@@ -13,30 +13,38 @@ def star(s, rp, cx, cy, r, ri=None):
 
 
 def starwarden():
+    # crimson-and-gold paladin of the stars: flowing silver hair, long cape, a pale greatsword held out at the side
     s = Spr()
-    plate, navy, gold = ramp('#3a4f9a', 1.2, 1.1), ramp('#1f2a5a', 1.2), P['gold']
-    cape(s, navy, 1.25, 52)
-    legs(s, plate, ramp('#22305e', 1.2))
-    torso(s, plate, hem=44)
-    s.part(gold, [('poly', [(21, 29), (35, 29), (33.5, 34), (28, 36), (22.5, 34)])], soft=1, gloss=.8)
-    belt(s, gold, 39, ramp('#7fd4ff', 1.2))
-    sword(s, ramp('#e6f0ff', 1.2), gold, x0=42, y0=43, x1=48, y1=16, w=1.9, guard=4.5)
-    arm(s, plate, plate, (35, 30), (39, 36), (42, 41), r=2.9)
-    s.part(gold, [('chord', 36, 31, 5.4, 4.6, 180, 360)], soft=1.2, gloss=1, cast=1)
-    arm(s, plate, plate, (21, 30), (18.5, 35), (17, 39), r=2.9)
-    # tower shield with a star crest
-    s.part(ramp('#d8deea', 1.2), [('poly', [(8, 30), (20, 30), (20, 45), (14, 51), (8, 45)])], soft=1.5, gloss=.8)
-    s.part(navy, [('poly', [(9.6, 31.6), (18.4, 31.6), (18.4, 44.3), (14, 49), (9.6, 44.3)])], soft=1.2)
-    star(s, gold, 14, 39.5, 4.2)
+    plate, dark, gold = ramp('#b02a34', 1.2, 1.1), ramp('#6a1622', 1.2), P['gold']
+    hair, blade = ramp('#e4e8f4', .9), ramp('#e6f0ff', 1.3)
+    back_hair(s, hair, 38, 12)
+    cape(s, dark, 1.5, 53)
+    with s.grp('cape'):
+        s.part(gold, [('poly', [(12, 51.5), (44, 51.5), (44.5, 52.8), (28, 54), (11.5, 52.8)])], soft=.4, gloss=1)
+    legs(s, plate, ramp('#4a141c', 1.2))
+    torso(s, plate, hem=45)
+    with s.grp('body'):
+        s.part(gold, [('poly', [(21, 29), (35, 29), (34, 33), (28, 35.5), (22, 33)])], soft=1, gloss=1)   # gorget
+        s.part(dark, [('poly', [(22, 40), (34, 40), (35.5, 47), (28, 48), (20.5, 47)])], soft=1)   # skirt plates
+        s.part(gold, [('poly', [(22, 46), (34, 46), (35.5, 47), (28, 48.5), (20.5, 47)])], soft=.4, gloss=1, line=False)
+        star(s, ramp('#fff3a0', 1.1), 28, 37, 3.2)
+    belt(s, gold, 40, ramp('#7fd4ff', 1.2))
+    sword(s, blade, gold, x0=42.5, y0=44, x1=48, y1=5, w=2.3, guard=5.6)
+    with s.grp('weapon'):
+        s.part(ramp('#9fdcff', 1.2), [('cap', 42.8, 39, 47.4, 9, .5)], soft=.3, line=False, flat=True, bias=.25)   # fuller glow
+    arm(s, plate, plate, (35, 30), (39, 36), (42.5, 42), r=2.9, glove=gold)
+    s.part(gold, [('chord', 36, 31.5, 6, 5.2, 180, 360)], soft=1.2, gloss=1, cast=1)
+    s.part(plate, [('chord', 36, 33, 5, 3.4, 180, 360)], soft=1, gloss=.8, line=False)
+    arm(s, plate, plate, (21, 30), (18.5, 35), (18, 40), r=2.9, glove=gold)
+    s.part(gold, [('chord', 20, 31.5, 6, 5.2, 180, 360)], soft=1.2, gloss=1, cast=1)
+    s.part(plate, [('chord', 20, 33, 5, 3.4, 180, 360)], soft=1, gloss=.8, line=False)
     head(s)
-    bangs(s, ramp('#d8e2f4', 1.1), 'swept', cast=1)
-    s.part(plate, [('chord', 28, 16.5, 12, 10.5, 180, 360), ('rect', 16, 14, 19, 24), ('rect', 37, 14, 40, 24)],
-           soft=2, gloss=1, cast=2)
-    s.part(gold, [('rect', 16, 14, 40, 15.6)], soft=.5, gloss=.8, cast=1)
-    star(s, ramp('#fff3a0', 1.1), 28, 7.5, 4.6)
+    bangs(s, hair, 'spiky', shine=10)
+    s.part(gold, [('rect', 17, 11.5, 39.5, 13)], soft=.4, gloss=1, cast=1)   # circlet
+    star(s, ramp('#7fd4ff', 1.2), 28, 11.5, 2.6)
     face(s, '#3a7ae0')
-    for x, y in ((47, 32), (51, 40), (6, 26), (44, 48)):
-        sparkle(s, x, y, (200, 225, 255))
+    for x, y in ((51, 10), (53, 24), (6, 26), (8, 44)):
+        sparkle(s, x, y, (255, 230, 170))
     return s
 
 

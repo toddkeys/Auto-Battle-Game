@@ -105,7 +105,7 @@ button.go:disabled{animation:none}
 .snd{display:flex;align-items:center;gap:10px}.vols{display:flex;flex-direction:column;gap:6px}.snd label{display:flex;align-items:center;gap:6px;font-size:14px}
 .mute{width:24px;height:22px;padding:0;border:0;background:none;font-size:15px;line-height:1;cursor:pointer;filter:drop-shadow(0 1px 0 #000)}
 .mute:hover{transform:scale(1.15)}.mute.off{opacity:.55}
-#bSpeed{font-size:16px;padding:6px 10px 7px;white-space:nowrap}
+#bSpeed{margin-top:4px;font-size:14px;padding:3px 10px 4px;white-space:nowrap}
 .snd input[type=range]{width:96px;accent-color:var(--brass);cursor:pointer}
 .next{font-size:13px;color:var(--muted);line-height:1.3;min-width:150px}.next b{color:var(--text);font-weight:700}
 /* the board, in a heavy frame */
@@ -239,9 +239,8 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
     <div class="hud">
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
-      <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div>
-        <button class="b" id="bSpeed" title="Battle speed">Speed x1</button></div>
-      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div></div>
+      <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><button class="b" id="bSpeed" title="Battle speed">Speed x1</button></div>
     </div>
     <div class="board"><canvas id="cv"></canvas><div id="msg"></div></div>
   </main>
@@ -271,7 +270,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Click a fighter</b> during battle to see its live stats and skill.</li>
         <li><b>Selling</b> returns half the gold — or all of it if you bought the hero this round.</li>
         <li><b>Summoners</b> call allies (wisps, wolves, a stone guardian, a star drake) that fight until the battle ends.</li>
-        <li>Every 5th round is a <b>monster round</b>; from round 15 a <b>boss</b> joins. Bosses alternate two skills, enrage at half HP and always drop a rare item.</li>
+        <li>Every 5th round is a <b>monster round</b>; from round 15 a <b>boss</b> joins. Bosses alternate two skills, enrage at half HP and always drop a rare item, even if you lose the fight.</li>
         <li><b>Items</b>: drag onto a hero (1 each). Drop the <i>same</i> item on it, or two of the same on each other, to <b>enchant</b> it (+1, +2). 📜 Unbinding Scroll takes a hero's item off.</li>
         <li><b>Shields</b>: gold shields stop physical damage, violet (🔮) magic shields stop magic damage.</li>
         <li><b>Gamblers</b> roll dice and draw cards: random, sometimes huge, outcomes. <b>Ice Wall</b> (Glacier Warden) stops enemy projectiles until it breaks.</li>
@@ -1384,7 +1383,9 @@ function endFight(win){
       for(const k of drops){ S.inv.push(k); got.push(IT(k).icon); }
       S.result+=' · Loot '+got.join(' '); } }
   else { const loss=2+Math.floor(S.round/5)+surv.length;   // 2 + 1 per 5 rounds + 1 per enemy still standing
-     S.hp=Math.max(0,S.hp-loss); S.result=`Defeat... -${loss} HP`+(gb?` (+${gb} gold)`:''); }
+     S.hp=Math.max(0,S.hp-loss); S.result=`Defeat... -${loss} HP`+(gb?` (+${gb} gold)`:'');
+     const fallen=F.f.filter(x=>x.team===1&&U[x.type].boss&&x.hp<=0&&!x.summon).map(()=>pick(RARE));
+     if(fallen.length){ S.inv.push(...fallen); S.result+=' · Boss loot '+fallen.map(k=>IT(k).icon).join(' '); } }
   SND.play(win?'victory':'defeat'); render(); renderUI();
   setTimeout(()=>{
     if(S.hp<=0){ S.phase='over'; showSummary(); render(); renderUI(); return; }
@@ -1428,7 +1429,7 @@ function pose(o,b,rigged){
 // attack style per unit: how the arms move on a basic attack
 const CLS_ANIM={gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
-const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':CLS_ANIM[b.cls]);
+const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
 function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=ks[i]; if(p<=p1){ const q=(p-p0)/(p1-p0); return v0+(v1-v0)*(i===ks.length-1?easeInOut(q):easeOut(q)); } } return ks[ks.length-1][1]; }
 // overhead sword cut, angles in radians from the rest pose: the arm lifts the hand above the shoulder while the blade
@@ -1438,6 +1439,8 @@ const SWING={arm:[[0,0],[.35,-2.3],[.52,.8],[.62,.95],[1,0]], blade:[[0,0],[.35,
 const SWING_BIG={arm:[[0,0],[.35,-2.5],[.5,1],[.62,1.1],[1,0]], blade:[[0,0],[.35,2.3],[.5,-2.3],[.62,-2.5],[1,0]], lean:[[0,0],[.35,1.6],[.5,-2.2],[1,0]]};
 function swing(R,p,K){ const arm=KF(p,K.arm), blade=KF(p,K.blade); R.armR.r+=arm; R.weapon.r+=blade-arm; R.body.x+=KF(p,K.lean);
   R.armL.r+=KF(p,[[0,0],[.35,.4],[.52,-.3],[1,0]]); R.head.r+=KF(p,[[0,0],[.35,-.08],[.52,.1],[1,0]]); }
+function thrust(R,p,k){ R.weapon.r+=KF(p,[[0,0],[.3,-1.25],[.45,-1.5],[.7,-1.5],[1,0]]); R.armR.r+=KF(p,[[0,0],[.3,.5],[.45,-.2],[1,0]]);
+  R.armR.x+=k*KF(p,[[0,0],[.3,1.5],[.45,-3.5],[.65,-3],[1,0]]); R.body.x+=k*KF(p,[[0,0],[.3,.8],[.45,-1.5],[1,0]]); R.armL.r+=KF(p,[[0,0],[.3,.3],[.45,-.3],[1,0]]); }
 // 3-beat move: ease toward `wind` (anticipation), snap to `hit`, settle back to 0
 function beats(p,wind,hit){ return p<.35?wind*easeOut(p/.35) : p<.55?wind+(hit-wind)*easeOut((p-.35)/.2) : hit*(1-easeInOut((p-.55)/.45)); }
 // joint offsets for this frame: {group:{x,y,r}} in sprite pixels / radians. The sprite faces left, so forward = -x.
@@ -1450,7 +1453,8 @@ function rigPose(o,type,b){
   R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
   R.wingL=J(); R.wingR=J();
   if(st==='bat'){ const f=Math.sin(t*14); R.wingL.r=f*.45; R.wingR.r=-f*.45; R.body.y=Math.sin(t*14+1.2)*1.4; }
-  if(st==='slash'){ R.armR.r-=.2; R.weapon.r=.18+br*.04; }   // ready stance: hand out from the hip, blade up beside the body (forward would hide it behind the head)
+  if(st==='slash'){ R.armR.r-=.15; R.weapon.r=.45+br*.04; }   // ready stance: hand at the hip, blade out on a diagonal, clear of the body
+  if(st==='spear') R.weapon.r=br*.02;   // spear upright beside the body, gripped mid-shaft
   if(st==='golem'){ R.armL.r=Math.sin(t*1.6)*.06; R.armR.r=-Math.sin(t*1.6)*.06; }
   if(st==='blob') R.head.r=Math.sin(t*2.5)*.12;
   if(o.moving){   // walk cycle: legs step in turn, arms swing against them, body bobs, cape trails
@@ -1460,6 +1464,7 @@ function rigPose(o,type,b){
     if(st==='blob') R.head.r+=s*.15;
   }
   if(o.rel>0&&st==='slash'){ const p=1-o.rel/REL_T; swing(R,p,SWING_BIG); R.body.y+=KF(p,[[0,0],[.35,-3],[.5,1.5],[1,0]]); R.legL.r+=KF(p,[[0,0],[.35,.3],[.5,-.25],[1,0]]); R.legR.r+=KF(p,[[0,0],[.35,-.3],[.5,.25],[1,0]]); }
+  else if(o.rel>0&&st==='spear'){ const p=1-o.rel/REL_T; thrust(R,p,1.6); R.legL.r+=KF(p,[[0,0],[.3,.2],[.45,-.3],[1,0]]); }
   else if(o.rel>0){
     const p=1-o.rel/REL_T, B=(w,h)=>beats(p,w,h);
     R.armR.r+=B(-2.1,1.4); R.armL.r+=B(1.5,-.8); R.body.y+=B(-3,1.5); R.head.r+=B(-.12,.12);
@@ -1467,6 +1472,7 @@ function rigPose(o,type,b){
   } else if(o.atkT>0){
     const p=1-o.atkT/ATK_T, B=(w,h)=>beats(p,w,h);
     if(st==='slash') swing(R,p,SWING);
+    else if(st==='spear') thrust(R,p,1);
     else if(st==='stab'){ R.armR.r+=B(-.5,.9); R.armR.x+=B(1,-2.5); R.armL.r+=B(.5,-.7); R.body.x+=B(.5,-1); }
     else if(st==='bow'){ R.armL.x+=B(-.5,-1.5); R.armR.x+=B(3,-1); R.armR.r+=B(-.25,.1); R.body.x+=B(.5,1); }
     else if(st==='staff'){ R.armR.r+=B(-.9,.5); R.armL.r+=B(.6,-.2); R.head.r+=B(-.05,.05); R.body.x+=B(.5,-.8); }
@@ -1474,6 +1480,7 @@ function rigPose(o,type,b){
     else if(st==='bat'){ R.body.x+=B(1.5,-3); R.wingL.r+=B(-.6,.5); R.wingR.r+=B(.6,-.5); }
     else if(st==='blob'){ R.head.y+=B(2,-2); R.head.r+=B(.1,-.25); }
   }
+  if(o.cast>0&&st==='spear'){ const q=easeOut(1-o.cast/CAST_T); R.weapon.r-=1.3*q; R.armR.x+=2*q; R.body.y+=1.5*q; R.legL.r+=.2*q; R.legR.r-=.2*q; }
   if(o.cast>0&&(st==='slash'||st==='stab')){   // melee wind-up: hand up by the shoulder, blade laid back, knees bent
     const q=easeOut(1-o.cast/CAST_T);
     R.armR.r-=1.8*q; R.weapon.r+=(1.8+1.7)*q; R.armL.r+=.35*q; R.body.y+=2*q; R.legL.r+=.25*q; R.legR.r-=.25*q; R.head.r+=.06*q;

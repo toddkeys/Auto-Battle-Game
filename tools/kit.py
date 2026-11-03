@@ -240,22 +240,26 @@ P = dict(
 
 
 def swordsman():
+    # wandering swordsman: long hair, crimson cape and tabard, brass pauldrons, a long sword held out at the side
     s = Spr()
-    blue, red = ramp('#3f8ae8', 1, 1.1), ramp('#e8413a')
-    legs(s, ramp('#4d556e'), P['leather'])
-    torso(s, blue)
-    s.part(P['darkleather'], [('poly', [(21.5, 29), (24.5, 28.5), (35, 38.5), (33, 39.5)])], soft=0.8)  # strap
-    belt(s, P['darkleather'], buckle=P['gold'])
-    sword(s, P['steel'], P['leather'], x0=41, y0=42, x1=49, y1=19)
-    arm(s, blue, SKIN, (35, 30), (38.5, 36), (41, 40), glove=P['leather'])
-    s.part(ramp('#8d97ab', 1.2), [('chord', 35.5, 31, 4, 3.4, 180, 360)], soft=1.2, gloss=0.6, cast=1)  # pauldron
-    arm(s, blue, SKIN, (21, 30), (18.5, 35.5), (18, 39), glove=P['leather'])
-    s.part(P['steel'], [('ell', 16, 38, 5, 5.5)], soft=1.5, gloss=0.8)  # buckler
-    s.part(red, [('ell', 16, 38, 3.3, 3.8)], soft=1.2)
-    s.part(P['gold'], [('ell', 16, 38, 1.2, 1.2)], soft=0.5, gloss=1)
-    s.part(red, [('ell', 28, 28.5, 8, 2.8)], soft=1, cast=1)  # scarf
-    s.part(red, [('poly', [(32, 28), (35, 28.5), (43, 31), (47, 36), (42, 35), (37, 32)])], soft=1)
+    red, leather, cream, brass = ramp('#c0303a', 1.2, 1.1), ramp('#8a4a2a', 1.1), ramp('#f2e6cc', .8), ramp('#e8a040', 1.2, 1.1)
+    hair = ramp('#a0623a', 1.0)
+    back_hair(s, hair, 35, 11.5)
+    cape(s, ramp('#9a2030', 1.2), 1.35, 53)
+    legs(s, ramp('#4a3a36'), ramp('#6a3a24', 1.1))
+    torso(s, cream, hem=44)
+    with s.grp('body'):
+        s.part(leather, [('poly', [(21, 29.5), (35, 29.5), (35.5, 40.5), (20.5, 40.5)])], soft=1, gloss=.5)   # cuirass
+        s.part(red, [('poly', [(22.5, 40), (33.5, 40), (35, 46.5), (28, 47.5), (21, 46.5)])], soft=1)   # tabard
+        s.part(brass, [('rect', 27.3, 30, 28.7, 40)], soft=.4, gloss=1, line=False)
+    belt(s, ramp('#3a2620'), 40, brass)
+    sword(s, ramp('#d8e2f0', 1.3), brass, x0=42, y0=43, x1=47, y1=11, w=1.9, guard=4.8)
+    arm(s, red, SKIN, (35, 30), (38.5, 36), (42, 41), glove=leather)
+    s.part(brass, [('chord', 36, 31, 5, 4.4, 180, 360)], soft=1.2, gloss=1, cast=1)   # pauldrons
+    arm(s, red, SKIN, (21, 30), (18.5, 35.5), (18.5, 40), glove=leather)
+    s.part(brass, [('chord', 20, 31, 5, 4.4, 180, 360)], soft=1.2, gloss=1, cast=1)
     head(s)
-    bangs(s, ramp('#8a5230'), 'tousled', shine=9)
-    face(s, '#2f7fe0', 'open')
+    bangs(s, hair, 'spiky', shine=9)
+    s.part(red, [('rect', 17, 11.8, 39.5, 13.6), ('poly', [(16, 12.5), (10, 15), (12, 17.5), (17, 14)])], soft=.6)   # headband + tails
+    face(s, '#e08a2a', 'smile')
     return s
