@@ -110,9 +110,10 @@ def nightreaper():
     s = Spr()
     suit, fur, green = ramp('#26302a', 1.2), ramp('#5a5e6a', 1.2), ramp('#5ee08a', 1.2, 1.1)
     # scythe held upright on the right, blade curling outward
-    s.part(ramp('#4a3a2e', 1.2), [('cap', 45, 53, 46.5, 5, 1)], soft=.6)
-    s.part(ramp('#cfe8d8', 1.3), [('poly', [(46, 3), (51, 2.5), (55, 7), (55.5, 15), (52.5, 9), (47, 7.5)])], soft=.6, gloss=1.2)
-    s.part(green, [('poly', [(48, 4), (51.5, 4.2), (54, 8), (54.2, 12), (51.6, 6.6)])], soft=.3, line=False, flat=True, bias=.2)
+    with s.grp('armR'):
+        s.part(ramp('#4a3a2e', 1.2), [('cap', 45, 53, 46.5, 5, 1)], soft=.6)
+        s.part(ramp('#cfe8d8', 1.3), [('poly', [(46, 3), (51, 2.5), (55, 7), (55.5, 15), (52.5, 9), (47, 7.5)])], soft=.6, gloss=1.2)
+        s.part(green, [('poly', [(48, 4), (51.5, 4.2), (54, 8), (54.2, 12), (51.6, 6.6)])], soft=.3, line=False, flat=True, bias=.2)
     cape(s, ramp('#1c2420', 1.2), 1.1, 52)
     legs(s, suit, ramp('#16191a'))
     torso(s, suit, hem=45)

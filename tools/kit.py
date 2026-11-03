@@ -3,25 +3,41 @@ Build everything with:  python tools/build_sprites.py"""
 from pixel import Spr, ramp
 
 SKIN = ramp('#ffd2b0', 0.8)
+
+
+def grouped(g):
+    """Helper decorator: everything the helper draws joins rig group g."""
+    def deco(fn):
+        def wrap(s, *a, **k):
+            with s.grp(g):
+                return fn(s, *a, **k)
+        return wrap
+    return deco
 WHITE = (255, 255, 255)
 BLUSH = (255, 150, 160)
 
 
 # ====== body ======
+@grouped('head')
 def back_hair(s, rp, length=26, width=11.5):
     s.part(rp, [('ell', 28, 17, width, 10), ('poly', [(28 - width + .5, 18), (28 + width - .5, 18),
                                                       (28 + width - 2, length), (28 - width + 2, length)])], soft=2)
 
 
 def legs(s, pants, boots, robe=False):
-    if not robe:
-        s.part(pants, [('poly', [(22, 39), (27.5, 39), (27, 49), (22.5, 49)]),
-                       ('poly', [(29, 39), (34.5, 39), (34, 49), (29.5, 49)])], soft=1.2)
-    s.part(boots, [('poly', [(21.5, 46), (27.5, 46), (27.5, 53), (19, 53), (19.5, 50.5), (21.5, 49.5)]),
-                   ('poly', [(29.5, 46), (35, 46), (35.5, 53), (28, 53), (28.5, 50.5), (29.5, 49.5)])],
-           soft=1.0, gloss=0.4)
+    # one group per leg so they can step; hips are the joints
+    s.piv.update(legL=(24.7, 40), legR=(31.7, 40))
+    for g, pant, boot in (('legL', [(22, 39), (27.5, 39), (27, 49), (22.5, 49)],
+                           [(21.5, 46), (27.5, 46), (27.5, 53), (19, 53), (19.5, 50.5), (21.5, 49.5)]),
+                          ('legR', [(29, 39), (34.5, 39), (34, 49), (29.5, 49)],
+                           [(29.5, 46), (35, 46), (35.5, 53), (28, 53), (28.5, 50.5), (29.5, 49.5)])):
+        with s.grp(g):
+            if not robe:
+                s.part(pants, [('poly', pant)], soft=1.2)
+            s.part(boots, [('poly', boot)], soft=1.0, gloss=0.4)
 
 
+@grouped('body')
 def torso(s, rp, kind='tunic', hem=43, soft=2.2):
     if kind == 'tunic':
         sh = [('poly', [(21, 28), (35, 28), (36.5, hem), (19.5, hem)])]
@@ -31,15 +47,25 @@ def torso(s, rp, kind='tunic', hem=43, soft=2.2):
 
 
 def arm(s, sleeve, skin, sh, el, hd, r=2.6, glove=None, hand_r=2.1):
+    g = s.group or ('armR' if sh[0] > 28 else 'armL')
+    s.piv.setdefault(g, sh)
+    s.hands.setdefault(g, hd)
+    with s.grp(g):
+        _arm(s, sleeve, skin, sh, el, hd, r, glove, hand_r)
+
+
+def _arm(s, sleeve, skin, sh, el, hd, r, glove, hand_r):
     s.part(sleeve, [('cap', *sh, *el, r), ('cap', *el, *hd, r * 0.85)], soft=1.1)
     s.part(glove or skin, [('ell', hd[0], hd[1] + 1.2, hand_r, hand_r)], soft=0.8)
 
 
+@grouped('head')
 def head(s, skin=SKIN):
     s.part(skin, [('ell', 28, 18, 10, 9.5), ('ell', 25.5, 22, 7.5, 6.5),
                   ('ell', 37.2, 20.5, 1.6, 2.2)], soft=2.5)
 
 
+@grouped('head')
 def face(s, iris, mouth='smile', shift=0, blush=True):
     """Big anime eyes (3x4) with lashes and a shine, looking down-left."""
     r = ramp(iris, 1.1, 1.2)
@@ -88,15 +114,18 @@ HAIR = {
 }
 
 
+@grouped('head')
 def bangs(s, rp, style='neat', cast=2, shine=11):
     s.part(rp, HAIR[style], soft=2, cast=cast, shine=shine)
 
 
+@grouped('cape')
 def cape(s, rp, wide=1.0, hem=51):
     s.part(rp, [('poly', [(20, 28), (36, 28), (36 + 7 * wide, hem - 1), (33, hem + 1), (28, hem), (23, hem + 1),
                           (20 - 7 * wide, hem - 1)])], soft=2.5)
 
 
+@grouped('body')
 def belt(s, rp, y=38, buckle=None):
     s.part(rp, [('poly', [(19.7, y), (36.3, y), (36.4, y + 2), (19.6, y + 2)])], soft=0.6, gloss=0.3)
     if buckle:

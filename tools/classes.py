@@ -4,6 +4,7 @@ from pixel import Spr, ramp
 
 
 # ====== headwear & extras ======
+@grouped('head')
 def wizard_hat(s, rp, band=None, tip=(41, 1), brim=15):
     s.part(rp, [('ell', 28, 12.5, brim, 3.6)], soft=1.2, cast=2)
     s.part(rp, [('poly', [(19.5, 12.5), (36.5, 12.5), (35, 6), tip, (31, 3.5), (25, 5)])], soft=1.8, cast=2)
@@ -11,12 +12,14 @@ def wizard_hat(s, rp, band=None, tip=(41, 1), brim=15):
         s.part(band, [('poly', [(19.8, 10), (36.2, 10), (36.5, 12.6), (19.5, 12.6)])], soft=0.6, gloss=0.5, cast=2)
 
 
+@grouped('body')
 def scarf(s, rp, tail=True):
     s.part(rp, [('ell', 28, 28.5, 8, 2.8)], soft=1, cast=1)
     if tail:
         s.part(rp, [('poly', [(33, 28), (36, 28.5), (45, 34), (47, 39), (43, 37), (38, 33)])], soft=1)
 
 
+@grouped('head')
 def mask(s, rp):
     s.part(rp, [('poly', [(18.3, 22.5), (37.5, 22.5), (36, 26), (28, 28.5), (20, 26.5)])], soft=1.2)
 
@@ -25,11 +28,13 @@ def ring(s, rp, cx, cy, rx, ry, t=1.2):
     s.part(rp, [('ell', cx, cy, rx, ry)], sub=[('ell', cx, cy, rx - t, ry - t)], soft=0.5, gloss=0.8, line=False)
 
 
+@grouped('fx')
 def sparkle(s, x, y, c):
     for dx, dy, a in ((0, 0, 255), (1, 0, 150), (-1, 0, 150), (0, 1, 150), (0, -1, 150)):
         s.glow(x + dx, y + dy, c, a)
 
 
+@grouped('body')
 def hem_trim(s, rp, y=47.6):
     s.part(rp, [('poly', [(17.5, y), (38.5, y), (39, y + 1.4), (28, y + 2.9), (17, y + 1.4)])], soft=.6)
 

@@ -60,6 +60,23 @@ class Spr:
         self.parts = []
         self.fx = []      # (x, y, rgba) drawn last, no outline
         self.marks = []   # (x, y, rgb) drawn after shading, before outline
+        # rig: every part belongs to a group (body, head, armL, armR, legL, legR, cape, fx, ...)
+        # that the game moves around its pivot. None = decided at layer time from position.
+        self.group = None
+        self.piv = {}     # group -> (x, y) joint
+        self.hands = {}   # arm group -> hand position (weapons held there follow the arm)
+
+    def grp(self, g):
+        """with s.grp('head'): ... tags every part drawn inside with that group"""
+        spr = self
+
+        class _G:
+            def __enter__(self):
+                self.prev, spr.group = spr.group, g
+
+            def __exit__(self, *a):
+                spr.group = self.prev
+        return _G()
 
     # -- shapes in pixel coordinates --------------------------------------
     @staticmethod
@@ -103,23 +120,63 @@ class Spr:
         m = np.asarray(im, dtype=np.float32) / 255
         if clip is not None:
             m = m * clip.hi
-        self.parts.append(dict(m=m, rp=rp, soft=soft, cast=cast, line=line,
+        self.parts.append(dict(m=m, rp=rp, soft=soft, cast=cast, line=line, g=self.group,
                                flat=flat, thr=thr, bias=bias, gloss=gloss, shine=shine))
         return self.parts[-1]
 
     def mark(self, x, y, rgb):
-        self.marks.append((x, y, rgb))
+        self.marks.append((x, y, rgb, len(self.parts) - 1))
 
     def glow(self, x, y, rgb, a=255):
-        self.fx.append((x, y, (*rgb, a)))
+        self.fx.append((x, y, (*rgb, a), len(self.parts) - 1, self.group))
 
     # -- render ------------------------------------------------------------
     def render(self):
-        n = len(self.parts)
+        return self._render(self.parts, [m[:3] for m in self.marks], [f[:3] for f in self.fx])
+
+    def _resolve(self):
+        """Give untagged parts (weapons, shields, emblems...) a group from where they sit."""
+        for p in self.parts:
+            if p['g']:
+                continue
+            m = p['m'].reshape(H, K, W, K).mean(axis=(1, 3)) >= p['thr']
+            ys, xs = np.nonzero(m)
+            if not len(xs):
+                p['g'] = 'body'
+                continue
+            near = lambda pt, r=1: m[max(0, int(pt[1]) - r):int(pt[1]) + r + 1, max(0, int(pt[0]) - r):int(pt[0]) + r + 1].any()
+            g = next((a for a, hd in self.hands.items() if near(hd)), None)
+            if g is None and xs.max() - xs.min() < 10:
+                g = next((a for a in self.hands if near(self.piv[a], 0)), None)
+            p['g'] = g or ('head' if ys.mean() < 26 else 'body')
+
+    def layers(self):
+        """Render each run of same-group parts as its own full layer (nothing hidden behind
+        other groups, so limbs can move without leaving holes). Returns [(group, Image)]."""
+        self._resolve()
+        runs = []
+        for i, p in enumerate(self.parts):
+            if runs and runs[-1][0] == p['g']:
+                runs[-1][1].append(i)
+            else:
+                runs.append((p['g'], [i]))
+        out = []
+        for g, idx in runs:
+            lo, hi = idx[0], idx[-1]
+            marks = [m[:3] for m in self.marks if lo <= m[3] <= hi]
+            fx = [f[:3] for f in self.fx if (f[4] or g) == g and lo <= max(f[3], 0) <= hi and f[4] != 'fx']
+            out.append((g, self._render([self.parts[i] for i in idx], marks, fx)))
+        fx = [f[:3] for f in self.fx if f[4] == 'fx']
+        if fx:
+            out.append(('fx', self._render([], [], fx)))
+        return out
+
+    def _render(self, parts, marks, fxs):
+        n = len(parts)
         owner = -np.ones((H, W), int)
         level = np.zeros((H, W), int)
         cov_all = []
-        for i, p in enumerate(self.parts):
+        for i, p in enumerate(parts):
             m = p['m']
             cov = m.reshape(H, K, W, K).mean(axis=(1, 3))
             inside = cov >= p['thr']
@@ -156,7 +213,7 @@ class Spr:
                     if y - dy < 0:
                         break
                     up = owner[y - dy, x]
-                    if up > o and self.parts[up]['cast'] >= dy:
+                    if up > o and parts[up]['cast'] >= dy:
                         level[y, x] = max(1, level[y, x] - 1)
                         break
         img = np.zeros((H, W, 4), np.uint8)
@@ -164,22 +221,22 @@ class Spr:
             for x in range(W):
                 o = owner[y, x]
                 if o >= 0:
-                    img[y, x, :3] = self.parts[o]['rp'][level[y, x]]
+                    img[y, x, :3] = parts[o]['rp'][level[y, x]]
                     img[y, x, 3] = 255
         # internal lines: back part pixels touching a front part
         for y in range(H):
             for x in range(W):
                 o = owner[y, x]
-                if o < 0 or not self.parts[o]['line']:
+                if o < 0 or not parts[o]['line']:
                     continue
                 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                     xx, yy = x + dx, y + dy
                     if 0 <= xx < W and 0 <= yy < H:
                         q = owner[yy, xx]
-                        if q > o and self.parts[q]['rp'] is not self.parts[o]['rp'] and self.parts[q]['line']:
-                            img[y, x, :3] = self.parts[o]['rp'][1] if dy == 1 else self.parts[o]['rp'][0]
+                        if q > o and parts[q]['rp'] is not parts[o]['rp'] and parts[q]['line']:
+                            img[y, x, :3] = parts[o]['rp'][1] if dy == 1 else parts[o]['rp'][0]
                             break
-        for x, y, rgb in self.marks:
+        for x, y, rgb in marks:
             img[y, x, :3] = rgb
             img[y, x, 3] = 255
         # outer outline (selective: darker on bottom/right)
@@ -195,9 +252,9 @@ class Spr:
                         best = owner[yy, xx]
                         break
                 if best is not None:
-                    out[y, x, :3] = self.parts[best]['rp'][0]
+                    out[y, x, :3] = parts[best]['rp'][0]
                     out[y, x, 3] = 255
-        for x, y, rgba in self.fx:
+        for x, y, rgba in fxs:
             if 0 <= x < W and 0 <= y < H:
                 if out[y, x, 3] == 0 or rgba[3] == 255:
                     out[y, x] = rgba

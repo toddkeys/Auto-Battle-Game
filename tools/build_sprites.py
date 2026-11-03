@@ -1,5 +1,8 @@
-"""Builds every unit and monster sprite -> assets/units/<id>.png + assets/preview.png
+"""Builds every unit and monster sprite -> assets/units/<id>.png + assets/preview.png,
+plus the animation rig: assets/rig/<id>.png (one 56x54 layer per piece, left to right)
+and assets/rig/<id>.json (which group each layer belongs to + joint pivots).
 Run:  python tools/build_sprites.py   then   python tools/build_game.py"""
+import json
 import os
 import sys
 from PIL import Image, ImageDraw
@@ -30,9 +33,19 @@ def preview(sprites, scale=4, cols=5):
 
 if __name__ == '__main__':
     os.makedirs(os.path.join(OUT, 'units'), exist_ok=True)
+    os.makedirs(os.path.join(OUT, 'rig'), exist_ok=True)
     ims = {}
     for cid, fn in CHARS.items():
         ims[cid] = fn().render()
         ims[cid].save(os.path.join(OUT, 'units', cid + '.png'))
+        s = fn()
+        layers = s.layers()
+        strip = Image.new('RGBA', (W * len(layers), H), (0, 0, 0, 0))
+        for i, (_, im) in enumerate(layers):
+            strip.paste(im, (i * W, 0))
+        strip.save(os.path.join(OUT, 'rig', cid + '.png'), optimize=True)
+        piv = {'head': (28, 27), 'body': (28, 44), 'cape': (28, 28), **s.piv}
+        with open(os.path.join(OUT, 'rig', cid + '.json'), 'w') as f:
+            json.dump({'layers': [g for g, _ in layers], 'piv': piv}, f)
     preview(ims)
     print('built', len(ims))
