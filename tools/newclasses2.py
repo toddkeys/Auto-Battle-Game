@@ -7,23 +7,33 @@ from pixel import Spr, ramp
 
 # ====== ninjas ======
 def shadowstep():
+    # shadow assassin: close black cowl, crimson eyes glowing over a mask, a long red scarf, a red-edged ninjato
     s = Spr()
-    garb, red, steel = ramp('#2a2f4a', 1.2), ramp('#d8303a', 1.1), P['steel']
-    with s.grp('cape'):   # long scarf trailing behind
-        s.part(red, [('poly', [(32, 27), (36, 27), (50, 33), (52, 38), (46, 36), (38, 31)])], soft=1)
-    legs(s, garb, ramp('#1a1e30'))
-    torso(s, garb, hem=45)
-    s.part(ramp('#3a405e', 1.2), [('poly', [(21, 29), (25, 29), (35, 42), (31, 43)])], soft=.6)
+    garb, dark, red, steel = ramp('#22202e', 1.3), ramp('#121018', 1.2), ramp('#d02a3a', 1.2, 1.1), P['steel']
+    with s.grp('cape'):   # long scarf streaming behind, torn short cape
+        s.part(red, [('poly', [(31, 26), (37, 26), (52, 31), (54, 36), (49, 34), (51, 39), (44, 35), (38, 31)])], soft=1)
+        s.part(garb, [('poly', [(19, 28), (37, 28), (41, 44), (38, 42), (35, 46), (32, 43), (28, 47), (24, 43), (21, 46), (18, 42), (15, 44)])], soft=1.8)
+    legs(s, dark, ramp('#0c0a10'))
+    torso(s, dark, hem=45)
+    s.part(red, [('poly', [(21, 29), (24, 28.5), (34, 43), (31, 44)])], soft=.5)   # crimson wrap
     belt(s, red, 39)
-    sword(s, steel, ramp('#3a2a2a'), x0=42, y0=42, x1=45, y1=22, w=1.3, guard=3)
-    arm(s, garb, SKIN, (35, 30), (38.5, 36), (41.5, 40), glove=ramp('#1a1e30'))
-    arm(s, garb, SKIN, (21, 30), (18.5, 35), (18, 39), glove=ramp('#1a1e30'))
+    with s.grp('weapon'):   # ninjato with a red edge
+        s.part(steel, [('poly', [(41.2, 40), (43, 40), (46.5, 18), (45.5, 15.5), (44.6, 18)])], soft=.5, gloss=1.6)
+        s.part(red, [('poly', [(43, 40), (43.6, 40), (46.6, 18.5), (46.2, 17)])], soft=.2, line=False, flat=True, bias=.2)
+        s.part(ramp('#1a1418'), [('cap', 39.5, 41.4, 44.5, 41, .9), ('cap', 42, 41.5, 41.6, 47, .9)], soft=.4)
+    arm(s, garb, SKIN, (35, 30), (38.5, 36), (42, 41), r=2.9, glove=dark)
+    arm(s, garb, SKIN, (21, 30), (18.5, 35), (18, 39), r=2.9, glove=dark)
     head(s)
-    bangs(s, ramp('#1a1a24', 1.3), 'spiky', shine=10)
-    s.part(garb, [('poly', [(17, 22.5), (39, 22.5), (38, 29), (28, 31), (18, 29)])], soft=1, cast=1)   # mask over the mouth
-    s.part(steel, [('rect', 21, 12, 35, 15)], soft=.5, gloss=1.2, cast=1)   # headband plate
-    s.part(red, [('rect', 16.5, 12.5, 21, 14.5), ('rect', 35, 12.5, 39.5, 14.5), ('poly', [(16, 13), (9, 10), (10, 15)])], soft=.5)
-    face(s, '#d8303a')
+    bangs(s, ramp('#121018', 1.3), 'neat', shine=6)
+    s.part(garb, [('chord', 28, 18, 13, 13.5, 180, 360), ('poly', [(15, 18), (19, 18), (19.5, 30), (14.5, 30)]),
+                  ('poly', [(41, 18), (37, 18), (36.5, 30), (41.5, 30)])], sub=[('ell', 28, 21.5, 9, 7.5)], soft=2.2, cast=3)   # close cowl
+    s.part(red, [('rect', 17, 13.5, 39, 15.2), ('poly', [(16, 14), (8, 11), (9, 16)])], soft=.4)   # headband and its tail
+    face(s, '#ff3040', mouth=None, blush=False)
+    s.part(dark, [('poly', [(19, 23.5), (37, 23.5), (36, 30), (28, 32), (20, 30)])], soft=.8)   # mask
+    for x, y in ((24, 21), (32, 21)):   # glowing red eyes
+        s.glow(x, y, (255, 60, 70), 210)
+    for x, y in ((7, 24), (51, 44), (10, 46)):
+        sparkle(s, x, y, (255, 120, 120))
     return s
 
 

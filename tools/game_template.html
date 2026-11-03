@@ -144,6 +144,11 @@ button.go{display:block;width:100%;margin-top:10px}
 .su{--fc:#9a9488;position:relative;min-width:0;min-height:122px;padding:6px 2px 6px;border:2px solid var(--ink);border-radius:7px;cursor:pointer;color:var(--text);font:inherit;
   background:radial-gradient(ellipse at 50% 32%,color-mix(in srgb,var(--cc) 40%,transparent),transparent 68%),linear-gradient(180deg,#2e1f13,#170f09);
   box-shadow:inset 0 0 0 2px var(--fc),inset 0 0 14px rgba(0,0,0,.7),0 3px 0 var(--ink);transition:transform .12s,box-shadow .12s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.su.marked{animation:markGlow 1.2s ease-in-out infinite}.su.marked:disabled{filter:grayscale(.3) brightness(.8)}
+.su.marked::before{content:'★';position:absolute;left:4px;top:2px;z-index:2;color:#ffe27a;font-size:15px;text-shadow:0 0 6px #ffb020,0 1px 0 #000}
+@keyframes markGlow{0%,100%{box-shadow:inset 0 0 0 2px #ffe27a,0 0 10px #ffc94a,0 3px 0 var(--ink)}50%{box-shadow:inset 0 0 0 2px #fff3b0,0 0 22px #ffd25a,0 3px 0 var(--ink)}}
+.cx{position:relative}.cx .mk{position:absolute;right:4px;top:3px;border:0;background:none;color:#ffe27a;font-size:18px;cursor:pointer;line-height:1;text-shadow:0 1px 0 #000}
+.cx .mk:hover{transform:scale(1.2)}.cx.marked{border-color:#ffd25a;box-shadow:0 0 8px rgba(255,210,90,.45)}
 .su.c2{--fc:#4cc072}.su.c3{--fc:#4f95f0}.su.c4{--fc:#c07af0}
 .su:hover:not(:disabled){transform:translateY(-5px);box-shadow:inset 0 0 0 2px var(--fc),0 0 16px var(--fc),0 8px 0 var(--ink)}
 .su:disabled{filter:grayscale(.85) brightness(.5);cursor:default}
@@ -300,6 +305,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run.</li>
+        <li><b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Chrono</b> heroes mark enemies so their damage replays, and stop time.</li>
@@ -1018,14 +1024,22 @@ $('#modesbox').addEventListener('click',e=>{
 // ====== Hero Codex: every hero you have fielded (kept in this browser) ======
 function readCodex(){ try{ return JSON.parse(localStorage.getItem('ab_codex')||'{}'); }catch(e){ return {}; } }
 function noteCodex(types){ const c=readCodex(); for(const t of types) c[t]=(c[t]||0)+1; try{ localStorage.setItem('ab_codex',JSON.stringify(c)); }catch(e){} }
-function openCodex(){
-  const c=readCodex(), heroes=[...UNITS].sort((a,b)=>a.cls.localeCompare(b.cls)||a.cost-b.cost);
-  $('#codexCount').textContent=`${heroes.filter(u=>c[u.id]).length} / ${heroes.length} heroes discovered — field a hero in battle to add it`;
-  $('#codexGrid').innerHTML=heroes.map(u=>{ const k=c[u.id], cl=CLASSES[u.cls], o=ORIGINS[u.org], sk=SKILLS[u.id];
-    return `<div class="cx ${k?'':'locked'}" title="${sk.name}: ${sk.desc.replace(/"/g,'&quot;')}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
-      <span class="cs">HP ${u.hp} · ATK ${u.atk} · R ${u.range}<br>${k?`Fielded ${k}×`:'Not fielded yet'}</span></div></div>`; }).join('');
+// marked heroes glow in the shop, so they are easy to spot while rerolling (kept in this browser)
+const MAX_MARKS=10;
+function readMarks(){ try{ return JSON.parse(localStorage.getItem('ab_marks')||'[]'); }catch(e){ return []; } }
+function saveMarks(m){ try{ localStorage.setItem('ab_marks',JSON.stringify(m)); }catch(e){} }
+function openCodex(note){
+  const c=readCodex(), marks=readMarks(), heroes=[...UNITS].sort((a,b)=>a.cls.localeCompare(b.cls)||a.cost-b.cost);
+  $('#codexCount').innerHTML=`${heroes.filter(u=>c[u.id]).length} / ${heroes.length} heroes discovered — field a hero in battle to add it<br>
+    <b style="color:#ffe27a">★ Marked ${marks.length} / ${MAX_MARKS}</b> — click ☆ on a hero to mark it; marked heroes glow in the shop${note?` · <span style="color:#ff9a80">${note}</span>`:''}`;
+  $('#codexGrid').innerHTML=heroes.map(u=>{ const k=c[u.id], cl=CLASSES[u.cls], o=ORIGINS[u.org], sk=SKILLS[u.id], m=marks.includes(u.id);
+    return `<div class="cx ${k?'':'locked'} ${m?'marked':''}" title="${sk.name}: ${sk.desc.replace(/"/g,'&quot;')}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
+      <span class="cs">HP ${u.hp} · ATK ${u.atk} · R ${u.range}<br>${k?`Fielded ${k}×`:'Not fielded yet'}</span></div><button class="mk" data-mark="${u.id}" title="${m?'Unmark':'Mark: glow in the shop'}">${m?'★':'☆'}</button></div>`; }).join('');
   $('#codex').hidden=false;
 }
+$('#codexGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-mark]'); if(!b) return; const id=b.dataset.mark, m=readMarks(), sc=$('#codexGrid').scrollTop;
+  if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS){ openCodex(`You can mark up to ${MAX_MARKS} heroes — unmark one first`); $('#codexGrid').scrollTop=sc; return; } else m.push(id);
+  saveMarks(m); openCodex(); $('#codexGrid').scrollTop=sc; renderUI(); });
 $('#codexClose').onclick=()=>{ $('#codex').hidden=true; };
 
 // ====== events between rounds (every 4th round) ======
@@ -2229,7 +2243,8 @@ function renderUI(){
   $('#sNext').textContent=(S.mode==='daily'?'📅 ':S.mode==='hard'?'💀 ':'')+KIND_LABEL[roundKind(S.round)]+(roundKind(S.round)==='pvp'&&S.round>2?` · enemy power +${Math.round((enemyPower(S.round)-1)*100)}%`:'');
   renderItems(); renderMeter();
   const prep=S.phase==='prep';
-  $('#shop').innerHTML=S.shop.map((id,k)=>id?`<button class="su c${U[id].cost}" data-k="${k}" data-id="${id}" ${!prep||S.gold<U[id].cost?'disabled':''} style="--cc:${colorOf(id)}">
+  const marks=readMarks();
+  $('#shop').innerHTML=S.shop.map((id,k)=>id?`<button class="su c${U[id].cost}${marks.includes(id)?' marked':''}" data-k="${k}" data-id="${id}" ${!prep||S.gold<U[id].cost?'disabled':''} style="--cc:${colorOf(id)}">
     <div class="th">${thumbHTML(id,30)}</div><div class="nm">${U[id].name}</div><div class="cl">${ORIGINS[U[id].org].icon} ${CLASSES[U[id].cls].name}</div><div class="c">${U[id].cost}</div></button>`:`<div></div>`).join('');
   $('#bReroll').disabled=!prep; $('#bSell').disabled=!prep||!S.sel; $('#bFight').disabled=!prep;
   $('#bLock').textContent=S.locked?'🔒 Locked':'🔓 Lock'; $('#bLock').title=S.locked?'Shop stays the same next round. Click to unlock.':'Keep these shop units for next round';
