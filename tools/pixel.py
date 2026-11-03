@@ -161,6 +161,8 @@ class Spr:
             else:
                 runs.append((p['g'], [i]))
         out = []
+        fp = getattr(self, 'face_part', None)
+        self.face_layer = next((i for i, (_, idx) in enumerate(runs) if fp is not None and idx[0] <= fp <= idx[-1]), None)
         for g, idx in runs:
             lo, hi = idx[0], idx[-1]
             marks = [m[:3] for m in self.marks if lo <= m[3] <= hi]

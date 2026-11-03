@@ -65,12 +65,19 @@ def head(s, skin=SKIN):
                   ('ell', 37.2, 20.5, 1.6, 2.2)], soft=2.5)
 
 
+EXPR = None   # set by build_sprites.py to render a face variant (see EXPRESSIONS)
+EXPRESSIONS = ('angry', 'hurt', 'dizzy', 'shock', 'sil', 'blind', 'sick', 'happy', 'ko')
+
+
 @grouped('head')
 def face(s, iris, mouth='smile', shift=0, blush=True):
-    """Big anime eyes (3x4) with lashes and a shine, looking down-left."""
+    """Big anime eyes (3x4) with lashes and a shine, looking down-left. kit.EXPR swaps in an expression."""
+    s.face_part = len(s.parts) - 1   # the face marks live on this part's layer
     r = ramp(iris, 1.1, 1.2)
     dark, mid, light = r[1], r[3], r[4]
     lash = (40, 26, 30)
+    if EXPR:
+        return _expression(s, EXPR, dark, mid, light, lash, mouth, shift, blush)
     for k, ex in enumerate((20 + shift, 27 + shift)):
         for dx in range(3):
             s.mark(ex + dx, 19, lash)
@@ -86,6 +93,65 @@ def face(s, iris, mouth='smile', shift=0, blush=True):
     elif mouth == 'open':
         s.mark(24 + shift, 25, (150, 60, 60)); s.mark(25 + shift, 25, (150, 60, 60))
         s.mark(24 + shift, 26, (230, 120, 120)); s.mark(25 + shift, 26, (230, 120, 120))
+
+
+def _expression(s, e, dark, mid, light, lash, mouth, shift, blush):
+    """Pixel faces for battle moments. Eyes sit at x=ex..ex+2, y=19..22; the mouth near (24..25, 25..26)."""
+    M = lambda pts, c: [s.mark(x, y, c) for x, y in pts]
+    MOUTH = (110, 40, 50)
+    for k, ex in enumerate((20 + shift, 27 + shift)):
+        inner = ex + 2 if k == 0 else ex          # the eye corner nearer the nose
+        outer = ex if k == 0 else ex + 2
+        if e == 'angry':                          # narrowed, brows pulled down at the middle
+            M([(ex, 19), (ex + 1, 19), (ex + 2, 19), (inner, 20)], lash)
+            M([(ex + 1, 20)], lash)
+            M([(ex, 21), (ex + 1, 21), (ex + 2, 21)], dark); M([(ex, 22), (ex + 1, 22), (ex + 2, 22)], mid)
+            M([(outer, 21)], WHITE)
+        elif e == 'hurt':                         # > <
+            M([(outer, 19), (ex + 1, 20), (inner, 20), (outer, 21)], lash)
+        elif e == 'dizzy':                        # @ @
+            M([(ex, 19), (ex + 1, 19), (ex + 2, 19), (ex, 20), (ex + 2, 20), (ex, 21), (ex + 1, 21), (ex + 2, 21)], lash)
+            M([(ex + 1, 20)], mid)
+        elif e == 'shock':                        # wide white eyes, tiny pupils
+            M([(ex, 19), (ex + 1, 19), (ex + 2, 19)], lash)
+            M([(x, y) for x in range(ex, ex + 3) for y in (20, 21, 22)], WHITE); M([(ex + 1, 21)], (30, 30, 50))
+        elif e == 'sil':                          # worried eyes (inner brow raised)
+            M([(outer, 20), (ex + 1, 19), (inner, 18)], lash)
+            M([(ex, 21), (ex + 1, 21), (ex + 2, 21)], dark); M([(ex, 22), (ex + 1, 22), (ex + 2, 22)], light)
+        elif e == 'blind':                        # shut tight
+            M([(ex, 21), (ex + 1, 21), (ex + 2, 21), (outer, 20)], lash)
+        elif e == 'sick':                         # droopy, green under the eyes
+            M([(ex, 20), (ex + 1, 20), (ex + 2, 20)], lash)
+            M([(ex, 21), (ex + 1, 21), (ex + 2, 21)], mid); M([(ex, 22), (ex + 1, 22), (ex + 2, 22)], (120, 190, 110))
+        elif e == 'happy':                        # ^ ^
+            M([(ex, 21), (ex + 1, 20), (ex + 2, 21)], lash)
+        elif e == 'ko':                           # x x
+            M([(ex, 19), (ex + 2, 19), (ex + 1, 20), (ex, 21), (ex + 2, 21)], lash)
+    if blush and e in ('angry', 'happy', 'hurt', 'shock'):
+        M([(19 + shift, 23), (20 + shift, 23), (30 + shift, 23), (31 + shift, 23)], BLUSH if e != 'shock' else (170, 210, 240))
+    if e == 'hurt':
+        M([(35 + shift, 16), (35 + shift, 17), (36 + shift, 17)], (150, 210, 255))   # sweat drop
+    if e == 'dizzy':
+        M([(16 + shift, 14), (39 + shift, 13)], (255, 230, 120))
+    if not mouth:                                 # masked face: only the eyes change
+        return
+    x = 24 + shift
+    if e == 'angry':
+        M([(x - 1, 25), (x, 25), (x + 1, 25), (x + 2, 25)], MOUTH); M([(x, 26), (x + 1, 26)], (230, 110, 110))
+    elif e == 'hurt':
+        M([(x - 1, 25), (x + 2, 25)], MOUTH); M([(x, 25), (x + 1, 25)], WHITE)
+    elif e in ('dizzy', 'sick'):
+        M([(x - 1, 26), (x, 25), (x + 1, 26), (x + 2, 25)], MOUTH)
+    elif e == 'shock':
+        M([(x, 25), (x + 1, 25), (x, 26), (x + 1, 26)], MOUTH)
+    elif e == 'sil':
+        M([(x - 1, 24), (x + 1, 24), (x, 25), (x - 1, 26), (x + 1, 26)], (120, 60, 160))
+    elif e == 'blind':
+        M([(x, 25), (x + 1, 25)], MOUTH)
+    elif e == 'happy':
+        M([(x - 1, 25), (x, 25), (x + 1, 25), (x + 2, 25)], MOUTH); M([(x, 26), (x + 1, 26)], (240, 130, 130))
+    elif e == 'ko':
+        M([(x - 1, 26), (x, 25), (x + 1, 25), (x + 2, 26)], MOUTH)
 
 
 HAIR = {

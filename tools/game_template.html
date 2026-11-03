@@ -494,7 +494,7 @@ function readStore(){ try{ return JSON.parse(localStorage.getItem('roab_sprites'
 function writeStore(d){ try{ localStorage.setItem('roab_sprites',JSON.stringify(d)); }catch(e){ msg('Could not save — the image will be lost on refresh'); } }
 function setSprite(id,src,faceLeft,rig){
   if(src){ const im=new Image(); im.onload=()=>{render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
-    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv}; } }   // custom images have no rig: they animate as one piece
+    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr}; } }   // custom images have no rig: they animate as one piece
   else delete SPR[id];
 }
 /*DEFAULT_SPRITES*/
@@ -1217,12 +1217,19 @@ const LOOSE={legL:1,legR:1,fx:1,body:1};   // every other piece rides on the bod
 // so glow/flash overlays tint the figure once instead of once per overlapping piece
 const RIG=document.createElement('canvas'); RIG.width=168*RES; RIG.height=162*RES;
 const rg=RIG.getContext('2d');
-function buildRig(rig,R,tints){
+// the face to show right now (heroes have one face layer per expression, see build_sprites.py)
+function exprOf(o){
+  if(o.die!==undefined) return 'ko'; if(o.frz>0) return 'shock'; if(o.stun>0) return 'dizzy'; if(o.flash>.45) return 'hurt';
+  if(o.cast>0||o.rel>0) return 'angry'; if(o.sil>0) return 'sil'; if(o.blind>0) return 'blind'; if(o.dis>0) return 'hurt';
+  if(o.psn) return 'sick'; if(o.cheer) return 'happy'; if(o.hp!==undefined&&o.hp<.25) return 'hurt'; return null;
+}
+function buildRig(rig,R,tints,expr){
   const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=false;
   rig.layers.forEach((g,i)=>{
     const j=R[g]||b, p=rig.piv[g]||rig.piv.body, ox=j.x+(LOOSE[g]?0:b.x), oy=j.y+(LOOSE[g]?0:b.y);
     rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r);
-    rg.drawImage(rig.img,i*56,0,56,54,-p[0],-p[1],56,54); rg.restore();
+    const src=i===rig.faceLayer&&expr&&rig.expr?rig.expr[expr]??i:i;
+    rg.drawImage(rig.img,src*56,0,56,54,-p[0],-p[1],56,54); rg.restore();
   });
   if(tints.length){ rg.globalCompositeOperation='source-atop';
     for(const [c,a] of tints){ rg.globalAlpha=a; rg.fillStyle=c; rg.fillRect(0,0,168,162); }
@@ -1245,11 +1252,11 @@ function drawUnit(type,star,px,py,o={}){
     const im=sp.img, s=Math.min(54/im.naturalHeight,60/im.naturalWidth,3)*sc, w=im.naturalWidth*s, h=im.naturalHeight*s;
     const flip=o.face!==undefined&&((o.face<0)!==!!sp.faceLeft);
     ctx.translate(px+P.dx,py+26+P.dy-P.lift); ctx.rotate(P.rot); ctx.scale(flip?-P.sx:P.sx,P.sy);
-    if(rig) buildRig(rig,rigPose(o,type,b),statusTints(o));
+    if(rig) buildRig(rig,rigPose(o,type,b),statusTints(o),exprOf(o));
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
     ctx.imageSmoothingEnabled=false; draw();
     if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
-    if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.7,o.cast>0?.25+.2*Math.sin(ANIM*30):0); draw(); }
+    if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.45,o.cast>0?.12+.08*Math.sin(ANIM*30):0); draw(); }   // soft, so the face still reads
   } else {
     ctx.fillStyle=o.flash?'#fff':col; ctx.beginPath(); ctx.arc(px+P.dx,py+2+P.dy-P.lift,19,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=2; ctx.stroke();
@@ -1433,7 +1440,7 @@ function render(){
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
     for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
-      ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,psn:a.psn,glow:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
+      ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,psn:a.psn,glow:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
       const px=p.x*CELL, py=p.y*CELL, r=p.big?8:p.arrow?1.5:5;

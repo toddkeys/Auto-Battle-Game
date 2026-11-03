@@ -44,12 +44,20 @@ if __name__ == '__main__':
         ims[cid].save(os.path.join(OUT, 'units', cid + '.png'))
         s = fn()
         layers = s.layers()
-        strip = Image.new('RGBA', (W * len(layers), H), (0, 0, 0, 0))
-        for i, (_, im) in enumerate(layers):
+        frames = [im for _, im in layers]
+        meta = {'layers': [g for g, _ in layers], 'piv': {'head': (28, 27), 'body': (28, 44), 'cape': (28, 28), **s.piv}}
+        if s.face_layer is not None:   # heroes: one extra copy of the face layer per expression, appended after the pieces
+            meta['faceLayer'], meta['expr'] = s.face_layer, {}
+            for e in kit.EXPRESSIONS:
+                kit.EXPR = e
+                meta['expr'][e] = len(frames)
+                frames.append(fn().layers()[s.face_layer][1])
+            kit.EXPR = None
+        strip = Image.new('RGBA', (W * len(frames), H), (0, 0, 0, 0))
+        for i, im in enumerate(frames):
             strip.paste(im, (i * W, 0))
         strip.save(os.path.join(OUT, 'rig', cid + '.png'), optimize=True)
-        piv = {'head': (28, 27), 'body': (28, 44), 'cape': (28, 28), **s.piv}
         with open(os.path.join(OUT, 'rig', cid + '.json'), 'w') as f:
-            json.dump({'layers': [g for g, _ in layers], 'piv': piv}, f)
+            json.dump(meta, f)
     preview(ims)
     print('built', len(ims))
