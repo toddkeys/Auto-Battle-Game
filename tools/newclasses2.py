@@ -28,24 +28,27 @@ def shadowstep():
 
 
 def phantomblade():
+    # spectral swordsman: white haori over violet hakama, high ponytail, a glowing ghost katana
     s = Spr()
-    garb, ghost, violet = ramp('#e8e4f4', .8), ramp('#b08aff', 1.2, 1.2), ramp('#5a3a9a', 1.2)
-    back_hair(s, ramp('#f0f0ff', .8), 40, 10)
-    legs(s, violet, ramp('#2a1a4a'))
-    torso(s, garb, hem=46)
-    s.part(violet, [('poly', [(21, 29), (25, 29), (35, 43), (31, 44)]), ('poly', [(22, 40), (34, 40), (35, 47), (21, 47)])], soft=.8)
-    belt(s, ghost, 39)
-    with s.grp('weapon'):   # spectral katana
-        s.part(ghost, [('poly', [(41, 40), (43, 40), (47, 12), (46, 9), (44.5, 12)])], soft=.5, gloss=1.6)
-        s.part(ramp('#3a2a4a'), [('cap', 39, 41.5, 45, 41, .9), ('cap', 42, 41.5, 41.6, 47, .9)], soft=.4)
-    arm(s, garb, SKIN, (35, 30), (38.5, 36), (42, 41))
-    arm(s, garb, SKIN, (21, 30), (18.5, 35), (18, 39))
+    haori, hakama, ghost, trim = ramp('#ecebf4', .8), ramp('#3a2a5a', 1.2), ramp('#a88aff', 1.2, 1.25), ramp('#7a5ad8', 1.1)
+    back_hair(s, ramp('#1e1a2a', 1.3), 38, 9)   # ponytail falling down the back
+    legs(s, hakama, ramp('#1a1428'), robe=True)
+    s.part(hakama, [('poly', [(20, 38), (36, 38), (39, 51), (17, 51)])], soft=1.5, cast=1)   # wide hakama
+    torso(s, haori, hem=41)
+    s.part(trim, [('poly', [(21, 29), (24, 28.5), (31, 40), (28, 40.5)]), ('poly', [(35, 29), (32, 28.5), (27, 36), (29.5, 37)])], soft=.5)   # crossed collar
+    belt(s, trim, 39)
+    with s.grp('weapon'):   # ghost katana
+        s.part(ghost, [('poly', [(41, 40), (43, 40), (48, 11), (47.5, 8), (45.6, 11)])], soft=.5, gloss=1.8)
+        s.part(ramp('#2a1e3a'), [('cap', 39.5, 41.4, 44.5, 41, .9), ('cap', 42, 41.5, 41.6, 47, .9)], soft=.4)
+    arm(s, haori, SKIN, (35, 30), (38.5, 36), (42, 41), r=2.9)
+    arm(s, haori, SKIN, (21, 30), (18.5, 35), (18, 39), r=2.9)
     head(s)
-    bangs(s, ramp('#f0f0ff', .8), 'swept', shine=10)
-    s.part(violet, [('poly', [(28, 22.5), (39, 22.5), (38, 29), (30, 30)])], soft=.8, cast=1)   # half mask
-    face(s, '#b08aff')
-    for x, y in ((8, 22), (50, 28), (12, 44)):
-        sparkle(s, x, y, (200, 170, 255))
+    bangs(s, ramp('#1e1a2a', 1.3), 'swept', shine=11)
+    s.part(ramp('#1e1a2a', 1.3), [('ell', 31, 7, 3.4, 2.6)], soft=1)   # hair tie
+    s.part(trim, [('rect', 29.5, 7.5, 32.5, 9)], soft=.3, line=False)
+    face(s, '#a88aff')
+    for x, y in ((8, 24), (51, 30), (10, 44)):
+        sparkle(s, x, y, (200, 180, 255))
     return s
 
 

@@ -20,7 +20,7 @@ def ronin():
     arm(s, kimono, SKIN, (21, 30), (18.5, 35), (19, 39), r=3)
     s.part(ramp('#2a2a30', 1.2), [('cap', 18, 40, 30, 41.5, 1)], soft=.5)   # sheathed short sword
     head(s)
-    bangs(s, ramp('#2a2228', 1.2), 'spiky', shine=10)
+    bangs(s, ramp('#2a2228', 1.2), 'neat', shine=10)   # neat, so no spikes poke through the hat
     s.part(straw, [('poly', [(10, 14.5), (28, 3), (46, 14.5), (43, 16), (28, 13), (13, 16)])], soft=1.5, cast=2)   # straw hat
     s.part(ramp('#9a7a40'), [('poly', [(27, 4), (29, 4), (28.5, 13), (27.5, 13)])], soft=.4, line=False)
     face(s, '#6a5a8a', 'smile')
@@ -49,27 +49,41 @@ def kensei():
 
 
 def shogun():
+    # warlord in black-and-crimson great armour: tiered shoulder plates, a tall golden crest, a long no-dachi
     s = Spr()
-    lacq, gold, dark = ramp('#a8202a', 1.2, 1.1), P['gold'], ramp('#2a2228', 1.3)
-    cape(s, ramp('#3a1a2a', 1.2), 1.2, 52)
-    legs(s, dark, ramp('#1e1a1e'))
-    torso(s, lacq, hem=45)
-    for y in (32, 36, 40):   # laced armour plates
-        s.part(gold, [('rect', 20.5, y, 35.5, y + .8)], soft=.3, flat=True, bias=.05, line=False)
-    s.part(lacq, [('poly', [(17, 29), (23, 28.5), (24, 36), (16, 37)]), ('poly', [(39, 29), (33, 28.5), (32, 36), (40, 37)])], soft=1.2, gloss=.6, cast=1)   # shoulder guards
-    belt(s, dark, 41, gold)
-    katana(s, ramp('#eef2fa', 1.3), gold, x0=42, y0=42, x1=50, y1=12)
-    arm(s, dark, SKIN, (35, 30), (39, 36), (42, 41), r=3, glove=dark)
-    arm(s, dark, SKIN, (21, 30), (18, 35), (17.5, 39.5), r=3, glove=dark)
+    black, crimson, gold, lace = ramp('#26222c', 1.3), ramp('#b0202c', 1.2, 1.1), P['gold'], ramp('#e04a3a', 1.1)
+    cape(s, crimson, 1.5, 53)   # war cloak
+    with s.grp('cape'):
+        s.part(gold, [('poly', [(12, 51.5), (44, 51.5), (44.5, 52.8), (28, 54), (11.5, 52.8)])], soft=.4, gloss=1)
+    legs(s, black, ramp('#16141a'))
+    torso(s, black, hem=42)
+    with s.grp('body'):
+        for y in (30.5, 33.5, 36.5, 39.5):   # laced plates
+            s.part(lace, [('rect', 20.5, y, 35.5, y + .7)], soft=.2, line=False, flat=True, bias=.1)
+        s.part(gold, [('ell', 28, 34, 2.4, 2.4)], sub=[('ell', 28, 34, 1.4, 1.4)], soft=.3, gloss=1.2)   # family crest
+        for k, y in enumerate((41, 44.5)):   # tiered armour skirt
+            s.part(crimson if k else black, [('poly', [(19.5 - k, y), (36.5 + k, y), (37.5 + k, y + 4), (18.5 - k, y + 4)])], soft=.8, gloss=.5)
+            s.part(gold, [('rect', 19 - k, y + 3.3, 37 + k, y + 4)], soft=.2, line=False)
+    belt(s, crimson, 41, gold)
+    sword(s, ramp('#eef2fa', 1.4), ramp('#2a1e1e'), x0=42, y0=43, x1=49, y1=4, w=1.4, guard=3)   # no-dachi
+    arm(s, black, SKIN, (35, 30), (39, 36), (42, 41), r=3.1, glove=black)
+    arm(s, black, SKIN, (21, 30), (18, 35), (17.5, 39.5), r=3.1, glove=black)
+    for side in (1, -1):   # big tiered shoulder plates
+        x = 28 + side * 10
+        for k in range(3):
+            y = 28 + k * 2.6
+            s.part(crimson if k % 2 == 0 else black, [('poly', [(x - 5, y), (x + 5, y), (x + 5.5 * side + side * .5, y + 3), (x - 5.5 * side - side * .5, y + 3)])], soft=.8, gloss=.6, cast=1)
+        s.part(gold, [('rect', x - 5, 28, x + 5, 28.8)], soft=.2, line=False)
     head(s)
     bangs(s, ramp('#1e1a20', 1.2), 'neat', shine=10)
-    s.part(dark, [('chord', 28, 16.5, 12.5, 10.5, 180, 360), ('poly', [(15, 15), (20, 15), (19.5, 23), (13, 21)]), ('poly', [(41, 15), (36, 15), (36.5, 23), (43, 21)])],
-           soft=2, gloss=.8, cast=2)   # kabuto
-    s.part(gold, [('poly', [(14, 4), (20, 11), (28, 12.5), (36, 11), (42, 4), (38, 9.5), (28, 10.5), (18, 9.5)])], soft=.6, gloss=1.2)   # crescent crest
-    s.part(gold, [('rect', 16, 13.6, 40, 15.2)], soft=.4, gloss=.8)
-    face(s, '#a03030', 'smile')
-    for x, y in ((8, 20), (50, 30)):
-        sparkle(s, x, y, (255, 220, 140))
+    s.part(black, [('chord', 28, 16, 13, 11, 180, 360)], soft=2, gloss=1, cast=2)   # helmet bowl
+    s.part(crimson, [('poly', [(14, 15), (20, 15), (18.5, 22), (12, 20.5)]), ('poly', [(42, 15), (36, 15), (37.5, 22), (44, 20.5)])], soft=1, gloss=.6)   # flared neck guard
+    s.part(gold, [('rect', 15.5, 14, 40.5, 15.6)], soft=.4, gloss=1)
+    s.part(gold, [('poly', [(28, 11), (17, 1), (13, -1), (19, 6), (26, 12)]), ('poly', [(28, 11), (39, 1), (43, -1), (37, 6), (30, 12)])], soft=.5, gloss=1.4)   # tall crest horns
+    s.part(crimson, [('ell', 28, 11, 2, 2)], soft=.4, gloss=1)
+    face(s, '#c03030')
+    for x, y in ((7, 22), (51, 26), (9, 44)):
+        sparkle(s, x, y, (255, 210, 140))
     return s
 
 
