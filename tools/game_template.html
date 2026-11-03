@@ -1342,6 +1342,15 @@ function pose(o,b,rigged){
 const CLS_ANIM={samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
 const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':CLS_ANIM[b.cls]);
+// keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
+function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=ks[i]; if(p<=p1){ const q=(p-p0)/(p1-p0); return v0+(v1-v0)*(i===ks.length-1?easeInOut(q):easeOut(q)); } } return ks[ks.length-1][1]; }
+// overhead sword cut, angles in radians from the rest pose: the arm lifts the hand above the shoulder while the blade
+// drops back over it, then both whip forward and the blade sweeps over the head down in front, then settles.
+// blade = absolute blade turn; the wrist (weapon) turns by blade - arm because it rides on the arm.
+const SWING={arm:[[0,0],[.35,-2.3],[.52,.8],[.62,.95],[1,0]], blade:[[0,0],[.35,2],[.52,-2],[.62,-2.3],[1,0]], lean:[[0,0],[.35,1.2],[.52,-1.6],[1,0]]};
+const SWING_BIG={arm:[[0,0],[.35,-2.5],[.5,1],[.62,1.1],[1,0]], blade:[[0,0],[.35,2.3],[.5,-2.3],[.62,-2.5],[1,0]], lean:[[0,0],[.35,1.6],[.5,-2.2],[1,0]]};
+function swing(R,p,K){ const arm=KF(p,K.arm), blade=KF(p,K.blade); R.armR.r+=arm; R.weapon.r+=blade-arm; R.body.x+=KF(p,K.lean);
+  R.armL.r+=KF(p,[[0,0],[.35,.4],[.52,-.3],[1,0]]); R.head.r+=KF(p,[[0,0],[.35,-.08],[.52,.1],[1,0]]); }
 // 3-beat move: ease toward `wind` (anticipation), snap to `hit`, settle back to 0
 function beats(p,wind,hit){ return p<.35?wind*easeOut(p/.35) : p<.55?wind+(hit-wind)*easeOut((p-.35)/.2) : hit*(1-easeInOut((p-.55)/.45)); }
 // joint offsets for this frame: {group:{x,y,r}} in sprite pixels / radians. The sprite faces left, so forward = -x.
@@ -1351,7 +1360,7 @@ function rigPose(o,type,b){
   const t=ANIM+(o.ph||0), br=Math.sin(t*3.2), st=animOf(type,b), R={};
   const J=(x=0,y=0,r=0)=>({x,y,r});
   R.body=J(0,br*.5); R.head=J(0,br*.35,Math.sin(t*1.3)*.03); R.cape=J(0,0,Math.sin(t*1.9)*.05);
-  R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J();
+  R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
   R.wingL=J(); R.wingR=J();
   if(st==='bat'){ const f=Math.sin(t*14); R.wingL.r=f*.45; R.wingR.r=-f*.45; R.body.y=Math.sin(t*14+1.2)*1.4; }
   if(st==='golem'){ R.armL.r=Math.sin(t*1.6)*.06; R.armR.r=-Math.sin(t*1.6)*.06; }
@@ -1362,13 +1371,14 @@ function rigPose(o,type,b){
     R.body.y-=Math.abs(c)*1.2; R.armL.r-=s*.4; R.armR.r-=s*.35; R.cape.r+=.12+s*.05; R.head.r+=s*.03;
     if(st==='blob') R.head.r+=s*.15;
   }
-  if(o.rel>0){
+  if(o.rel>0&&st==='slash'){ const p=1-o.rel/REL_T; swing(R,p,SWING_BIG); R.body.y+=KF(p,[[0,0],[.35,-3],[.5,1.5],[1,0]]); R.legL.r+=KF(p,[[0,0],[.35,.3],[.5,-.25],[1,0]]); R.legR.r+=KF(p,[[0,0],[.35,-.3],[.5,.25],[1,0]]); }
+  else if(o.rel>0){
     const p=1-o.rel/REL_T, B=(w,h)=>beats(p,w,h);
     R.armR.r+=B(-2.1,1.4); R.armL.r+=B(1.5,-.8); R.body.y+=B(-3,1.5); R.head.r+=B(-.12,.12);
     R.legL.r+=B(.3,-.2); R.legR.r+=B(-.3,.2); R.wingL.r+=B(-.8,.6); R.wingR.r+=B(.8,-.6); R.cape.r+=B(.25,-.1);
   } else if(o.atkT>0){
     const p=1-o.atkT/ATK_T, B=(w,h)=>beats(p,w,h);
-    if(st==='slash'){ R.armR.r+=B(-1.6,1.1); R.armL.r+=B(.2,-.3); R.body.x+=B(1,-1.5); R.head.r+=B(-.06,.1); }
+    if(st==='slash') swing(R,p,SWING);
     else if(st==='stab'){ R.armR.r+=B(-.5,.9); R.armR.x+=B(1,-2.5); R.armL.r+=B(.5,-.7); R.body.x+=B(.5,-1); }
     else if(st==='bow'){ R.armL.x+=B(-.5,-1.5); R.armR.x+=B(3,-1); R.armR.r+=B(-.25,.1); R.body.x+=B(.5,1); }
     else if(st==='staff'){ R.armR.r+=B(-.9,.5); R.armL.r+=B(.6,-.2); R.head.r+=B(-.05,.05); R.body.x+=B(.5,-.8); }
@@ -1376,9 +1386,9 @@ function rigPose(o,type,b){
     else if(st==='bat'){ R.body.x+=B(1.5,-3); R.wingL.r+=B(-.6,.5); R.wingR.r+=B(.6,-.5); }
     else if(st==='blob'){ R.head.y+=B(2,-2); R.head.r+=B(.1,-.25); }
   }
-  if(o.cast>0&&(st==='slash'||st==='stab')){   // melee wind-up: sword drawn back low, knees bent
+  if(o.cast>0&&(st==='slash'||st==='stab')){   // melee wind-up: hand up by the shoulder, blade laid back, knees bent
     const q=easeOut(1-o.cast/CAST_T);
-    R.armR.r-=1.9*q; R.armL.r+=.35*q; R.body.y+=2*q; R.legL.r+=.25*q; R.legR.r-=.25*q; R.head.r+=.06*q;
+    R.armR.r-=1.8*q; R.weapon.r+=(1.8+1.7)*q; R.armL.r+=.35*q; R.body.y+=2*q; R.legL.r+=.25*q; R.legR.r-=.25*q; R.head.r+=.06*q;
   } else if(o.cast>0){   // charging a skill: arms (or wings) lift, weapon held high
     const q=easeOut(1-o.cast/CAST_T);
     R.armR.r-=1.3*q; R.armL.r+=1.1*q; R.head.r-=.08*q; R.wingL.r-=.7*q; R.wingR.r+=.7*q; R.body.y-=q;
@@ -1405,6 +1415,10 @@ function exprOf(o){
 function buildRig(rig,R,tints,expr){
   const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=false;
   rig.layers.forEach((g,i)=>{
+    if(g==='weapon'&&rig.piv.weapon){   // shoulder -> arm turn -> wrist -> weapon turn
+      const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon;
+      rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
+      rg.drawImage(rig.img,i*56,0,56,54,-ph[0],-ph[1],56,54); rg.restore(); return; }
     const j=R[g]||b, p=rig.piv[g]||rig.piv.body, ox=j.x+(LOOSE[g]?0:b.x), oy=j.y+(LOOSE[g]?0:b.y);
     rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r);
     const src=i===rig.faceLayer&&expr&&rig.expr?rig.expr[expr]??i:i;

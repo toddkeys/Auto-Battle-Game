@@ -42,7 +42,7 @@ def templar():
     _cross(s, red, 28, 36, 12, 8, 2.2)
     belt(s, P['darkleather'], 40, gold)
     # spear with a pennant
-    with s.grp('armR'):
+    with s.grp('weapon'):
         s.part(P['wood'], [('cap', 43, 52, 45, 6, .9)], soft=.5)
         s.part(P['steel'], [('poly', [(45, 0), (47.5, 6), (45, 9), (42.5, 6)])], soft=.6, gloss=1.2)
         s.part(red, [('poly', [(45.5, 10), (53, 12), (45.5, 15)])], soft=.6)
@@ -67,8 +67,9 @@ def aegispaladin():
     s.part(sky, [('poly', [(24, 32), (32, 32), (32.5, 46), (28, 48), (23.5, 46)])], soft=1)
     s.part(gold, [('poly', [(21, 29), (35, 29), (34, 33), (28, 35), (22, 33)])], soft=1, gloss=.9)
     belt(s, gold, 40, sky)
-    s.part(ramp('#fff4d0', 1.1), [('poly', [(40, 39), (44, 39), (49, 10), (47.5, 6), (46, 10)])], soft=.7, gloss=1.3)   # radiant blade
-    s.part(gold, [('poly', [(37, 39), (47, 39.6), (47, 41.6), (37, 41)]), ('cap', 42, 41, 41.6, 47, 1)], soft=.6, gloss=.8)
+    with s.grp('weapon'):   # radiant blade
+        s.part(ramp('#fff4d0', 1.1), [('poly', [(40, 39), (44, 39), (49, 10), (47.5, 6), (46, 10)])], soft=.7, gloss=1.3)
+        s.part(gold, [('poly', [(37, 39), (47, 39.6), (47, 41.6), (37, 41)]), ('cap', 42, 41, 41.6, 47, 1)], soft=.6, gloss=.8)
     arm(s, plate, plate, (35, 30), (39, 36), (42, 41), r=3)
     s.part(gold, [('chord', 36, 31, 5.6, 4.8, 180, 360)], soft=1.2, gloss=1, cast=1)
     arm(s, plate, plate, (21, 30), (18.5, 35), (17, 39), r=3)

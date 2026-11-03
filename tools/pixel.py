@@ -146,6 +146,8 @@ class Spr:
                 continue
             near = lambda pt, r=1: m[max(0, int(pt[1]) - r):int(pt[1]) + r + 1, max(0, int(pt[0]) - r):int(pt[0]) + r + 1].any()
             g = next((a for a, hd in self.hands.items() if near(hd)), None)
+            if g == 'armR':
+                g = 'weapon'   # whatever the right hand holds turns at the wrist (see rig drawing in the game)
             if g is None and xs.max() - xs.min() < 10:
                 g = next((a for a in self.hands if near(self.piv[a], 0)), None)
             p['g'] = g or ('head' if ys.mean() < 26 else 'body')

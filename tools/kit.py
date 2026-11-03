@@ -199,6 +199,7 @@ def belt(s, rp, y=38, buckle=None):
 
 
 # ====== weapons ======
+@grouped('weapon')   # held in the right hand: the whole sword turns at the wrist
 def sword(s, blade, hilt, x0=40, y0=41, x1=44, y1=14, w=1.6, guard=4.0):
     s.part(blade, [('poly', [(x0 - w, y0 - 3), (x0 + w, y0 - 3), (x1 + w * .7, y1 + 2), (x1, y1 - 1), (x1 - w * .9, y1 + 2)])],
            soft=0.7, gloss=1.0)
@@ -206,6 +207,7 @@ def sword(s, blade, hilt, x0=40, y0=41, x1=44, y1=14, w=1.6, guard=4.0):
                   ('ell', x0 - .3, y0 + 4.2, 1.3, 1.3)], soft=0.6, gloss=0.6)
 
 
+@grouped('weapon')
 def staff(s, wood, x0=40, y0=52, x1=42, y1=10, r=0.9):
     s.part(wood, [('cap', x0, y0, x1, y1, r)], soft=0.6)
 

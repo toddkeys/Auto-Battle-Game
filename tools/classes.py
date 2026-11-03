@@ -250,11 +250,11 @@ def lordknight():
     s.part(red, [('poly', [(24, 33), (32, 33), (32.5, 47), (28, 49), (23.5, 47)])], soft=1.2)
     s.part(gold, [('poly', [(21, 29), (35, 29), (34, 33), (28, 35), (22, 33)])], soft=1, gloss=.8)
     belt(s, gold, 39, red)
-    # glowing greatsword
-    s.part(ramp('#d8f2ff', 1.2), [('poly', [(40, 38), (44, 38), (51, 7), (49.5, 3), (47.5, 7)])], soft=.7, gloss=1.2)
-    s.part(ramp('#7fd4ff', 1.1), [('poly', [(41.6, 37), (42.4, 37), (49.6, 8), (49, 7)])], soft=.3, line=False, flat=True, bias=.2)
-    s.part(gold, [('poly', [(36, 38), (48, 38.8), (48, 41), (36, 40.2)]), ('cap', 42, 40, 41.6, 46, 1),
-                  ('ell', 41.5, 47, 1.5, 1.5)], soft=.6, gloss=.8)
+    with s.grp('weapon'):   # glowing greatsword
+        s.part(ramp('#d8f2ff', 1.2), [('poly', [(40, 38), (44, 38), (51, 7), (49.5, 3), (47.5, 7)])], soft=.7, gloss=1.2)
+        s.part(ramp('#7fd4ff', 1.1), [('poly', [(41.6, 37), (42.4, 37), (49.6, 8), (49, 7)])], soft=.3, line=False, flat=True, bias=.2)
+        s.part(gold, [('poly', [(36, 38), (48, 38.8), (48, 41), (36, 40.2)]), ('cap', 42, 40, 41.6, 46, 1),
+                      ('ell', 41.5, 47, 1.5, 1.5)], soft=.6, gloss=.8)
     arm(s, plate, plate, (35, 30), (39, 36), (42, 41), r=2.8)
     s.part(gold, [('chord', 36, 31, 5.2, 4.5, 180, 360)], soft=1.2, gloss=1, cast=1)
     arm(s, plate, plate, (21, 30), (18.5, 35), (20, 40), r=2.8)

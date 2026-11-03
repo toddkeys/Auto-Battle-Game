@@ -49,6 +49,8 @@ if __name__ == '__main__':
         layers = s.layers()
         frames = [im for _, im in layers]
         meta = {'layers': [g for g, _ in layers], 'piv': {'head': (28, 27), 'body': (28, 44), 'cape': (28, 28), **s.piv}}
+        if 'weapon' in meta['layers']:
+            meta['piv']['weapon'] = s.hands['armR']   # the wrist
         if s.face_layer is not None:   # heroes: one extra copy of the face layer per expression, appended after the pieces
             meta['faceLayer'], meta['expr'] = s.face_layer, {}
             for e in kit.EXPRESSIONS:
