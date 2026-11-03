@@ -12,13 +12,16 @@ import kit  # noqa: E402
 import classes  # noqa: E402
 import monsters  # noqa: E402
 import tier4  # noqa: E402
+import summoners  # noqa: E402
+import creatures  # noqa: E402
 from pixel import W, H  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets')
-CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **monsters.MONSTERS)
+CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **summoners.SUMMONERS,
+             **monsters.MONSTERS, **creatures.CREATURES)
 
 
-def preview(sprites, scale=4, cols=5):
+def preview(sprites, scale=4, cols=6):
     cw, ch = W * scale + 16, H * scale + 30
     rows = (len(sprites) + cols - 1) // cols
     sheet = Image.new('RGBA', (cw * cols, ch * rows), (52, 68, 44, 255))
