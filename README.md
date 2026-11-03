@@ -8,7 +8,7 @@ A single-file auto battler (original anime-style pixel art). Open `ro-autobattle
 - Animation: every sprite is built from pieces (legs, body, arms + weapons, head, cape...). `build_sprites.py` also writes
   `assets/rig/<id>.png` (one layer per piece) + `<id>.json` (piece groups and joints); the game turns each piece on its
   joint (`rigPose` in the template) for walking, attacks, casting, hits, cheering and dying.
-- Sprites: `tools/kit.py`, `tools/classes.py`, `tools/tier4.py`, `tools/summoners.py`, `tools/monsters.py`, `tools/creatures.py` (engine in `tools/pixel.py`)
+- Sprites: `tools/kit.py`, `tools/classes.py`, `tools/tier4.py`, `tools/crusaders.py`, `tools/summoners.py`, `tools/monsters.py`, `tools/creatures.py` (engine in `tools/pixel.py`)
 
 Rebuild (needs Python with Pillow and numpy):
 
