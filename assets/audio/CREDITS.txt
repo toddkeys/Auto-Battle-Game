@@ -1,0 +1,22 @@
+Sound and music credits (all from opengameart.org)
+Files were trimmed, loudness-matched and converted to OGG by tools/build_audio.py.
+
+Music
+- prep.mp3   "Town Theme RPG" by cynicmusic — CC0
+             https://opengameart.org/content/town-theme-rpg
+- battle.mp3 "JRPG Epic Rock Battle Theme #1" (loop) by HydroGene — CC0
+             https://opengameart.org/content/jrpg-epic-rock-battle-theme-1
+
+Sound effects
+- "Spell Sounds Starter Pack" by p0ss — CC-BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/)
+  https://opengameart.org/content/spell-sounds-starter-pack
+  used for: freeze, ice, heal, bless, shield, flame, zap, zapshot, curse, poison, teleport, summon, stun,
+            arrows, snipe, boom, star, victory, defeat
+  The modified versions of these files in sfx/ are shared under the same CC-BY-SA 3.0 license.
+- "RPG Sound Pack" by artisticdude — CC0
+  https://opengameart.org/content/rpg-sound-pack
+- "80 CC0 RPG SFX" and "25 CC0 bang / firework SFX" by rubberduck — CC0
+  https://opengameart.org/content/80-cc0-rpg-sfx
+  https://opengameart.org/content/25-cc0-bang-firework-sfx
+- "50 RPG sound effects" by Kenney (www.kenney.nl) — CC0
+  https://opengameart.org/content/50-rpg-sound-effects

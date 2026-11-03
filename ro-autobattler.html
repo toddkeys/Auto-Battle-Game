@@ -195,6 +195,13 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
     </div>
     <div class="card">
       <details>
+        <summary>Credits</summary>
+        <p class="help" style="padding:0;margin-top:8px">Art, code and game design: original. Music: <b>Town Theme RPG</b> by cynicmusic, <b>JRPG Epic Rock Battle Theme #1</b> by HydroGene (CC0).
+        Sound effects: <b>Spell Sounds Starter Pack</b> by p0ss (CC-BY-SA 3.0), <b>RPG Sound Pack</b> by artisticdude, <b>80 CC0 RPG SFX</b> and <b>25 CC0 bang SFX</b> by rubberduck, <b>50 RPG sound effects</b> by Kenney (CC0) — all via OpenGameArt.org. Details in assets/audio/CREDITS.txt.</p>
+      </details>
+    </div>
+    <div class="card">
+      <details>
         <summary>Sprite settings</summary>
         <p class="help" style="padding:0;margin-top:8px">Press "Choose", pick a PNG sprite sheet, drag a box around one standing pose and Save. Your image replaces the built-in one (in this browser only).</p>
         <div class="spl" id="spl"></div>
@@ -646,105 +653,51 @@ function drawAmbient(){
 }
 
 
-// ====== sound: all synthesized with Web Audio — original music and effects, no audio files ======
-// Music: "Meadow Waltz" (prep, 3/4, F major: 1 6m 4 5 | 1 3m 4 5 | 6m 4 2m 5 | 1 4 5 1)
-//        "Clash at the Ford" (battle, 4/4, D minor: 1m 1m 6 7 | 1m 1m 4m 5)
+// ====== sound: recorded effects + music (assets/audio, built by tools/build_audio.py; credits in assets/audio/CREDITS.txt) ======
+// plain <audio> elements, so it also works when the page is opened straight from disk
 const SND=(()=>{
-  let ac=null, mus, sfx, musicOn=true, sfxOn=true, want='prep', track=null, bar=0, nextT=0, nb=null;
+  let ready=false, musicOn=true, sfxOn=true, want='prep';
+  const SFX_VOL=.6, MUS_VOL=.32, pool={}, last={};
   try{ const p=JSON.parse(localStorage.getItem('ab_sound')||'{}'); musicOn=p.music!==false; sfxOn=p.sfx!==false; }catch(e){}
   const save=()=>{ try{ localStorage.setItem('ab_sound',JSON.stringify({music:musicOn,sfx:sfxOn})); }catch(e){} };
-  const mtof=m=>440*2**((m-69)/12), last={};
+  const FILES=['hit1','hit2','hit3','crit','shoot','zapshot','cast','skill','hdie','mdie','shatter','freeze','boom','slam','quake','heal','bless','shield',
+    'fire','flame','ice','zap','curse','poison','teleport','summon','stun','arrows','snipe','steal','flurry','trap','slime','roar_golem','roar_lich','roar',
+    'click','buy','sell','reroll','star','equip','slot','start','victory','defeat'];
+  const ALIAS={hit:['hit1','hit2','hit3']};
+  const GAP={hit:.06,crit:.08,shoot:.06,zapshot:.07,heal:.15,cast:.1,boom:.15,freeze:.12,shatter:.12,click:.04,hdie:.1,mdie:.1};
+  const VOL={click:.5,cast:.6,hit:.75,shoot:.7,zapshot:.6,buy:.8,sell:.8,reroll:.8};
+  const music={prep:new Audio('assets/audio/prep.mp3'),battle:new Audio('assets/audio/battle.mp3')};
+  for(const m of Object.values(music)){ m.loop=true; m.volume=0; m.preload='auto'; }
   function init(){
-    if(ac) return; const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; ac=new AC();
-    const comp=ac.createDynamicsCompressor(), out=ac.createGain(); out.gain.value=.85; comp.connect(out); out.connect(ac.destination);
-    mus=ac.createGain(); mus.gain.value=musicOn?.3:0; sfx=ac.createGain(); sfx.gain.value=sfxOn?.45:0; mus.connect(comp); sfx.connect(comp);
-    const dl=ac.createDelay(), fb=ac.createGain(), wet=ac.createGain(); dl.delayTime.value=.24; fb.gain.value=.28; wet.gain.value=.2;   // a little hall echo on the music
-    mus.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(comp);
-    setInterval(tick,60);
+    if(ready) return; ready=true;
+    for(const n of FILES) pool[n]={i:0,a:Array.from({length:3},()=>{ const x=new Audio('assets/audio/sfx/'+n+'.ogg'); x.preload='auto'; return x; })};
   }
-  function tone(dest,f,t,d,{type='sine',v=.2,a=.006,rel=null,f2=null,vib=0,lp=0}={}){
-    const o=ac.createOscillator(), g=ac.createGain(), r=rel??d*.5; o.type=type; o.frequency.setValueAtTime(f,t); if(f2) o.frequency.exponentialRampToValueAtTime(f2,t+d);
-    if(vib){ const l=ac.createOscillator(), lg=ac.createGain(); l.frequency.value=5.2; lg.gain.value=vib; l.connect(lg); lg.connect(o.frequency); l.start(t+.12); l.stop(t+d+r); }
-    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+a); g.gain.setValueAtTime(v,t+Math.max(a,d*.6)); g.gain.exponentialRampToValueAtTime(.0005,t+d+r);
-    let node=o; if(lp){ const fl=ac.createBiquadFilter(); fl.type='lowpass'; fl.frequency.value=lp; o.connect(fl); node=fl; }
-    node.connect(g); g.connect(dest); o.start(t); o.stop(t+d+r+.05);
+  function play(k){
+    if(!ready||!sfxOn) return; const now=performance.now()/1000; if(now-(last[k]||-9)<(GAP[k]||.05)) return; last[k]=now;
+    let n=ALIAS[k]||k; if(Array.isArray(n)) n=n[Math.random()*n.length|0];
+    const p=pool[n]; if(!p) return; const x=p.a[p.i++%p.a.length];
+    x.volume=SFX_VOL*(VOL[k]||1); try{ x.currentTime=0; }catch(e){} x.play().catch(()=>{});
   }
-  function noise(dest,t,d,{v=.3,f=1200,f2=null,q=.8,type='bandpass'}={}){
-    if(!nb){ nb=ac.createBuffer(1,ac.sampleRate,ac.sampleRate); const c=nb.getChannelData(0); for(let i=0;i<c.length;i++) c[i]=Math.random()*2-1; }
-    const n=ac.createBufferSource(), fl=ac.createBiquadFilter(), g=ac.createGain(); n.buffer=nb; fl.type=type; fl.frequency.setValueAtTime(f,t); if(f2) fl.frequency.exponentialRampToValueAtTime(f2,t+d); fl.Q.value=q;
-    g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.0005,t+d); n.connect(fl); fl.connect(g); g.connect(dest); n.start(t,Math.random()*.5); n.stop(t+d+.05);
-  }
-  // ---- music ----
-  const TRACKS={
-    prep:{bpm:138,beats:3,
-      chords:[[57,60,65],[57,62,65],[58,62,65],[55,60,64],[57,60,65],[57,60,64],[58,62,65],[55,58,64],[57,62,65],[58,62,65],[55,58,62],[55,60,64],[57,60,65],[58,62,65],[55,60,64],[57,60,65]],
-      bass:[41,38,46,36,41,45,46,36,38,46,43,36,41,46,36,41],
-      mel:[[[0,69,1],[1,72,1],[2,77,1]],[[0,76,2],[2,74,1]],[[0,74,1],[1,72,1],[2,70,1]],[[0,72,3]],
-           [[0,69,1],[1,72,1],[2,77,1]],[[0,76,1],[1,79,1],[2,76,1]],[[0,77,1],[1,74,1],[2,70,1]],[[0,72,2],[2,70,1]],
-           [[0,69,1],[1,74,1],[2,77,1]],[[0,77,2],[2,76,1]],[[0,74,1],[1,70,1],[2,67,1]],[[0,72,3]],
-           [[0,69,1],[1,72,1],[2,77,1]],[[0,74,1],[1,77,1],[2,81,1]],[[0,79,1],[1,76,1],[2,72,1]],[[0,77,3]]]},
-    battle:{bpm:150,beats:4,
-      chords:[[62,65,69],[62,65,69],[62,65,70],[64,67,72],[62,65,69],[62,65,69],[62,67,70],[61,64,69]],
-      bass:[38,38,34,36,38,38,43,45],
-      mel:[[[0,74,.5],[.5,77,.5],[1,81,1],[2,79,.5],[2.5,77,.5],[3,76,1]],[[0,74,1.5],[1.5,72,.5],[2,74,2]],
-           [[0,70,.5],[.5,74,.5],[1,77,1],[2,79,1],[3,77,1]],[[0,76,1],[1,72,1],[2,76,1],[3,79,1]],
-           [[0,74,.5],[.5,77,.5],[1,81,1],[2,79,.5],[2.5,77,.5],[3,76,1]],[[0,81,1],[1,79,.5],[1.5,77,.5],[2,74,2]],
-           [[0,79,.5],[.5,77,.5],[1,74,1],[2,70,1],[3,74,1]],[[0,73,1],[1,76,1],[2,79,1],[3,81,1]]]},
-  };
-  function playBar(T,i,t){
-    const b=60/T.bpm, ch=T.chords[i], root=T.bass[i];
-    for(const [st,m,du] of T.mel[i]){   // flute-like lead
-      tone(mus,mtof(m),t+st*b,du*b*.92,{type:'triangle',v:.16,a:.03,vib:3,rel:.12}); tone(mus,mtof(m+12),t+st*b,du*b*.9,{v:.035,a:.04,rel:.1}); }
-    if(T.beats===3){
-      tone(mus,mtof(root),t,b*.9,{type:'triangle',v:.22,rel:.1});   // oom
-      for(const k of [1,2]) for(const m of ch) tone(mus,mtof(m),t+k*b,b*.32,{type:'triangle',v:.045,rel:.08,lp:2200});   // pah pah
-      [0,1,2,0,2,1].forEach((n,j)=>tone(mus,mtof(ch[n]+(j===3?12:0)+12),t+j*b/2,b*.45,{v:.04,a:.004,rel:.35}));   // harp
-    } else {
-      for(let k=0;k<8;k++) tone(mus,mtof(root+(k%4===3?12:0)),t+k*b/2,b*.42,{type:'square',v:.05,rel:.05,lp:900});   // driving bass
-      for(const m of ch) tone(mus,mtof(m),t,b*3.8,{type:'triangle',v:.03,a:.2,rel:.3,lp:1600});   // pad
-      for(const k of [0,2]) tone(mus,150,t+k*b,.18,{f2:45,v:.5,rel:.05});   // kick
-      for(const k of [1,3]) noise(mus,t+k*b,.16,{v:.22,f:1800,q:.7});      // snare
-      for(let k=0;k<8;k++) noise(mus,t+k*b/2,.04,{v:.06,f:8000,type:'highpass'});   // hats
+  // called every frame: the wanted track fades in, the other fades out (and pauses when silent)
+  function update(dt){
+    for(const [k,m] of Object.entries(music)){
+      const tgt=ready&&musicOn&&k===want?MUS_VOL:0;
+      if(tgt>0&&m.paused) m.play().catch(()=>{});
+      m.volume=Math.max(0,Math.min(1,m.volume+(tgt-m.volume)*Math.min(1,dt*2.5)));
+      if(tgt===0&&!m.paused&&m.volume<.005) m.pause();
     }
   }
-  function tick(){
-    if(!ac||!musicOn) return;
-    if(track!==want){ track=want; bar=0; nextT=Math.max(nextT,ac.currentTime+.08); }
-    const T=TRACKS[track];
-    while(nextT<ac.currentTime+.5){ playBar(T,bar,nextT); nextT+=T.beats*60/T.bpm; bar=(bar+1)%T.chords.length; }
-  }
-  // ---- effects (each kind is rate-limited so big fights stay readable) ----
-  const FX={
-    hit:t=>{ noise(sfx,t,.07,{v:.22,f:900,f2:300}); tone(sfx,140,t,.06,{f2:60,v:.25}); },
-    crit:t=>{ noise(sfx,t,.1,{v:.32,f:1400,f2:400}); tone(sfx,1500,t,.12,{type:'triangle',v:.1,rel:.15}); tone(sfx,120,t,.1,{f2:45,v:.35}); },
-    shoot:t=>noise(sfx,t,.12,{v:.08,f:3200,f2:1200,type:'highpass'}),
-    cast:t=>{ tone(sfx,380,t,.32,{f2:1150,v:.08,type:'triangle'}); [0,.08,.16].forEach((d,i)=>tone(sfx,1320+i*330,t+d,.12,{v:.04})); },
-    skill:t=>{ [523,659,784].forEach(f=>tone(sfx,f,t,.18,{type:'triangle',v:.07,rel:.2})); noise(sfx,t,.2,{v:.12,f:2500,f2:600}); },
-    heal:t=>{ tone(sfx,880,t,.12,{v:.07,rel:.25}); tone(sfx,1320,t+.07,.14,{v:.06,rel:.3}); },
-    freeze:t=>{ [2400,3100,3600].forEach((f,i)=>tone(sfx,f,t+i*.03,.12,{v:.05,rel:.25})); noise(sfx,t,.25,{v:.08,f:6000,type:'highpass'}); },
-    shatter:t=>{ noise(sfx,t,.18,{v:.2,f:5000,type:'highpass'}); [2800,3700,4400].forEach((f,i)=>tone(sfx,f,t+i*.025,.06,{v:.05,rel:.1})); },
-    boom:t=>{ noise(sfx,t,.55,{v:.45,f:500,f2:80,type:'lowpass',q:.5}); tone(sfx,90,t,.4,{f2:30,v:.45}); },
-    enrage:t=>{ tone(sfx,75,t,.8,{type:'sawtooth',f2:48,v:.18,lp:600,rel:.3}); noise(sfx,t,.7,{v:.2,f:300,type:'lowpass'}); },
-    summon:t=>{ tone(sfx,300,t,.35,{f2:900,v:.08}); tone(sfx,1200,t+.25,.2,{v:.05,rel:.4}); },
-    buy:t=>{ tone(sfx,1320,t,.06,{type:'square',v:.05,lp:4000}); tone(sfx,1760,t+.06,.12,{type:'square',v:.05,lp:4000,rel:.15}); },
-    sell:t=>{ tone(sfx,1760,t,.06,{type:'square',v:.05,lp:4000}); tone(sfx,1175,t+.06,.12,{type:'square',v:.05,lp:4000}); },
-    reroll:t=>{ for(let i=0;i<4;i++) noise(sfx,t+i*.04,.05,{v:.08,f:2000+i*600}); tone(sfx,988,t+.16,.08,{type:'triangle',v:.06}); },
-    star:t=>[523,659,784,1047].forEach((f,i)=>tone(sfx,f,t+i*.07,.18,{type:'triangle',v:.09,rel:.25})),
-    click:t=>tone(sfx,660,t,.03,{type:'triangle',v:.05,rel:.03}),
-    victory:t=>{ [[0,65],[.12,69],[.24,72],[.36,77]].forEach(([d,m])=>tone(sfx,mtof(m+12),t+d,.16,{type:'triangle',v:.1,rel:.1})); [65,69,72,77].forEach(m=>tone(sfx,mtof(m+12),t+.5,.6,{type:'triangle',v:.06,rel:.5})); },
-    defeat:t=>[[0,69],[.18,65],[.36,62],[.6,61]].forEach(([d,m])=>tone(sfx,mtof(m),t+d,d<.5?.18:.7,{type:'triangle',v:.1,rel:.3})),
-  };
-  const GAP={hit:.045,crit:.07,shoot:.05,heal:.12,cast:.08,skill:.08,boom:.12,freeze:.1,shatter:.1,click:.03};
-  function play(k){
-    if(!ac||!sfxOn) return; const now=ac.currentTime; if(now-(last[k]||-9)<(GAP[k]||.05)) return; last[k]=now; FX[k](now+.005);
-  }
-  return {init,play,
-    music(kind){ want=kind; },
-    toggleMusic(){ musicOn=!musicOn; save(); if(mus) mus.gain.setTargetAtTime(musicOn?.3:0,ac.currentTime,.1); if(musicOn&&ac) nextT=ac.currentTime+.1; return musicOn; },
-    toggleSfx(){ sfxOn=!sfxOn; save(); if(sfx) sfx.gain.setTargetAtTime(sfxOn?.45:0,ac.currentTime,.05); return sfxOn; },
+  return {init,play,update,
+    music(kind){ if(kind!==want&&kind==='battle'){ try{ music.battle.currentTime=0; }catch(e){} } want=kind; },
+    toggleMusic(){ musicOn=!musicOn; save(); return musicOn; },
+    toggleSfx(){ sfxOn=!sfxOn; save(); return sfxOn; },
     get musicOn(){ return musicOn; }, get sfxOn(){ return sfxOn; }};
 })();
-// browsers only allow sound after the first click/tap
+// which sound each skill makes when it goes off
+const SKILL_SND={swordsman:'slam',knight:'stun',lordknight:'slam',archer:'shoot',hunter:'trap',sniper:'snipe',acolyte:'heal',priest:'heal',highpriest:'bless',
+  thief:'steal',assassin:'flurry',assassincross:'teleport',mage:'fire',wizard:'ice',highwizard:'fire',starwarden:'shield',stormranger:'arrows',dawnoracle:'bless',
+  nightreaper:'curse',voidsage:'zap',bulwark:'shield',templar:'teleport',aegispaladin:'bless',spiritcaller:'summon',beastmaster:'summon',stonebinder:'quake',
+  starcaller:'summon',mossling:'slime',shroomkin:'poison',emberbat:'fire',golem:'quake',lich:'ice',wyrm:'flame'};
 addEventListener('pointerdown',()=>{ SND.init(); },{once:true});
 
 // ====== game state ======
@@ -760,7 +713,7 @@ function buyCap(){
   if(S.phase!=='prep') return;
   if(cap()>=MAX_CAP) return msg(`Already at the maximum of ${MAX_CAP} units`);
   const c=capCost(); if(S.gold<c) return msg('Not enough gold');
-  S.gold-=c; S.extra++; msg(`You can now field ${cap()} units`); render(); renderUI();
+  S.gold-=c; S.extra++; SND.play('slot'); msg(`You can now field ${cap()} units`); render(); renderUI();
 }
 const onBoard=()=>S.units.filter(u=>u.loc.w==='board');
 const roundKind=r=>r%5===0?(r>=15?'boss':'monster'):'pvp';
@@ -774,7 +727,7 @@ function giveItem(u){
     msg(`Took ${u.items.map(i=>ITEMS[i].icon).join(' ')} off ${U[u.type].name}`); u.items=[]; return;
   }
   if(u.items.length>=MAX_ITEMS) return msg(`${U[u.type].name} already holds ${ITEMS[u.items[0]].icon} — use 📜 to take it off first`);
-  u.items.push(k); S.inv.splice(S.selItem,1); S.selItem=null;
+  u.items.push(k); S.inv.splice(S.selItem,1); S.selItem=null; SND.play('equip');
   msg(`${U[u.type].name} equipped ${ITEMS[k].icon} ${ITEMS[k].name}`);
 }
 
@@ -963,7 +916,7 @@ function startFight(){
   f.forEach((x,i)=>{ const before=Object.fromEntries(ITEM_STATS.map(k=>[k,x[k]||0])); for(const k of x.items||[]) ITEMS[k].apply(x);
     x.itemDelta=Object.fromEntries(ITEM_STATS.map(k=>[k,(x[k]||0)-before[k]]).filter(([,v])=>v));   // what the items added, so Pilfer can take it back
     x.spawnT=.3+(i%9)*.04; if(U[x.type].leap) x.leapDelay=.2; });
-  S.fight={f,proj:[],fx:[],vfx:[],timers:[],parts:[],t:0,kind,stop:0,lastStop:-9,winner:null}; S.phase='fight';
+  S.fight={f,proj:[],fx:[],vfx:[],timers:[],parts:[],t:0,kind,stop:0,lastStop:-9,winner:null}; S.phase='fight'; SND.play('start');
   for(const x of f) if(U[x.type].guard){   // Guardian Link: protect the nearest unguarded back-line ally
     const ally=f.filter(b=>b.team===x.team&&b!==x&&!b.guard&&U[b.type].range>=2).sort((p,q)=>dist(p,x)-dist(q,x))[0];
     if(ally){ ally.guard=x; ally.guardPct=U[x.type].guard; } }
@@ -975,7 +928,7 @@ let ANIM=0;
 function frame(now){
   const dt=Math.min((now-last)/1000,.05); last=now; ANIM+=dt;
   if(S&&S.fight){ if(S.phase!=='fight') tickFx(dt*speed); else if(S.fight.stop>0) S.fight.stop-=dt; else step(dt*speed); }
-  trauma=Math.max(0,trauma-dt*1.4);
+  trauma=Math.max(0,trauma-dt*1.4); SND.update(dt);
   if(S&&S.fight){ const F=S.fight, want=F.f.some(x=>x.hp>0&&x.castT>0&&bigCaster(x))?1:0; F.dim=(F.dim||0)+(want-(F.dim||0))*Math.min(1,dt*10); }
   if(S&&S.inspect&&S.fight&&(ANIM*5|0)!==((ANIM-dt)*5|0)) renderInfo();   // live stats, 5x a second
   if(S&&S.ufx.length){ for(const u of S.ufx) u.t-=dt; S.ufx=S.ufx.filter(u=>u.t>0); }
@@ -1027,7 +980,7 @@ function heal(u,amt,src){ if(u.hp<=0) return; if(src) src.hl+=Math.min(amt,u.max
 function shoot(a,t,mult=1,c,big,onHit){
   const arrow=!big&&U[a.type].cls==='archer';
   const d0=Math.max(.5,Math.hypot(t.x-a.x,t.y-a.y+.2));
-  SND.play('shoot');
+  SND.play(arrow?'shoot':'zapshot');
   S.fight.proj.push({x:a.x,y:a.y-.2,bx:a.x,by:a.y-.2,d0,h:arrow?Math.min(1.1,d0*.2):0,src:a,t,c:c||colorOf(a.type),mult,big,arrow,onHit,tr:[]});
 }
 function deal(t,dmg,crit,src){
@@ -1094,7 +1047,7 @@ function releaseCast(a){
   a.atkT=ATK_T; a.relT=REL_T; a.glow=.5; if(t) a.tgt=t; if(a.spellblade) a.sb=3;
   const sk=SKILLS[a.type], nm=sk.names?sk.names[(a.alt|0)%sk.names.length]:sk.name;   // bosses alternate between skills
   V({k:'shout',x:a.x,y:a.y-.95,txt:nm+'!',c:colorOf(a.type),m:1});   // shout the skill name
-  SND.play('skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
+  SND.play(SKILL_SND[a.type]||'skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
   burst(a.x,a.y-.3,colorOf(a.type),10,3,3,0);
   V({k:'pillar',x:a.x,y:a.y+.35,c:colorOf(a.type),m:.4});   // light pillar on release
   SKILLS[a.type].cast(a,t);
@@ -1180,10 +1133,10 @@ function tickFx(dt){
     if(a.hp<=0&&!a.dead&&a.phoenix){ a.phoenix=0; a.hp=a.hpLag=a.max*.35; a.frz=a.stun=0; a.psn=null;   // Phoenix Feather
       pop(a,'Phoenix!','#ffb040',true); V({k:'pillar',x:a.x,y:a.y+.35,c:'#ff9030',m:.6}); burst(a.x,a.y-.3,'#ffb040',18,3,3,-2); }
     if(a.hp<=0&&!a.dead){ for(const b of F.f) if(b.team!==a.team&&b.hp>0&&b.killAS) b.asM+=b.killAS;
-      a.dead=true; a.dieT=DIE_T; burst(a.x,a.y-.2,'#ffffff',10,2,3,2); burst(a.x,a.y,colorOf(a.type),8,1.5,3,-1); }
+      a.dead=true; a.dieT=DIE_T; SND.play(a.team===1&&(U[a.type].cls==='monster'||U[a.type].cls==='summon')?'mdie':'hdie'); burst(a.x,a.y-.2,'#ffffff',10,2,3,2); burst(a.x,a.y,colorOf(a.type),8,1.5,3,-1); }
     if(a.dieT>0) a.dieT-=dt;
     if(U[a.type].boss&&!a.enraged&&a.hp>0&&a.hp<a.max*.5){
-      a.enraged=true; a.mp=a.mpMax; pop(a,'ENRAGED','#ff5040',true); SND.play('enrage');
+      a.enraged=true; a.mp=a.mpMax; pop(a,'ENRAGED','#ff5040',true); SND.play({golem:'roar_golem',lich:'roar_lich'}[a.type]||'roar');
       V({k:'ring',x:a.x,y:a.y+.3,r:2.2,c:'#ff4030',m:.6}); V({k:'flash',x:0,y:0,c:'#ff3020',m:.35}); burst(a.x,a.y-.3,'#ff5040',20,4,4,0); hitStop(.1);
       BOSS_ENRAGE[a.type](a);
     }
@@ -1644,7 +1597,7 @@ $('#items').addEventListener('pointerup',e=>{ const d=itemDrag; itemDrag=null; i
   if(!u) return msg('Drop the item on one of your units');
   S.selItem=d.i; giveItem(u); render(); renderUI(); });
 $('#items').addEventListener('pointercancel',()=>{ if(itemDrag&&itemDrag.ghost) itemDrag.ghost.remove(); itemDrag=null; });
-$('#bMus').onclick=()=>{ SND.init(); $('#bMus').classList.toggle('off',!SND.toggleMusic()); };
+$('#bMus').onclick=()=>{ SND.init(); $('#bMus').classList.toggle('off',!SND.toggleMusic()); };   // music fades in/out in SND.update
 $('#bSfx').onclick=()=>{ SND.init(); $('#bSfx').classList.toggle('off',!SND.toggleSfx()); };
 $('#bMus').classList.toggle('off',!SND.musicOn); $('#bSfx').classList.toggle('off',!SND.sfxOn);
 document.addEventListener('click',e=>{ if(e.target.closest('button.b,.su,.it')) SND.play('click'); });

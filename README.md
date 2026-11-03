@@ -10,6 +10,8 @@ A single-file auto battler (original anime-style pixel art). Open `ro-autobattle
   joint (`rigPose` in the template) for walking, attacks, casting, hits, cheering and dying.
 - Sprites: `tools/kit.py`, `tools/classes.py`, `tools/tier4.py`, `tools/crusaders.py`, `tools/summoners.py`, `tools/monsters.py`, `tools/creatures.py` (engine in `tools/pixel.py`)
 
+Sound: `assets/audio` (credits in `assets/audio/CREDITS.txt`), rebuilt from the source packs with `python tools/build_audio.py <packs folder>` (needs ffmpeg).
+
 Rebuild (needs Python with Pillow and numpy):
 
 ```bash
