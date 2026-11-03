@@ -18,7 +18,7 @@ K = 'k/OGG/'                      # Kenney RPG sounds, CC0
 SFX = {
     # combat
     'hit1': (R + 'blade_01.ogg', .5, 0), 'hit2': (R + 'blade_02.ogg', .5, 0), 'hit3': (K + 'knifeSlice.ogg', .5, 0),
-    'crit': (K + 'chop.ogg', .6, 3), 'shoot': (A + 'battle/swing2.wav', .4, -4), 'zapshot': (P + 'zap2.ogg', .5, -4),
+    'crit': ([K + 'chop.ogg', R + 'item_gem_03.ogg'], .6, 3),   # heavy chop + bright metallic ring 'shoot': (A + 'battle/swing2.wav', .4, -4), 'zapshot': (P + 'zap2.ogg', .5, -4),
     'cast': (R + 'spell_01.ogg', .8, -3), 'skill': (A + 'battle/magic1.wav', 1.2, 0),
     'hdie': (A + 'inventory/armor-light.wav', .8, 0), 'mdie': (R + 'creature_die_01.ogg', 1.0, 0),
     'shatter': (R + 'item_gem_03.ogg', .7, 2), 'freeze': (P + 'freeze2.ogg', 1.0, 0),
@@ -34,7 +34,8 @@ SFX = {
     'click': (A + 'interface/interface1.wav', .3, -6), 'buy': (R + 'item_coins_01.ogg', .6, -2), 'sell': (K + 'handleCoins.ogg', .7, -2),
     'reroll': (K + 'bookFlip2.ogg', .5, 0), 'star': (P + 'cheer.ogg', 1.6, -2), 'equip': (A + 'inventory/chainmail1.wav', .7, -2),
     'slot': (R + 'lock_01.ogg', .6, 0),
-    'bash': ([R + 'metal_02.ogg', B + 'cannon_01.ogg', A + 'inventory/metal-ringing.wav'], 1.1, 2),   # heavy shield slam: clang + thump + ring 'start': (A + 'battle/sword-unsheathe.wav', 1.0, -2),
+    'bash': ([R + 'metal_02.ogg', B + 'cannon_01.ogg', A + 'inventory/metal-ringing.wav'], 1.1, 2),   # heavy shield slam: clang + thump + ring
+    'start': (A + 'battle/sword-unsheathe.wav', 1.0, -2),
     'victory': (P + 'cheer-crowd.ogg', 2.2, -4), 'defeat': (P + 'magicfail.ogg', 1.6, -2),
 }
 MUSIC = {'prep': 'TownTheme.mp3', 'battle': 'jrpg_battle_loop.mp3'}

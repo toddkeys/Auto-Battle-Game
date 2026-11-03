@@ -162,7 +162,7 @@ def tinkerer():
     arm(s, shirt, SKIN, (35, 30), (38.5, 36), (42, 40), glove=P['leather'])
     arm(s, shirt, SKIN, (21, 30), (18.5, 35), (18, 39), glove=P['leather'])
     head(s)
-    bangs(s, ramp('#d8703a', 1.0), 'tousled', shine=9)
+    bangs(s, ramp('#d8703a', 1.0), 'neat', shine=9)
     s.part(brass, [('rect', 17, 12, 39, 14)], soft=.4, cast=1)
     s.part(ramp('#9ad8ff', 1.1), [('ell', 23, 11.5, 2.8, 2.6), ('ell', 33, 11.5, 2.8, 2.6)], soft=.5, gloss=1.2)   # goggles on the forehead
     face(s, '#3a7ad0', 'smile')
@@ -176,9 +176,9 @@ def engineer():
     torso(s, coat, hem=46)
     s.part(brass, [('rect', 27, 29, 29, 46)], soft=.4, gloss=1, line=False)
     belt(s, dark, 39, brass)
-    with s.grp('weapon'):   # hand cannon
-        s.part(P['steel'], [('rect', 40, 36, 49, 40)], soft=.6, gloss=1.2)
-        s.part(brass, [('rect', 47, 35, 50, 41), ('rect', 40, 39, 43, 44)], soft=.4, gloss=1)
+    with s.grp('weapon'):   # hand cannon, barrel pointing forward across the body
+        s.part(P['steel'], [('rect', 33, 36, 44, 40)], soft=.6, gloss=1.2)
+        s.part(brass, [('rect', 31, 35, 34, 41), ('rect', 40.5, 39, 43.5, 44)], soft=.4, gloss=1)
     arm(s, coat, SKIN, (35, 30), (38.5, 36), (42, 40), glove=dark)
     arm(s, coat, SKIN, (21, 30), (18.5, 35), (18, 39), glove=dark)
     head(s)

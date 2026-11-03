@@ -297,6 +297,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Sell items</b> by dragging them onto the shop or right-clicking: 2 gold (rare 4, scroll 1), times the enchant level.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground. Some cells hold <b>terrain</b>: 🔥 lava burns, ✨ holy ground heals, 🌫 fog makes ranged attacks miss.</li>
+        <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Chrono</b> heroes rewind HP and bend time.</li>
         <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ Poison · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. "Lock" keeps the shop for next round.</li>
@@ -357,6 +358,10 @@ const CLASSES = {
   engineer:{name:'Engineer',color:'#d0a060', desc:['Turrets have +30% HP and damage','Turrets have +60% HP and damage; every engineer builds a second turret']},
   monk:{name:'Monk',color:'#ffcc66', desc:['Monks dodge 20% of attacks; each hit stacks +4% attack speed (max 10)','Monks dodge 35% of attacks; each hit stacks +6% attack speed (max 10)']},
   chrono:{name:'Chrono',color:'#7fe0e0', desc:['Team gains 15% more mana from attacks','Team gains 30% more mana from attacks']},
+  ninja:{name:'Ninja',color:'#e04a5a', desc:['After a skill, ninjas dodge 25% of attacks for 2s','Ninja skills deal 25% more damage; after a skill ninjas dodge 40% of attacks for 2s']},
+  gravity:{name:'Gravity',color:'#8a6aff', desc:['Enemies pulled by a gravity skill take 15% more damage for 3s','Pulled enemies take 30% more damage for 3s']},
+  druid:{name:'Druid',color:'#6ac04a', desc:['Roots last 1s longer','Roots last 1s longer and rooted enemies take 15% more damage']},
+  berserker:{name:'Berserker',color:'#d8643a', desc:['Berserker attacks cleave: 30% damage to enemies next to the target','Cleave 60%, and berserkers heal for 10% of the damage they deal']},
 };
 // second trait: each origin mixes four classes, one unit per cost tier
 const ORIGINS = {
@@ -432,6 +437,18 @@ const UNITS = [
   // chrono: rewind and haste
   {id:'chronomancer',name:'Chronomancer', cls:'chrono',org:'starborn',    cost:2,hp:580, atk:48, range:3,as:1.1, ms:1.4},
   {id:'timekeeper',  name:'Timekeeper',   cls:'chrono',org:'moonblood',   cost:4,hp:1100,atk:105,range:4,as:1.0, ms:1.3},
+  // ninjas: dashing damage dealers
+  {id:'shadowstep',  name:'Shadowstep',   cls:'ninja',org:'moonblood',    cost:2,hp:680, atk:88, range:1,as:.65,ms:2.4},
+  {id:'phantomblade',name:'Phantom Blade',cls:'ninja',org:'gilded',       cost:4,hp:1300,atk:175,range:1,as:.6, ms:2.5},
+  // gravity: pull enemies together
+  {id:'riftcaller',  name:'Riftcaller',   cls:'gravity',org:'ironvow',    cost:2,hp:650, atk:52, range:3,as:1.1, ms:1.4},
+  {id:'eclipsewitch',name:'Eclipse Witch',cls:'gravity',org:'starborn',   cost:4,hp:1150,atk:100,range:4,as:1.1, ms:1.3},
+  // druids: roots, and wind that carries allies
+  {id:'thornweaver', name:'Thornweaver',  cls:'druid',org:'wildheart',    cost:2,hp:640, atk:50, range:3,as:1.0, ms:1.4},
+  {id:'galecaller',  name:'Galecaller',   cls:'druid',org:'starborn',     cost:3,hp:880, atk:70, range:3,as:1.0, ms:1.5},
+  // berserkers: giants that spin huge axes
+  {id:'axebrute',    name:'Axe Brute',    cls:'berserker',org:'ironvow',  cost:2,hp:1100,atk:78, range:1,as:1.0, ms:1.6,scale:1.12},
+  {id:'chieftain',   name:'Giant Chieftain',cls:'berserker',org:'wildheart',cost:4,hp:2100,atk:145,range:1,as:1.0,ms:1.6,scale:1.2},
 ];
 // called by summoners (or bosses); not in the shop
 const SUMMONS = [
@@ -529,6 +546,28 @@ function raise(a,n,pct){
 }
 // Engineers: build turrets (they copy the builder's team bonuses like any summon)
 function build(a,max){ const m=summon(a,'turret',max); if(m){ m.max*=a.turBoost||1; m.hp=m.hpLag=m.max; m.atk*=a.turBoost||1; } return m; }
+// Ninja Flicker Strike: hop from enemy to enemy, then come home
+function blink(a,list,m){ a.blinkQ={list,i:0,t:0,home:{x:a.x,y:a.y},m:m*(a.nSkill||1)}; a.ghost=9; FX('smoke',a.x,a.y-.1,{s:1,add:false,m:.4}); }
+const segDist=(px,py,x0,y0,x1,y1)=>{ const dx=x1-x0, dy=y1-y0, l=dx*dx+dy*dy||1, q=Math.max(0,Math.min(1,((px-x0)*dx+(py-y0)*dy)/l)); return Math.hypot(px-x0-dx*q,py-y0-dy*q); };
+// Gravity: drag a unit to a point (bosses are too heavy)
+function pull(e,x,y,src){ if(e.hp<=0) return; if(!U[e.type].boss) e.pullTo={x:x+(Math.random()-.5)*.5,y:y+(Math.random()-.5)*.5,t:.3};
+  if(src&&src.gAmp){ e.gAmp=src.gAmp; e.gT=3; } }
+// Druid roots: no walking, no moving skills; attacks only what is already in range
+function root(e,s,src){ if(e.hp<=0) return; s+=(src&&src.rootPlus)||0; inflict(e,'root',s); if(src&&src.rootAmp) e.rootAmp=src.rootAmp; }
+const MOVE_SKILL={shadowstep:1,phantomblade:1,axebrute:1,chieftain:1};
+// the point in a side's half farthest from every enemy
+function safest(a){ let best={x:a.x,y:a.y}, bd=-1; const ys=a.team===0?[5.5,6.5,7.5]:[.5,1.5,2.5];
+  for(const y of ys) for(let x=.5;x<COLS;x+=1){ const d=Math.min(...foes(a).map(e=>Math.hypot(e.x-x,e.y-y)),99); if(d>bd){ bd=d; best={x,y}; } } return best; }
+// small elemental touch on summons' basic attacks
+const SUMMON_HIT={
+  drake:(a,t)=>{ if(!t.psn) poison(t,a.atk*.08,2,a,'Burning','#ff8a3a'); },
+  mossling:(a,t)=>{ if(!t.psn) poison(t,a.atk*.06,2,a); },
+  wolf:(a,t)=>{ if(!t.psn&&Math.random()<.3) poison(t,a.atk*.08,2,a,'Bleeding','#ff5a5a'); },
+  guardian:(a,t)=>{ if(Math.random()<.15) inflict(t,'slow',1); },
+  wisp:(a,t)=>{ const m=Math.min(t.mp,3); t.mp-=m; },
+  skeleton:(a,t)=>{ if(Math.random()<.1) inflict(t,'shred',1); },
+  turret:(a,t)=>{ if(Math.random()<.2){ const o=foes(a).find(e=>e!==t&&dist(e,t)<=1.5); if(o){ deal(o,a.atk*.2,false,a); V({k:'arc',x:o.x,y:o.y,c:'#ffe45a',r:.5,dir:1,m:.2}); } } },
+};
 function combo(a){ if(a.comboStep) a.combo=Math.min(10,(a.combo||0)+1); }
 function notes(a,n){ for(let i=0;i<n;i++) later(i*.1,()=>pop({x:a.x+(Math.random()-.5)*.8,y:a.y-.2},Math.random()<.5?'♪':'♫','#ffd27a')); }
 const SONGS=[{name:'Haste',c:'#ffb050'},{name:'Guard',c:'#9ad8ff'},{name:'Spirit',c:'#c8a0ff'}];
@@ -656,6 +695,31 @@ const SKILLS = {
   timekeeper:{name:'Time Warp', mp:100, desc:'Bends time over the field: allies gain haste (+30% attack speed) for 5s, every enemy is slowed for 3s and loses 30 mana.',
     cast(a){ for(const b of friends(a)) b.haste=Math.max(b.haste||0,5); for(const e of foes(a)){ inflict(e,'slow',3); e.mp=Math.max(0,e.mp-30); }
       V({k:'flash',x:0,y:0,c:'#7fe0e0',m:.3}); V({k:'ring',x:a.x,y:a.y,r:4,c:'#7fe0e0',m:.8}); }},
+  shadowstep:{name:'Flicker Strike', mp:60, desc:'Vanishes and strikes the target and up to 3 enemies within 2.5 cells of it, 110% damage each, then returns. Untargetable while striking. Can\'t be cast while rooted.',
+    cast(a,t){ const list=[t,...foes(a).filter(e=>e!==t&&dist(e,t)<=2.5).sort(()=>Math.random()-.5).slice(0,3)]; blink(a,list,1.1); }},
+  phantomblade:{name:'Rift Step', mp:80, desc:'Dashes straight through the target to the far side, 170% damage to every enemy along the path. 1.2s later each of them is struck again for 90% and slowed. Can\'t be cast while rooted.',
+    cast(a,t){ const d=dist(a,t)||1, ux=(t.x-a.x)/d, uy=(t.y-a.y)/d, x1=Math.min(COLS-.5,Math.max(.5,t.x+ux*1.3)), y1=Math.min(ROWS-.5,Math.max(.5,t.y+uy*1.3));
+      const hitL=foes(a).filter(e=>segDist(e.x,e.y,a.x,a.y,x1,y1)<=.7), k=a.nSkill||1;
+      a.leap={x0:a.x,y0:a.y,x1,y1,t:0,T:.2,flat:1}; a.ghost=.25; V({k:'arc',x:t.x,y:t.y,c:'#b08aff',r:1.4,dir:a.face,m:.4});
+      for(const e of hitL){ hit(a,e,1.7*k); FX('slash',e.x,e.y-.25,{s:.7,tint:'#c8a0ff',flip:a.face<0,m:.4});
+        later(1.2,()=>{ if(e.hp>0&&a.hp>0){ hit(a,e,.9*k); inflict(e,'slow',1.5); FX('spark',e.x,e.y-.3,{s:.6,tint:'#b08aff',m:.4}); } }); } }},
+  riftcaller:{name:'Vacuum', mp:70, desc:'Opens a rift at the target: every enemy within 2 cells is pulled into it and takes 110% damage.',
+    cast(a,t){ const x=t.x, y=t.y; V({k:'ring',x,y,r:2,c:'#8a6aff',m:.5}); FX('nova',x,y-.2,{s:1.2,tint:'#8a6aff',m:.5});
+      for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=2){ pull(e,x,y,a); later(.25,()=>{ if(e.hp>0) hit(a,e,1.1); }); } }},
+  eclipsewitch:{name:'Event Horizon', mp:110, desc:'Channels a black hole on the largest group of enemies for 2.5s: enemies within 2 cells are dragged to its centre, can\'t act, and take 50% of her attack as damage every half second.',
+    cast(a){ const c=densest(a,2); if(!c) return; S.fight.holes.push({x:c.x,y:c.y,r:2,t:2.5,T:2.5,src:a,tick:0}); a.chan=2.5;
+      V({k:'flash',x:0,y:0,c:'#2a0a4a',m:.35}); addTrauma(.3); }},
+  thornweaver:{name:'Entangling Roots', mp:65, desc:'Thorny roots burst from the ground: enemies within 1.5 cells of the target take 120% damage and are rooted for 2s (they can only attack what is already in range, and can\'t use moving skills).',
+    cast(a,t){ const x=t.x, y=t.y; V({k:'quake',x,y:y+.3,r:1.5,c:'#4a8a2a',m:.8});
+      for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.5){ hit(a,e,1.2); root(e,2,a); FX('geyser',e.x,e.y+.3,{s:.5,tint:'#7ad66a',m:.5}); } }},
+  galecaller:{name:'Wind Walk', mp:70, desc:'A gust carries the most endangered ally to the safest spot behind your lines and gives it a shield worth 20% of its max HP; every other ally gains +40% move speed and +20% attack speed for 3s.',
+    cast(a){ const w=friends(a).filter(b=>b!==a&&!(b.root>0)).sort(byHurt)[0];
+      if(w){ const spot=safest(a); w.leap={x0:w.x,y0:w.y,x1:spot.x,y1:spot.y,t:0,T:.45}; w.shield+=w.max*.2; FX('smoke',w.x,w.y-.1,{s:1,add:false,m:.5}); }
+      for(const b of friends(a)) if(b!==w){ b.windT=3; burst(b.x,b.y+.2,'#dff6ff',6,2,2,-2); } V({k:'ring',x:a.x,y:a.y,r:3,c:'#bfefff',m:.6}); }},
+  axebrute:{name:'Whirlwind', mp:70, desc:'Spins for 1.5s, moving toward the target: enemies within 1.4 cells are hit 5 times for 60% damage. Can\'t be cast while rooted.',
+    cast(a){ a.spin={t:1.5,T:1.5,r:1.4,m:.6,every:.3,acc:0}; }},
+  chieftain:{name:'Cyclone of Ruin', mp:100, desc:'Spins for 2.4s, chasing the target: enemies within 1.7 cells are hit 8 times for 70% damage, then a ground slam deals 120% and stuns them for 1s. Can\'t be cast while rooted.',
+    cast(a){ a.spin={t:2.4,T:2.4,r:1.7,m:.7,every:.3,acc:0,slam:1}; addTrauma(.2); }},
   turret:{name:'Volley', mp:70, desc:'Fires three quick shots at the target for 60% damage each.',
     cast(a,t){ for(let i=0;i<3;i++) later(i*.12,()=>{ if(t.hp>0&&a.hp>0) shoot(a,t,.6); }); }},
   cardshark:{name:'Draw a Card', mp:55, desc:'Draws one of four cards: Ace (300% damage to the target), King (physical shield for the most hurt ally, 30% of its max HP), Queen (heals the most hurt ally for 25% max HP) or Joker (stuns the target for 1s and steals 20 mana).',
@@ -664,7 +728,7 @@ const SKILLS = {
       else if(c==='K'){ w.shield+=w.max*.3; V({k:'dome',x:w.x,y:w.y,c:'#ffe27a',r:.65,m:.8}); }
       else if(c==='Q') heal(w,w.max*.25,a);
       else { stun(t); const m=Math.min(t.mp,20); t.mp-=m; gainMp(a,m); } }},
-  fortuneteller:{name:'Lucky Roll', mp:70, desc:'Rolls a die for the whole team: 1 heal 8% · 2 +30% attack speed 4s · 3 a shield (physical or magic) worth 15% max HP · 4 +25% damage 4s · 5 +30 mana · 6 all of these!',
+  fortuneteller:{name:'Lucky Roll', mp:70, desc:'Rolls a die, and the whole team gets: 1 → heal 8% of max HP · 2 → +30% attack speed for 4s · 3 → a shield (physical or magic) worth 15% of max HP · 4 → +25% damage for 4s · 5 → +30 mana · 6 → all of them!',
     cast(a){ const n=roll(a); dieFx(a,n);
       for(const b of friends(a)){ const all=n===6;
         if(n===1||all) heal(b,b.max*.08,a); if(n===2||all) b.haste=Math.max(b.haste||0,4);
@@ -1219,7 +1283,10 @@ function applySynergy(f){
       x.potPsn=lv.alchemist>=2; x.necBoost=[1,1.3,1.6][lv.necro]; x.necMana=lv.necro>=2&&U[x.type].cls==='necro';
       x.turBoost=[1,1.3,1.6][lv.engineer]; x.turrets=U[x.type].cls==='engineer'?(lv.engineer>=2?2:1):0;
       if(U[x.type].cls==='monk'){ x.dodge=[0,.2,.35][lv.monk]; x.comboStep=[.03,.04,.06][lv.monk]; }
-      x.manaMul=(x.manaMul||1)*[1,1.15,1.3][lv.chrono]; }
+      x.manaMul=(x.manaMul||1)*[1,1.15,1.3][lv.chrono];
+      if(U[x.type].cls==='ninja'){ x.nDodge=[0,.25,.4][lv.ninja]; x.nSkill=lv.ninja>=2?1.25:1; }
+      x.gAmp=[0,.15,.3][lv.gravity]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
+      if(U[x.type].cls==='berserker'){ x.cleave=[0,.3,.6][lv.berserker]; if(lv.berserker>=2) x.leech+=.1; } }
     if(team===0) S.alchGold=[0,1,2][lv.alchemist];
     if(team===0) S.goldBonus=[[0,0],[1,0],[2,1]][olv.gilded];   // [on win, on loss]
   }
@@ -1286,7 +1353,7 @@ function startFight(){
     const ally=f.filter(b=>b.team===x.team&&b!==x&&!b.guard&&U[b.type].range>=2).sort((p,q)=>dist(p,x)-dist(q,x))[0];
     if(ally){ ally.guard=x; ally.guardPct=U[x.type].guard; } }
   for(const x of f) if(x.sumStart&&U[x.type].calls){ const m=summon(x,U[x.type].calls,9); if(m) m.spawnT=x.spawnT+.25; }   // Summoner bonus (tier 2)
-  S.fight.graves=[];
+  S.fight.graves=[]; S.fight.holes=[];
   for(const x of f) for(let i=0;i<(x.turrets||0);i++){ const m=build(x,9); if(m) m.spawnT=x.spawnT+.3+i*.15; }   // Engineers
   renderUI();
 }
@@ -1303,7 +1370,7 @@ function frame(now){
   if(S) render();
   requestAnimationFrame(frame);
 }
-function nearest(a,list){ let best=null,bd=1e9; for(const b of list) if(b.team!==a.team&&b.hp>0){ const d=dist(a,b); if(d<bd){bd=d;best=b;} } return best; }
+function nearest(a,list){ let best=null,bd=1e9; for(const b of list) if(b.team!==a.team&&b.hp>0&&!(b.ghost>0)){ const d=dist(a,b); if(d<bd){bd=d;best=b;} } return best; }
 // --- helpers used by skills ---
 const foes=a=>S.fight.f.filter(b=>b.team!==a.team&&b.hp>0);
 const friends=a=>S.fight.f.filter(b=>b.team===a.team&&b.hp>0);
@@ -1315,7 +1382,7 @@ function pop(u,txt,c,big){ S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?
 // slow (-40% move and attack speed), psn = poison (damage over time)
 // dur = fixed length for every skill (stun 1s, silence 2s, blind 2s); slow keeps each skill's own length
 // tint = colour wash over the unit while it lasts
-const STATUS={stun:{label:'Stunned',c:'#ffe066',icon:'💫',dur:1,tint:'#ffd84a'},sil:{label:'Silenced',c:'#c8a0ff',icon:'🤐',dur:2,tint:'#9a50ff'},
+const STATUS={root:{label:'Rooted',c:'#8be06a',icon:'🌿',tint:'#3a9a2a'},stun:{label:'Stunned',c:'#ffe066',icon:'💫',dur:1,tint:'#ffd84a'},sil:{label:'Silenced',c:'#c8a0ff',icon:'🤐',dur:2,tint:'#9a50ff'},
   blind:{label:'Blinded',c:'#c8c8c8',icon:'🌫️',dur:2,tint:'#14141c'},slow:{label:'Slowed',c:'#8fd0ff',icon:'🐌',tint:'#7fd0ff'},
   psn:{label:'Poisoned',c:'#8be06a',icon:'☠️',tint:'#4ad040'},
   frz:{label:'Frozen',c:'#bff2ff',icon:'🧊',tint:'#d8f6ff'},
@@ -1327,7 +1394,7 @@ const STATUS={stun:{label:'Stunned',c:'#ffe066',icon:'💫',dur:1,tint:'#ffd84a'
 // all mana gain goes through here: Mana Drained and the Occultist bonus cut it
 const gainMp=(u,amt)=>{ u.mp=Math.min(u.mpMax,u.mp+amt*(u.drain>0?.5:1)*(1-(u.manaCut||0))); };
 const healMul=u=>u.wnd>0?.5:1;
-const MAGIC_CLS={magic:1,holy:1,occultist:1,summoner:1,frost:1,gambler:1,bard:1,alchemist:1,necro:1,chrono:1}, MAGIC_TYPES={wisp:1,drake:1,lich:1,shroomkin:1};
+const MAGIC_CLS={magic:1,holy:1,occultist:1,summoner:1,frost:1,gambler:1,bard:1,alchemist:1,necro:1,chrono:1,gravity:1,druid:1}, MAGIC_TYPES={wisp:1,drake:1,lich:1,shroomkin:1};
 const isMagic=src=>!!src&&(MAGIC_CLS[U[src.type].cls]||MAGIC_TYPES[src.type]);
 // dice: a d6, rolled twice (best kept) with the Gambler bonus
 const roll=a=>{ const r=()=>1+Math.floor(Math.random()*6); return a.lucky?Math.max(r(),r()):r(); };
@@ -1364,7 +1431,7 @@ function strip(u){ if(u.hp<=0||!u.items||!u.items.length||!u.itemDelta) return;
   pop(u,'Stripped '+u.items.map(k=>IT(k).icon).join(''),'#ffc080',true); burst(u.x,u.y-.4,'#ffd080',10,3,3,3); u.items=[]; u.itemDelta=null; }
 // ice: a chance to Freeze (bosses are immune). Returns true when it took hold.
 function freeze(u,chance,s){ if(u.hp<=0||U[u.type].boss||Math.random()>=chance) return false; const had=u.cloak>0; inflict(u,'frz',s); return !had; }
-function poison(u,dps,s,src){ if(u.hp<=0) return; if(!u.psn){ pop(u,'Poisoned','#8be06a'); burst(u.x,u.y-.3,'#8be06a',8,2,3,-1); } u.psn={dps,t:s,T:s,src}; }
+function poison(u,dps,s,src,lbl='Poisoned',c='#8be06a'){ if(u.hp<=0) return; if(!u.psn){ pop(u,lbl,c); burst(u.x,u.y-.3,c,8,2,3,-1); } u.psn={dps,t:s,T:s,src}; }
 // holy cleanse: removes every status and restores 15% mana
 function cleanse(u){ const had=u.stun>0||u.sil>0||u.blind>0||u.slow>0||u.frz>0||u.dis>0||u.shred>0||u.drain>0||u.wnd>0||u.psn;
   u.stun=u.sil=u.blind=u.slow=u.frz=u.dis=u.shred=u.drain=u.wnd=0; if(u.hp>0) u.mp=Math.min(u.mpMax,u.mp+u.mpMax*.15); u.psn=null; if(had) pop(u,'Cleansed','#bfffe0'); }
@@ -1378,7 +1445,7 @@ function burst(x,y,c,n,spd=2.5,size=3,g=6){
     S.fight.parts.push({x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-(g>0?1.5:0),life,max:life,c,size,g}); }
 }
 function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal'); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
-const PROJ={minstrel:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',cardshark:'p_arcane',fortuneteller:'p_arcane',highroller:'p_light',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
+const PROJ={cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
   acolyte:'p_light',priest:'p_light',highpriest:'p_light',dawnoracle:'p_light',spiritcaller:'p_arcane',starcaller:'p_arcane',stonebinder:'p_arcane',wisp:'p_arcane',shroomkin:'p_plant'};
 function shoot(a,t,mult=1,c,big,onHit){
   const arrow=!big&&U[a.type].cls==='archer';
@@ -1388,12 +1455,13 @@ function shoot(a,t,mult=1,c,big,onHit){
 }
 function deal(t,dmg,crit,src){
   if(src&&src.range>1){ const tr=terrainAt(t.x,t.y); if(tr&&tr.k==='fog'&&Math.random()<.35){ pop(t,'Miss','#c8d0d8'); return; } }   // Fog
-  if(src&&(t.dodge||t.zen>0)&&Math.random()<(t.dodge||0)+(t.zen>0?.5:0)){ pop(t,'Dodge','#fff3c0'); return; }   // Monks
+  if(t.ghost>0&&src) return;   // ninja mid-strike: untouchable
+  if(src&&(t.dodge||t.zen>0||t.nDodgeT>0)&&Math.random()<(t.dodge||0)+(t.zen>0?.5:0)+(t.nDodgeT>0?t.nDodge:0)){ pop(t,'Dodge','#fff3c0'); return; }   // Monks, Ninjas
   dmg*=(1-t.red)*(1-(t.sRed||0))*(0.9+Math.random()*.2);
   if(U[t.type].armor&&t.hp>t.max*.5) dmg*=1-U[t.type].armor;   // boss stoneskin while above half HP
   if(t.ward>0){ if(!isMagic(src)){ if(src) pop(t,'Immune','#dff8ff'); return; } dmg*=1.2; }   // Ice Ward: physical can't touch it, magic hurts more
   if(t.backRed) dmg*=1-t.backRed;   // Crusader bonus
-  dmg*=1+(t.shred>0?.25:0)+(t.vuln||0);   // Armor Broken / Occultist bonus
+  dmg*=1+(t.shred>0?.25:0)+(t.vuln||0)+(t.gT>0?t.gAmp||0:0)+(t.root>0?t.rootAmp||0:0);   // Armor Broken / Occultist bonus
   if(t.guard&&t.guard.hp>0&&t.guard!==src){ const sh=dmg*t.guardPct; dmg-=sh; deal(t.guard,sh,false,null); }   // Guardian Link takes a share
   if(t.frz>0){ t.frz=0; SND.play('shatter'); FX('nova',t.x,t.y-.3,{s:.8,tint:'#cff4ff',m:.45}); pop(t,'Shatter!','#dff8ff',true); V({k:'shards',x:t.x,y:t.y,c:'#dff8ff',r:.9,n:10,m:.35}); }   // damage breaks Frozen
   if(src) src.dd+=dmg; t.dtk+=dmg;
@@ -1405,7 +1473,7 @@ function deal(t,dmg,crit,src){
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
   burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.play(crit?'crit':'hit');
-  pop(t,Math.round(dmg)+(crit?'!':''),crit?'#ffcf33':'#fff',crit);
+  if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else pop(t,Math.round(dmg),'#fff',false);
 }
 function hit(a,t,mult=1,canCrit=mult===1){
   let dmg=a.atk*a.dmgM*mult; const crit=canCrit&&(Math.random()<a.crit||a.firstCrit); if(canCrit) a.firstCrit=false; if(crit) dmg*=2;
@@ -1415,6 +1483,8 @@ function hit(a,t,mult=1,canCrit=mult===1){
   if(mult===1&&a.sb>0){ dmg*=1.6; a.sb--; }                 // Spellblade charges
   deal(t,dmg,crit,a);
   if(mult===1) combo(a);
+  if(mult===1&&a.cleave) for(const o of S.fight.f) if(o!==t&&o.team!==a.team&&o.hp>0&&dist(o,t)<=1.1) deal(o,dmg*a.cleave,false,a);   // Berserker cleave
+  if(mult===1&&a.summon&&!a.raised&&SUMMON_HIT[a.type]&&t.hp>0) SUMMON_HIT[a.type](a,t);
   if(mult===1&&a.frostOn&&t.hp>0) freeze(t,a.frostOn,2);    // Frost Orb
   if(mult===1&&a.siphon&&t.mp>0){ const m=Math.min(t.mp,a.siphon); t.mp-=m; gainMp(a,m); }   // Soul Siphon
   if(a.wound&&t.hp>0) inflict(t,'wnd',a.wound);              // Grievous Blade (attacks and skills)
@@ -1423,6 +1493,7 @@ function hit(a,t,mult=1,canCrit=mult===1){
 // full mana: charge up for CAST_T seconds, then releaseCast fires the skill
 function tryCast(a,t,inRange){
   if(a.mp<a.mpMax||a.sil>0) return false;
+  if(a.root>0&&MOVE_SKILL[a.type]) return false;   // rooted: no dashing or spinning
   if(!a.heal&&!inRange) return false;
   const col=colorOf(a.type);
   a.mp=0; a.castT=CAST_T; a.castTgt=t; SND.play('cast');
@@ -1465,6 +1536,7 @@ function releaseCast(a){
   burst(a.x,a.y-.3,colorOf(a.type),10,3,3,0);
   V({k:'pillar',x:a.x,y:a.y+.35,c:colorOf(a.type),m:.4});   // light pillar on release
   SKILLS[a.type].cast(a,t);
+  if(a.nDodge) a.nDodgeT=2;   // Ninja bonus
 }
 function step(dt){
   const F=S.fight; F.t+=dt;
@@ -1475,6 +1547,13 @@ function step(dt){
   for(const x of F.f) if(x.hp<=0&&!x.graved){ x.graved=1;   // the fallen, for necromancers
     if(!x.summon) F.graves.push({type:x.type,star:x.star,x:x.x,y:x.y,team:x.team,mult:x.max/(U[x.type].hp*STAR_MULT[x.star-1])});
     for(const n of alive) if(n.necMana&&n.team!==x.team) gainMp(n,15); }
+  for(const h of F.holes){ h.t-=dt; h.tick+=dt;   // black holes: drag in, hold, hurt
+    for(const e of alive) if(e.team!==h.src.team&&Math.hypot(e.x-h.x,e.y-h.y)<=h.r){
+      if(!U[e.type].boss){ const d=Math.hypot(h.x-e.x,h.y-e.y)||1, mv=Math.min(d,2.2*dt); e.x+=(h.x-e.x)/d*mv; e.y+=(h.y-e.y)/d*mv; }
+      e.stun=Math.max(e.stun||0,.12); if(h.src.gAmp){ e.gAmp=h.src.gAmp; e.gT=3; }
+      if(h.tick>=.5) deal(e,h.src.atk*.5,false,h.src); }
+    if(h.tick>=.5) h.tick=0; }
+  F.holes=F.holes.filter(h=>h.t>0);
   const song=Math.floor(F.t/4)%3;   // every bard sings the same song; it changes every 4s
   if(song!==F.song){ F.song=song; for(const b of alive) if(U[b.type].cls==='bard'){ V({k:'ring',x:b.x,y:b.y,r:b.songR,c:SONGS[song].c,m:.6}); pop({x:b.x,y:b.y-.5},'♪ '+SONGS[song].name,SONGS[song].c); } }
   for(const x of alive){ x.sAS=0; x.sRed=0; x.sMp=0;
@@ -1488,6 +1567,20 @@ function step(dt){
     if(tr&&tr.k==='lava'){ const d=a.max*.04*dt; a.hp-=d; a.dtk+=d; if(Math.random()<dt*2) burst(a.x,a.y+.3,'#ff7a3a',3,1.5,2,-2); if(a.hp<=0) continue; }
     if(tr&&tr.k==='holy') a.hp=Math.min(a.max,a.hp+a.max*.025*dt*healMul(a));
     if(a.sMp) gainMp(a,a.sMp*dt); if(a.overT>0) a.overT-=dt; if(a.zen>0) a.zen-=dt;
+    if(a.root>0) a.root-=dt; if(a.gT>0) a.gT-=dt; if(a.windT>0) a.windT-=dt; if(a.nDodgeT>0) a.nDodgeT-=dt; if(a.ghost>0&&!a.blinkQ) a.ghost-=dt;
+    if(a.pullTo){ const P=a.pullTo, d=Math.hypot(P.x-a.x,P.y-a.y), mv=Math.min(d,8*dt); if(d>.01){ a.x+=(P.x-a.x)/d*mv; a.y+=(P.y-a.y)/d*mv; } if((P.t-=dt)<=0) a.pullTo=null; }
+    if(a.chan>0){ a.chan-=dt; continue; }   // channelling (Event Horizon)
+    if(a.blinkQ){ const B=a.blinkQ; B.t-=dt;   // Flicker Strike: one enemy every 0.13s
+      if(B.t<=0){ const e=B.list[B.i++];
+        if(e&&e.hp>0){ a.x=e.x+(Math.random()<.5?-.45:.45); a.y=e.y+.1; a.face=e.x<a.x?-1:1; hit(a,e,B.m); FX('slash',e.x,e.y-.25,{s:.65,tint:'#ff5a6a',flip:a.face<0,m:.35}); burst(a.x,a.y,'#30344a',6,2,2,0); }
+        B.t=.13; if(B.i>=B.list.length){ a.x=B.home.x; a.y=B.home.y; a.blinkQ=null; a.ghost=0; FX('smoke',a.x,a.y-.1,{s:.9,add:false,m:.4}); } }
+      continue; }
+    if(a.spin&&(a.stun>0||a.frz>0)) a.spin=null;   // a stun breaks the whirl
+    if(a.spin){ const P=a.spin; P.t-=dt; P.acc+=dt;   // Berserker whirl
+      if(P.acc>=P.every){ P.acc=0; for(const e of foes(a)) if(dist(a,e)<=P.r) hit(a,e,P.m); V({k:'arc',x:a.x,y:a.y,c:'#ff8a4a',r:P.r,dir:1,m:.22}); V({k:'arc',x:a.x,y:a.y,c:'#ffd0a0',r:P.r*.8,dir:-1,m:.22}); SND.play('flurry'); }
+      const t=a.tgt&&a.tgt.hp>0?a.tgt:nearest(a,alive); if(t&&!(a.root>0)){ const d=dist(a,t); if(d>.6){ const mv=a.ms*1.1*dt; a.x+=(t.x-a.x)/d*mv; a.y+=(t.y-a.y)/d*mv; a.walk+=mv; a.moving=.12; } }
+      if(P.t<=0){ a.spin=null; if(P.slam){ for(const e of foes(a)) if(dist(a,e)<=P.r){ hit(a,e,1.2); stun(e); } V({k:'quake',x:a.x,y:a.y+.4,r:P.r,m:.9}); FX('geyser',a.x,a.y+.4,{s:1.2,tint:'#d8a070',m:.6}); hitStop(.08); } }
+      continue; }
     a.atkT=Math.max(0,a.atkT-dt); a.relT=Math.max(0,(a.relT||0)-dt); a.moving=Math.max(0,a.moving-dt); a.glow=Math.max(0,a.glow-dt);
     if(a.regen) a.hp=Math.min(a.max,a.hp+a.max*a.regen*dt*healMul(a));
     if(a.sil>0) a.sil-=dt; if(a.blind>0) a.blind-=dt; if(a.slow>0) a.slow-=dt; if(a.dis>0) a.dis-=dt; if(a.shred>0) a.shred-=dt; if(a.drain>0) a.drain-=dt; if(a.wnd>0) a.wnd-=dt;
@@ -1496,11 +1589,11 @@ function step(dt){
     if(a.spawnT>0){ a.spawnT-=dt; if(a.spawnT<=0) burst(a.x,a.y+.35,'#d8d0b8',6,1.2,3,4); continue; }   // dropping onto the field
     if(a.leap){   // assassin jump arc
       const L=a.leap; L.t+=dt; const q=Math.min(1,L.t/L.T);
-      a.x=L.x0+(L.x1-L.x0)*easeInOut(q); a.y=L.y0+(L.y1-L.y0)*easeInOut(q); a.leapP=q;
+      a.x=L.x0+(L.x1-L.x0)*easeInOut(q); a.y=L.y0+(L.y1-L.y0)*easeInOut(q); a.leapP=L.flat?0:q;
       if(q>=1){ a.leap=null; a.leapP=0; burst(a.x,a.y+.35,'#d8d0b8',8,1.6,3,4); }
       continue;
     }
-    if(a.leapDelay>0){ a.leapDelay-=dt;
+    if(a.leapDelay>0){ a.leapDelay-=dt; if(a.root>0) a.leapDelay=0;
       if(a.leapDelay<=0){ const es=foes(a);
         if(es.length){ const t=es.reduce((p,q)=>a.team===0?(q.y<p.y?q:p):(q.y>p.y?q:p));   // furthest back enemy
           a.leap={x0:a.x,y0:a.y,x1:t.x,y1:Math.min(ROWS-.5,Math.max(.5,t.y+(a.team===0?-.75:.75))),t:0,T:.45};
@@ -1518,14 +1611,15 @@ function step(dt){
       if(a.castT<=0) releaseCast(a);
       continue;
     }
-    a.cd-=dt*a.asM*slowM*(a.haste>0?1.3:1)*(1+(a.sAS||0))*(a.overT>0?1.6:1)*(1+(a.combo||0)*(a.comboStep||0));
+    a.cd-=dt*a.asM*slowM*(a.haste>0?1.3:1)*(a.windT>0?1.2:1)*(1+(a.sAS||0))*(a.overT>0?1.6:1)*(1+(a.combo||0)*(a.comboStep||0));
     if(a.heal){
       if(tryCast(a,null,true)) continue;
       const hurt=alive.filter(b=>b.team===a.team&&b.hp>0&&b.hp<b.max*.8&&dist(a,b)<=a.range+.5).sort(byHurt)[0];
       if(hurt){ if(a.cd<=0){ a.cd=a.as; a.atkT=ATK_T; gainMp(a,(MANA_ATTACK+a.manaAtk)*(a.manaMul||1));
         later(ATK_T*.45,()=>{ if(a.hp>0){ if(U[a.type].hot) hot(hurt,a.heal*1.2,3,a); else heal(hurt,a.heal,a); } }); } continue; }
     }
-    if(!a.tgt||a.tgt.hp<=0) a.tgt=nearest(a,alive);
+    if(!a.tgt||a.tgt.hp<=0||a.tgt.ghost>0) a.tgt=nearest(a,alive);
+    if(a.root>0&&a.tgt&&dist(a,a.tgt)>a.range+.5){ const r=alive.filter(b=>b.team!==a.team&&!(b.ghost>0)&&dist(a,b)<=a.range+.5).sort((p,q)=>dist(a,p)-dist(a,q))[0]; if(r) a.tgt=r; }   // rooted: fight what is in reach
     const t=a.tgt; if(!t) continue;
     if(Math.abs(t.x-a.x)>.05) a.face=t.x<a.x?-1:1;
     const d=dist(a,t), inRange=d<=a.range+.5;
@@ -1537,7 +1631,7 @@ function step(dt){
           if(a.blind>0&&Math.random()<.5){ pop(t,'Miss','#c8c8c8'); return; }
           if(a.range<=1){ hit(a,t); V({k:'slash',x:t.x,y:t.y,c:'#ffffff',m:.22,dir:a.face}); }
           else shoot(a,t); }); }
-    } else { const mv=a.ms*dt*slowM; a.x+=(t.x-a.x)/d*mv; a.y+=(t.y-a.y)/d*mv; a.walk+=mv; a.moving=.12; }
+    } else if(!(a.root>0)){ const mv=a.ms*dt*slowM*(a.windT>0?1.4:1); a.x+=(t.x-a.x)/d*mv; a.y+=(t.y-a.y)/d*mv; a.walk+=mv; a.moving=.12; }
   }
   for(const a of alive) for(const b of alive){
     if(a===b) continue; const d=dist(a,b);
@@ -1636,6 +1730,7 @@ function pose(o,b,rigged){
   if(o.cast>0){ const q=Math.sin((1-o.cast/CAST_T)*Math.PI*.5);
     if(b.range<=1){ dy+=3*q; sx*=1+.05*q; sy*=1-.05*q; } else lift+=8*q;   // melee crouches to wind up; casters float
     rot+=Math.sin(ANIM*45)*.03; }
+  if(o.spin>0) sx*=Math.cos(ANIM*16);   // whirling: the sprite turns edge-on and back
   if(o.leapP){ lift+=Math.sin(o.leapP*Math.PI)*48; rot+=face*.35*Math.sin(o.leapP*Math.PI); }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); lift+=q*q*90; alpha*=o.spawn>1?0:1-q*.5; }
   if(o.cheer) lift+=Math.abs(Math.sin(ANIM*7+(o.ph||0)))*10;
@@ -1646,8 +1741,8 @@ function pose(o,b,rigged){
 }
 // ====== rig: each sprite is split into pieces (legs, body, arms + weapons, head, cape...) that turn on their joints ======
 // attack style per unit: how the arms move on a basic attack
-const CLS_ANIM={bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
-const MON_ANIM={dancer:'stab',turret:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
+const CLS_ANIM={ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
+const MON_ANIM={beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
 const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
 function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=ks[i]; if(p<=p1){ const q=(p-p0)/(p1-p0); return v0+(v1-v0)*(i===ks.length-1?easeInOut(q):easeOut(q)); } } return ks[ks.length-1][1]; }
@@ -1679,7 +1774,8 @@ function rigPose(o,type,b){
   if(st==='slash'||st==='spear'){   // guard stance: weapon held in front of the body, pointing forward; it eases out of the guard to attack
     const g=st==='slash'&&(o.rel>0||o.atkT>0)?0:guardOf(o); R.front=1;   // swings carry their own guard start/end
     if(st==='slash'){ R.armR.r+=-.15+.55*g; R.weapon.r=.45-2.15*g+br*.03; }
-    else { R.armR.r+=.35*g; R.weapon.r=-.75*g+br*.02; } }
+    else R.weapon.r=-.12*g+br*.02; }   // spear: upright beside the head, tip leaning a little forward
+  if(st==='gun'){ R.front=1; if(o.atkT>0){ const p=1-o.atkT/ATK_T; R.armR.x+=KF(p,[[0,0],[.4,0],[.5,2.5],[1,0]]); R.weapon.r+=KF(p,[[0,0],[.4,0],[.5,-.25],[1,0]]); } }   // cannon: recoil
   if(st==='golem'){ R.armL.r=Math.sin(t*1.6)*.06; R.armR.r=-Math.sin(t*1.6)*.06; }
   if(st==='blob') R.head.r=Math.sin(t*2.5)*.12;
   if(o.moving){   // walk cycle: legs step in turn, arms swing against them, body bobs, cape trails
@@ -1754,7 +1850,7 @@ function buildRig(rig,R,tints,expr){
 }
 // which statuses tint the unit right now, pulsing so it reads as "an effect", not a palette swap
 function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,blind:.42,slow:.3,psn:.26,frz:.5,dis:.3,shred:.28,drain:.3,wnd:.28,ward:.4};
-  const t=Object.keys(A).filter(k=>k==='psn'?o.psn:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
+  A.root=.3; const t=Object.keys(A).filter(k=>k==='psn'?o.psn:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
 function drawUnit(type,star,px,py,o={}){
   const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.scale||1, oy=-54*(sc-1);
   ctx.save(); ctx.globalAlpha=P.alpha;
@@ -1914,6 +2010,10 @@ function drawVfx(v){
 function render(){
   ctx.setTransform(RES,0,0,RES,0,0); ctx.clearRect(0,0,W,H);
   ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); drawAmbient(); drawTerrain();
+  if(S.fight&&S.fight.holes) for(const h of S.fight.holes){ const x=h.x*CELL, y=h.y*CELL, R=h.r*CELL, k=Math.min(1,(h.T-h.t)*4,h.t*4);   // black hole
+    const g=ctx.createRadialGradient(x,y,0,x,y,R); g.addColorStop(0,`rgba(0,0,0,${.95*k})`); g.addColorStop(.35,`rgba(40,10,70,${.7*k})`); g.addColorStop(1,'rgba(90,40,160,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(x,y,R,R*.7,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle=`rgba(190,150,255,${.7*k})`; ctx.lineWidth=2; for(let i=0;i<3;i++){ const a0=-ANIM*4+i*2.1; ctx.beginPath(); ctx.ellipse(x,y,R*(.35+i*.2),R*(.35+i*.2)*.7,0,a0,a0+2.2); ctx.stroke(); } }
   if(S.phase==='prep'){
     ctx.fillStyle='rgba(255,60,60,.07)'; ctx.fillRect(0,0,W,BOARD_H/2);
     ctx.strokeStyle='rgba(255,255,255,.09)'; ctx.lineWidth=1; ctx.beginPath();
@@ -1979,7 +2079,7 @@ function render(){
     ctx.restore();
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
-    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{raised:a.raised,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
+    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{spin:a.spin?1:0,raised:a.raised,root:a.root,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
       ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,glow:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
@@ -1992,6 +2092,10 @@ function render(){
         ctx.strokeStyle='#e8d8b0'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-12,0); ctx.lineTo(4,0); ctx.stroke();
         ctx.fillStyle='#d0d8e8'; ctx.beginPath(); ctx.moveTo(9,0); ctx.lineTo(2,-3.5); ctx.lineTo(2,3.5); ctx.fill();
         ctx.fillStyle=p.c; ctx.fillRect(-14,-3,5,6); ctx.restore(); }
+      else if(p.spr==='card'){ const z=p.big?1.6:1;   // a spinning playing card
+        ctx.save(); ctx.translate(px,py); ctx.rotate(ANIM*14); ctx.scale(z*Math.max(.25,Math.abs(Math.cos(ANIM*9))),z);
+        ctx.fillStyle='#fffdf6'; ctx.strokeStyle='#3a2030'; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(-4.5,-6.5,9,13,1.5); ctx.fill(); ctx.stroke();
+        ctx.fillStyle=(p.src.uid||p.src.ph*10|0)%2?'#d02a3a':'#202028'; ctx.beginPath(); ctx.moveTo(0,-3.5); ctx.lineTo(2.6,0); ctx.lineTo(0,3.5); ctx.lineTo(-2.6,0); ctx.fill(); ctx.restore(); }
       else if(p.spr&&FXI[p.spr]&&FXI[p.spr].im.naturalWidth){ const f=FXI[p.spr], an=p.ang??Math.atan2(p.t.y-p.y,p.t.x-p.x), z=p.big?2.6:1.1;   // pixel spell sprite: small for basic attacks
         ctx.save(); ctx.translate(px,py); ctx.rotate(an); ctx.imageSmoothingEnabled=false;
         if(p.big){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=.35; ctx.fillStyle=p.c; ctx.beginPath(); ctx.arc(0,0,r*2.2,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over'; }
@@ -2005,6 +2109,11 @@ function render(){
     for(const f of F.fx){ // numbers pop big, settle, then drift up and fade
       const age=f.t0-f.t, sc=age<.1?.5+age/.1*.9:Math.max(1,1.4-(age-.1)*3), rise=(1-(1-age/f.t0)**2)*.7;
       ctx.save(); ctx.translate(f.x*CELL,(f.y-rise)*CELL); ctx.scale(sc,sc); ctx.globalAlpha=Math.min(1,f.t*3);
+      if(f.crit){   // critical hit: a spiky yellow burst behind a big red number
+        ctx.save(); ctx.rotate(Math.sin(age*20)*.05); ctx.fillStyle='#ffd23f'; ctx.strokeStyle='#7a2a00'; ctx.lineWidth=2; ctx.beginPath();
+        for(let i=0;i<20;i++){ const an=i/20*Math.PI*2+age*2, rr=i%2?13:24; ctx.lineTo(Math.cos(an)*rr*1.25,Math.sin(an)*rr*.8-7); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+        ctx.font="32px 'Jersey 10',system-ui"; ctx.lineJoin='round'; ctx.lineWidth=5; ctx.strokeStyle='#2a0800'; ctx.strokeText(f.txt,0,0); ctx.fillStyle='#ff3a2a'; ctx.fillText(f.txt,0,0);
+        ctx.font="12px 'Jersey 10',system-ui"; ctx.lineWidth=3; ctx.strokeText('CRITICAL',0,-24); ctx.fillStyle='#fff3c0'; ctx.fillText('CRITICAL',0,-24); ctx.restore(); continue; }
       ctx.font=f.big?"23px 'Jersey 10',system-ui":"20px 'Jersey 10',system-ui";
       ctx.fillStyle='#000'; ctx.fillText(f.txt,1,1); ctx.fillStyle=f.c; ctx.fillText(f.txt,0,0); ctx.restore(); }
     ctx.restore();
@@ -2020,8 +2129,13 @@ function render(){
 }
 
 // ====== side panel ======
+// shop / codex picture: units that hold a weapon in front get their picture from the rig in that stance
+function thumbSrc(id){ const sp=SPR[id], rig=sp&&sp.rig; if(!sp) return null; if(sp.thumb) return sp.thumb;
+  const st=U[id]&&animOf(id,U[id]); if(!rig||!rig.img.naturalWidth||!['slash','spear','gun'].includes(st)) return sp.img.src;
+  buildRig(rig,rigPose({ph:-ANIM},id,U[id]),[],null); const c=document.createElement('canvas'); c.width=56; c.height=54; const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
+  g.drawImage(RIG,56*RES,54*RES,56*RES,54*RES,0,0,56,54); return sp.thumb=c.toDataURL(); }
 function thumbHTML(id,size){
-  const sp=SPR[id]; if(sp) return `<img src="${sp.img.src}" alt="">`;
+  const sp=SPR[id]; if(sp) return `<img src="${thumbSrc(id)}" alt="">`;
   return `<div class="dot" style="background:${colorOf(id)};width:${size}px;height:${size}px"></div>`;
 }
 // live = a fighter in the current battle: shows its real HP, attack, mana and statuses

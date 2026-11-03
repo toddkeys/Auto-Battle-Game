@@ -40,9 +40,9 @@ def beastmaster():
     for x in (24, 27, 30, 33):   # tooth necklace
         s.part(bone, [('poly', [(x, 31.5), (x + 1.4, 31.5), (x + .7, 34.5)])], soft=.3, line=False)
     belt(s, P['darkleather'], 39, P['gold'])
-    # hand axe
-    s.part(P['wood'], [('cap', 41, 46, 44, 30, .9)], soft=.5)
-    s.part(P['steel'], [('poly', [(43, 29), (49, 27), (50, 33), (44.5, 34)])], soft=.6, gloss=1)
+    with s.grp('weapon'):   # hand axe: haft and head turn together at the wrist
+        s.part(P['wood'], [('cap', 41, 46, 44, 30, .9)], soft=.5)
+        s.part(P['steel'], [('poly', [(43, 29), (49, 27), (50, 33), (44.5, 34)])], soft=.6, gloss=1)
     arm(s, leather, SKIN, (35, 30), (38.5, 36), (41.5, 40), glove=P['darkleather'])
     arm(s, leather, SKIN, (21, 30), (18, 35.5), (17.5, 39.5), glove=P['darkleather'])
     head(s)
