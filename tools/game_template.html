@@ -121,7 +121,7 @@ select{background:#1f2232;color:var(--text);border:1px solid var(--line);border-
           <li>Assassins leap behind the enemy front line when a battle starts — keep your back line protected.</li>
           <li>Drag a unit onto the shop to sell it.</li>
           <li>3 copies of the same unit merge into ★★ automatically (3 × ★★ = ★★★).</li>
-          <li>Field slots grow every 2 rounds. Press "+1 slot" to buy an extra one now (up to 9).</li>
+          <li>You start with 3 field slots. Press "+1 slot" to buy more (up to 9); each slot costs more than the last (6, 10, 15, 21, 28, 36 gold).</li>
           <li>Each round gives 5 gold + 1 interest per 10 gold saved (max 5).</li>
           <li>Reach 0 HP and the game is over.</li>
         </ol>
@@ -328,8 +328,10 @@ let S, speed=1, last=0, msgTimer, hoverId=null;
 function msg(t){ $('#msg').textContent=t; clearTimeout(msgTimer); msgTimer=setTimeout(()=>$('#msg').textContent='',3500); }
 function newGame(){ S={round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
-const cap=()=>Math.min(3+Math.floor((S.round-1)/2)+S.extra,MAX_CAP);
-const capCost=()=>4+2*S.extra;   // each extra slot costs 2 more than the last
+// field slots only grow when bought: start with 3, slots 4..9 cost more each time
+const CAP_COSTS=[6,10,15,21,28,36];
+const cap=()=>Math.min(3+S.extra,MAX_CAP);
+const capCost=()=>CAP_COSTS[S.extra]??Infinity;
 function buyCap(){
   if(S.phase!=='prep') return;
   if(cap()>=MAX_CAP) return msg(`Already at the maximum of ${MAX_CAP} units`);
