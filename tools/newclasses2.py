@@ -143,9 +143,10 @@ def galecaller():
 def axe(s, haft, head_rp, x0, y0, x1, y1, big=1.0):
     with s.grp('weapon'):
         s.part(haft, [('cap', x0, y0 + 5, x1, y1, 1.1 * big)], soft=.5)
-        s.part(head_rp, [('poly', [(x1 - 1, y1 + 1), (x1 + 8 * big, y1 - 5 * big), (x1 + 10 * big, y1 + 3 * big),
-                                   (x1 + 8 * big, y1 + 11 * big), (x1 - 1, y1 + 7 * big)])], soft=.7, gloss=1.3)
-        s.part(head_rp, [('poly', [(x1, y1 + 1), (x1 - 4 * big, y1 - 2 * big), (x1 - 4 * big, y1 + 7 * big), (x1, y1 + 6 * big)])], soft=.5, gloss=1)
+        # blade on the left of the haft: in the forward guard (and on the swing) the edge faces the enemy, not the sky
+        s.part(head_rp, [('poly', [(x1 + 1, y1 + 1), (x1 - 8 * big, y1 - 5 * big), (x1 - 10 * big, y1 + 3 * big),
+                                   (x1 - 8 * big, y1 + 11 * big), (x1 + 1, y1 + 7 * big)])], soft=.7, gloss=1.3)
+        s.part(head_rp, [('poly', [(x1, y1 + 1), (x1 + 4 * big, y1 - 2 * big), (x1 + 4 * big, y1 + 7 * big), (x1, y1 + 6 * big)])], soft=.5, gloss=1)
 
 
 def axebrute():

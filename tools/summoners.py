@@ -42,7 +42,7 @@ def beastmaster():
     belt(s, P['darkleather'], 39, P['gold'])
     with s.grp('weapon'):   # hand axe: haft and head turn together at the wrist
         s.part(P['wood'], [('cap', 41, 46, 44, 30, .9)], soft=.5)
-        s.part(P['steel'], [('poly', [(43, 29), (49, 27), (50, 33), (44.5, 34)])], soft=.6, gloss=1)
+        s.part(P['steel'], [('poly', [(45, 29), (39, 27), (38, 33), (43.5, 34)])], soft=.6, gloss=1)   # edge on the left: faces the enemy in the guard
     arm(s, leather, SKIN, (35, 30), (38.5, 36), (41.5, 40), glove=P['darkleather'])
     arm(s, leather, SKIN, (21, 30), (18, 35.5), (17.5, 39.5), glove=P['darkleather'])
     head(s)
