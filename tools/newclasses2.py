@@ -6,7 +6,7 @@ from pixel import Spr, ramp
 
 
 # ====== ninjas ======
-def shadowstep():
+def phantomblade():
     # shadow assassin: close black cowl, crimson eyes glowing over a mask, a long red scarf, a red-edged ninjato
     s = Spr()
     garb, dark, red, steel = ramp('#22202e', 1.3), ramp('#121018', 1.2), ramp('#d02a3a', 1.2, 1.1), P['steel']
@@ -37,7 +37,7 @@ def shadowstep():
     return s
 
 
-def phantomblade():
+def shadowstep():
     # a hooded wraith-swordsman: deep hood, face in shadow with glowing eyes, tattered cloak, ghost katana
     s = Spr()
     cloak, dark, ghost, wisp = ramp('#2a2440', 1.3), ramp('#141020', 1.2), ramp('#a88aff', 1.2, 1.25), ramp('#c8b8ff', 1.1, 1.3)

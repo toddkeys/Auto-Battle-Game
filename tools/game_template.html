@@ -711,9 +711,9 @@ const SKILLS = {
   phantomblade:{name:'Rift Step', mp:65, desc:'Dashes straight through the target to the far side, 150% damage to every enemy along the path. 1.2s later each of them is struck again for 70% and slowed. Can\'t be cast while rooted.',
     cast(a,t){ const d=dist(a,t)||1, ux=(t.x-a.x)/d, uy=(t.y-a.y)/d, x1=Math.min(COLS-.5,Math.max(.5,t.x+ux*1.3)), y1=Math.min(ROWS-.5,Math.max(.5,t.y+uy*1.3));
       const hitL=foes(a).filter(e=>segDist(e.x,e.y,a.x,a.y,x1,y1)<=.7), k=a.nSkill||1;
-      a.leap={x0:a.x,y0:a.y,x1,y1,t:0,T:.2,flat:1}; a.ghost=.25; V({k:'arc',x:t.x,y:t.y,c:'#b08aff',r:1.4,dir:a.face,m:.4});
-      for(const e of hitL){ hit(a,e,1.5*k); FX('slash',e.x,e.y-.25,{s:.7,tint:'#c8a0ff',flip:a.face<0,m:.4});
-        later(1.2,()=>{ if(e.hp>0&&a.hp>0){ hit(a,e,.7*k); inflict(e,'slow',1.5); FX('spark',e.x,e.y-.3,{s:.6,tint:'#b08aff',m:.4}); } }); } }},
+      a.leap={x0:a.x,y0:a.y,x1,y1,t:0,T:.2,flat:1}; a.ghost=.25; V({k:'arc',x:t.x,y:t.y,c:'#ff5a6a',r:1.4,dir:a.face,m:.4});
+      for(const e of hitL){ hit(a,e,1.5*k); FX('slash',e.x,e.y-.25,{s:.7,tint:'#ff5a6a',flip:a.face<0,m:.4});
+        later(1.2,()=>{ if(e.hp>0&&a.hp>0){ hit(a,e,.7*k); inflict(e,'slow',1.5); FX('spark',e.x,e.y-.3,{s:.6,tint:'#ff7a7a',m:.4}); } }); } }},
   riftcaller:{name:'Vacuum', mp:70, desc:'Opens a rift at the target: every enemy within 2 cells is pulled into it and takes 110% damage.',
     cast(a,t){ const x=t.x, y=t.y; V({k:'ring',x,y,r:2,c:'#8a6aff',m:.5}); FX('nova',x,y-.2,{s:1.2,tint:'#8a6aff',m:.5});
       for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=2){ pull(e,x,y,a); later(.25,()=>{ if(e.hp>0) hit(a,e,1.1); }); } }},
@@ -1599,7 +1599,7 @@ function step(dt){
     if(a.chan>0){ a.chan-=dt; continue; }   // channelling (Event Horizon)
     if(a.blinkQ){ const B=a.blinkQ; B.t-=dt;   // Flicker Strike: one enemy every 0.13s
       if(B.t<=0){ const e=B.list[B.i++];
-        if(e&&e.hp>0){ a.x=e.x+(Math.random()<.5?-.45:.45); a.y=e.y+.1; a.face=e.x<a.x?-1:1; hit(a,e,B.m); FX('slash',e.x,e.y-.25,{s:.65,tint:'#ff5a6a',flip:a.face<0,m:.35}); burst(a.x,a.y,'#30344a',6,2,2,0); }
+        if(e&&e.hp>0){ a.x=e.x+(Math.random()<.5?-.45:.45); a.y=e.y+.1; a.face=e.x<a.x?-1:1; hit(a,e,B.m); FX('slash',e.x,e.y-.25,{s:.65,tint:'#b08aff',flip:a.face<0,m:.35}); burst(a.x,a.y,'#2a2440',6,2,2,0); }
         B.t=.13; if(B.i>=B.list.length){ a.x=B.home.x; a.y=B.home.y; a.blinkQ=null; a.ghost=0; FX('smoke',a.x,a.y-.1,{s:.9,add:false,m:.4}); } }
       continue; }
     if(a.spin&&(a.stun>0||a.frz>0)) a.spin=null;   // a stun breaks the whirl
