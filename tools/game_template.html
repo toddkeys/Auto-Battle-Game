@@ -302,7 +302,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
-        <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Chrono</b> heroes rewind HP and bend time.</li>
+        <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Chrono</b> heroes mark enemies so their damage replays, and stop time.</li>
         <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ Poison · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
@@ -657,9 +657,9 @@ const SKILLS = {
   kensei:{name:'Thousand Cuts', mp:75, desc:'Spins through every enemy within 1.6 cells, striking 4 times for 70% damage each.',
     cast(a){ for(let i=0;i<4;i++) later(i*.1,()=>{ if(a.hp<=0) return; for(const e of foes(a)) if(dist(e,a)<=1.6) hit(a,e,.7);
       V({k:'arc',x:a.x,y:a.y,c:'#ffd0b0',r:1.3,dir:i%2?-1:1,m:.22}); FX('slash',a.x,a.y-.25,{s:.7,tint:'#ffb090',flip:i%2===1,rot:i*.8,m:.3}); }); }},
-  shogun:{name:"Warlord's Cry", mp:90, desc:'Cleaves the target and enemies beside it for 250% damage, then rallies the team: +30% attack speed for 4s.',
-    cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=1.3) hit(a,e,2.5); FX('slash',t.x,t.y-.25,{s:1.2,tint:'#ff8060',flip:a.face<0,m:.5});
-      for(const b of friends(a)){ b.haste=4; V({k:'ring',x:b.x,y:b.y+.3,r:.55,c:'#ff9a70',m:.5}); } addTrauma(.3); hitStop(.07); }},
+  shogun:{name:'Armor Breaker', mp:90, desc:'A great cleave through the target and the enemies beside it: 250% damage, and their armour is broken for 4s (they take 25% more damage).',
+    cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=1.3){ hit(a,e,2.5); inflict(e,'shred',4); V({k:'shards',x:e.x,y:e.y,c:'#c8c0b0',r:.6,n:6,m:.4}); }
+      FX('slash',t.x,t.y-.25,{s:1.2,tint:'#ff8060',flip:a.face<0,m:.5}); addTrauma(.3); hitStop(.07); }},
   snowmender:{name:'Chill Mend', mp:55, desc:'Wraps the two most injured allies in healing frost: they recover 160% of its heal over 4s and are cleansed (restoring 15% mana).',
     cast(a){ for(const b of friends(a).sort(byHurt).slice(0,2)){ hot(b,a.heal*1.6,4,a); cleanse(b); FX('nova',b.x,b.y-.3,{s:.7,tint:'#bff2ff',m:.5}); } }},
   frostoracle:{name:'Glacial Ward', mp:80, desc:'Encases the most endangered ally in Ice Ward for 2.5s (it cannot act, heals 8% max HP per second, ignores physical damage but takes 20% more magic damage); allies within 2 cells recover 100% of its heal over 4s.',
@@ -695,13 +695,11 @@ const SKILLS = {
   grandmaster:{name:'Palm of Heaven', mp:90, desc:'An open-palm strike: 380% damage, a 1s stun and a knockback. Then the Grandmaster reaches full combo and dodges an extra 50% of attacks for 3s.',
     cast(a,t){ hit(a,t,3.8); stun(t); const d=dist(a,t)||1; t.x+=(t.x-a.x)/d*.8; t.y+=(t.y-a.y)/d*.8; clampOnBoard(t);
       a.combo=10; a.zen=3; FX('nova',t.x,t.y-.2,{s:1.2,tint:'#ffe27a',m:.5}); hitStop(.08); }},
-  chronomancer:{name:'Rewind', mp:70, desc:'Turns back time for the most hurt ally: its HP returns to its highest point in the last 3s and its debuffs are cleansed.',
-    cast(a){ const w=friends(a).sort(byHurt)[0]; if(!w) return; const best=Math.max(w.hp,...(w.hist||[]));
-      if(best>w.hp){ a.hl+=best-w.hp; pop(w,'+'+Math.round(best-w.hp),'#7fe0e0',true); w.hp=best; } cleanse(w);
-      V({k:'ring',x:w.x,y:w.y,r:.9,c:'#7fe0e0',m:.6}); FX('sigil',w.x,w.y-.1,{s:.6,tint:'#7fe0e0',m:.6}); }},
-  timekeeper:{name:'Time Warp', mp:100, desc:'Bends time over the field: allies gain haste (+30% attack speed) for 5s, every enemy is slowed for 3s and loses 30 mana.',
-    cast(a){ for(const b of friends(a)) b.haste=Math.max(b.haste||0,5); for(const e of foes(a)){ inflict(e,'slow',3); e.mp=Math.max(0,e.mp-30); }
-      V({k:'flash',x:0,y:0,c:'#7fe0e0',m:.3}); V({k:'ring',x:a.x,y:a.y,r:4,c:'#7fe0e0',m:.8}); }},
+  chronomancer:{name:'Paradox Mark', mp:70, desc:'Marks the target with a time paradox for 3s. When the mark ends, time replays: the target takes 50% of all the damage it took while marked again (at least 150% of the Chronomancer\'s attack).',
+    cast(a,t){ t.pmark={t:3,acc:0,src:a}; V({k:'ring',x:t.x,y:t.y,r:.7,c:'#7fe0e0',m:.6}); FX('sigil',t.x,t.y-.1,{s:.6,tint:'#7fe0e0',m:.6}); }},
+  timekeeper:{name:'Stop Time', mp:110, desc:'Stops time for every enemy within 2.5 cells of the target for 1.5s (bosses 0.75s): they can\'t act, and the damage they take is held back, then lands all at once, 20% stronger, when time resumes.',
+    cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=2.5){ e.tstop=U[e.type].boss?.75:1.5; e.tsBank=0; e.tsSrc=a; pop(e,'⏳','#7fe0e0',true); }
+      V({k:'flash',x:0,y:0,c:'#bff6ff',m:.3}); V({k:'ring',x:t.x,y:t.y,r:2.5,c:'#7fe0e0',m:1.5}); }},
   shadowstep:{name:'Flicker Strike', mp:75, desc:'Vanishes and strikes the target and up to 4 enemies within 3 cells of it, 140% damage each, then returns. Untargetable while striking. Can\'t be cast while rooted.',
     cast(a,t){ const list=[t,...foes(a).filter(e=>e!==t&&dist(e,t)<=3).sort(()=>Math.random()-.5).slice(0,4)]; blink(a,list,1.4); }},
   phantomblade:{name:'Rift Step', mp:65, desc:'Dashes straight through the target to the far side, 150% damage to every enemy along the path. 1.2s later each of them is struck again for 70% and slowed. Can\'t be cast while rooted.',
@@ -1392,7 +1390,7 @@ function pop(u,txt,c,big){ S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?
 // slow (-40% move and attack speed), psn = poison (damage over time)
 // dur = fixed length for every skill (stun 1s, silence 2s, blind 2s); slow keeps each skill's own length
 // tint = colour wash over the unit while it lasts
-const STATUS={shock:{label:'Shocked',c:'#9ad8ff',icon:'⚡',dur:.4,tint:'#bfe8ff'},root:{label:'Rooted',c:'#8be06a',icon:'🌿',tint:'#3a9a2a'},stun:{label:'Stunned',c:'#ffe066',icon:'💫',dur:1,tint:'#ffd84a'},sil:{label:'Silenced',c:'#c8a0ff',icon:'🤐',dur:2,tint:'#9a50ff'},
+const STATUS={tstop:{label:'Time Stopped',c:'#7fe0e0',icon:'⏳',tint:'#5ad8e8'},shock:{label:'Shocked',c:'#9ad8ff',icon:'⚡',dur:.4,tint:'#bfe8ff'},root:{label:'Rooted',c:'#8be06a',icon:'🌿',tint:'#3a9a2a'},stun:{label:'Stunned',c:'#ffe066',icon:'💫',dur:1,tint:'#ffd84a'},sil:{label:'Silenced',c:'#c8a0ff',icon:'🤐',dur:2,tint:'#9a50ff'},
   blind:{label:'Blinded',c:'#c8c8c8',icon:'🌫️',dur:2,tint:'#14141c'},slow:{label:'Slowed',c:'#8fd0ff',icon:'🐌',tint:'#7fd0ff'},
   psn:{label:'Poisoned',c:'#8be06a',icon:'☠️',tint:'#4ad040'},
   frz:{label:'Frozen',c:'#bff2ff',icon:'🧊',tint:'#d8f6ff'},
@@ -1477,6 +1475,8 @@ function deal(t,dmg,crit,src){
   dmg*=1+(t.shred>0?.25:0)+(t.vuln||0)+(t.gT>0?t.gAmp||0:0)+(t.root>0?t.rootAmp||0:0);   // Armor Broken / Occultist bonus
   if(t.guard&&t.guard.hp>0&&t.guard!==src){ const sh=dmg*t.guardPct; dmg-=sh; deal(t.guard,sh,false,null); }   // Guardian Link takes a share
   if(t.frz>0){ t.frz=0; dmg*=1.5; SND.play('shatter'); FX('nova',t.x,t.y-.3,{s:.8,tint:'#cff4ff',m:.45}); pop(t,'Shatter!','#dff8ff',true); V({k:'shards',x:t.x,y:t.y,c:'#dff8ff',r:.9,n:10,m:.35}); }   // damage breaks Frozen
+  if(t.tstop>0&&src){ t.tsBank+=dmg; return; }   // Stop Time: banked until time resumes
+  if(t.pmark&&src) t.pmark.acc+=dmg;   // Paradox Mark tally
   if(src) src.dd+=dmg; t.dtk+=dmg;
   const sk=isMagic(src)?'mshield':'shield';   // gold shields stop physical damage, violet ones stop magic
   if(t[sk]>0){ const ab=Math.min(t[sk],dmg); t[sk]-=ab; dmg-=ab; }
@@ -1543,8 +1543,6 @@ function releaseCast(a){
   let t=a.castTgt; if(t&&t.hp<=0) t=nearest(a,S.fight.f);
   if(!a.heal&&!t) return;
   a.atkT=ATK_T; a.relT=REL_T; a.glow=.5; if(t) a.tgt=t; if(a.spellblade) a.sb=a.spellblade;
-  const sk=SKILLS[a.type], nm=sk.names?sk.names[(a.alt|0)%sk.names.length]:sk.name;   // bosses alternate between skills
-  V({k:'shout',x:a.x,y:a.y-.95,txt:nm+'!',c:colorOf(a.type),m:1});   // shout the skill name
   if(a.star===3){ FXS=1.3; V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.6,m:.8}); V({k:'ring',x:a.x,y:a.y,r:1.1,c:'#fff3c0',m:.6}); burst(a.x,a.y-.4,'#ffe9a0',18,3.5,3,-2); }   // 3 stars: a golden flourish
   CASTER=a; SND.play(SKILL_SND[a.type]||'skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
   burst(a.x,a.y-.3,colorOf(a.type),10,3,3,0);
@@ -1576,7 +1574,11 @@ function step(dt){
     if(song===0) x.sAS=Math.max(x.sAS,.2*k); else if(song===1) x.sRed=Math.max(x.sRed,.15*k); else x.sMp=Math.max(x.sMp,4*k); }
   for(const a of alive){
     if(a.hp<=0) continue;
-    if((a.histT=(a.histT||0)+dt)>=.5){ a.histT=0; (a.hist=a.hist||[]).push(a.hp); if(a.hist.length>6) a.hist.shift(); }   // last 3s of HP, for Rewind
+    if(a.pmark&&(a.pmark.t-=dt)<=0){ const M=a.pmark; a.pmark=null;   // Paradox Mark: the replay
+      deal(a,Math.max(M.acc*.5,M.src.atk*M.src.dmgM*1.5),false,M.src); FX('nova',a.x,a.y-.2,{s:.8,tint:'#7fe0e0',m:.45}); V({k:'ring',x:a.x,y:a.y,r:.9,c:'#bff6ff',m:.5}); if(a.hp<=0) continue; }
+    if(a.tstop>0){ a.tstop-=dt;   // time stopped: frozen, damage held back
+      if(a.tstop<=0&&a.tsBank>0){ const b=a.tsBank*1.2; a.tsBank=0; deal(a,b,true,a.tsSrc); FX('strike',a.x,a.y+.3,{s:.7,tint:'#7fe0e0',m:.45}); }
+      continue; }
     if(a.sMp) gainMp(a,a.sMp*dt); if(a.overT>0) a.overT-=dt; if(a.zen>0) a.zen-=dt;
     if(a.root>0) a.root-=dt; if(a.gT>0) a.gT-=dt; if(a.windT>0) a.windT-=dt; if(a.nDodgeT>0) a.nDodgeT-=dt; if(a.ghost>0&&!a.blinkQ) a.ghost-=dt;
     if(a.pullTo){ const P=a.pullTo, d=Math.hypot(P.x-a.x,P.y-a.y), mv=Math.min(d,8*dt); if(d>.01){ a.x+=(P.x-a.x)/d*mv; a.y+=(P.y-a.y)/d*mv; } if((P.t-=dt)<=0) a.pullTo=null; }
@@ -1864,7 +1866,7 @@ function buildRig(rig,R,tints,expr){
 }
 // which statuses tint the unit right now, pulsing so it reads as "an effect", not a palette swap
 function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,blind:.42,slow:.3,psn:.26,frz:.5,dis:.3,shred:.28,drain:.3,wnd:.28,ward:.4};
-  A.root=.3; A.shock=.45; const t=Object.keys(A).filter(k=>k==='psn'?o.psn:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
+  A.root=.3; A.shock=.45; A.tstop=.45; const t=Object.keys(A).filter(k=>k==='psn'?o.psn:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
 function drawUnit(type,star,px,py,o={}){
   const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.scale||1, oy=-54*(sc-1);
   ctx.save(); ctx.globalAlpha=P.alpha;
@@ -1872,6 +1874,7 @@ function drawUnit(type,star,px,py,o={}){
   ctx.fillStyle=o.team===1?'rgba(255,80,80,.45)':'rgba(90,169,255,.45)';
   ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,20*sh,7*sh,0,0,Math.PI*2); ctx.fill();
   if(o.sel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+  if(o.pmark){ ctx.strokeStyle=`rgba(127,224,224,${.55+.3*Math.sin(ANIM*6)})`; ctx.lineWidth=1.5; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,15,5,0,ANIM*3,ANIM*3+Math.PI*1.5); ctx.stroke(); }   // Paradox Mark: a ticking ring
   if(star===3&&!o.ghost&&o.die===undefined&&!(o.spawn>1)){   // 3 stars: a very faint golden aura and a few rising motes
     const k=.07+.03*Math.sin(ANIM*2.4+(o.ph||0)), g=ctx.createRadialGradient(px,py+2,4,px,py+2,30*sc);
     g.addColorStop(0,`rgba(255,226,140,${k})`); g.addColorStop(1,'rgba(255,226,140,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+2,26*sc,32*sc,0,0,Math.PI*2); ctx.fill();
@@ -2104,7 +2107,7 @@ function render(){
     ctx.restore();
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
-    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
+    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
       ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,glow:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
@@ -2174,7 +2177,7 @@ function thumbHTML(id,size){
 function infoHTML(id,star,items,live){
   const u=U[id], m=STAR_MULT[star-1], sk=SKILLS[id], c=CLASSES[u.cls]||{name:u.boss?'Boss':u.cls==='summon'?'Summon':'Monster',color:colorOf(id)}, o=ORIGINS[u.org];
   const side=live?(live.team===0?'<span style="color:#7fd0ff">Ally</span>':'<span style="color:#ff8a80">Enemy</span>')+' · ':'';
-  const st=live?['ward','frz','stun','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
+  const st=live?['ward','frz','stun','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
   return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${u.name} <span class="stars">${'★'.repeat(star)}</span></div>
     <div class="tags">${side}<span style="color:${c.color}">${c.name}</span>${o?` · <span style="color:${o.color}">${o.icon} ${o.name}</span>`:''}${u.cost&&u.cost<5?` · ${u.cost} gold`:''}</div></div></div>
     <div class="chips">${live?`<span>❤ ${Math.max(0,Math.round(live.hp))} / ${Math.round(live.max)}</span><span>⚔ ${Math.round(live.atk*live.dmgM)}</span>${live.mshield>1?`<span style="color:#d0a0ff">🔮 ${Math.round(live.mshield)}</span>`:''}${live.shield>1?`<span>🛡 ${Math.round(live.shield)}</span>`:''}${sk.mp<1e9?`<span>💧 ${Math.round(live.mp)} / ${sk.mp}</span>`:''}`

@@ -28,27 +28,31 @@ def shadowstep():
 
 
 def phantomblade():
-    # spectral swordsman: white haori over violet hakama, high ponytail, a glowing ghost katana
+    # a hooded wraith-swordsman: deep hood, face in shadow with glowing eyes, tattered cloak, ghost katana
     s = Spr()
-    haori, hakama, ghost, trim = ramp('#ecebf4', .8), ramp('#3a2a5a', 1.2), ramp('#a88aff', 1.2, 1.25), ramp('#7a5ad8', 1.1)
-    back_hair(s, ramp('#1e1a2a', 1.3), 38, 9)   # ponytail falling down the back
-    legs(s, hakama, ramp('#1a1428'), robe=True)
-    s.part(hakama, [('poly', [(20, 38), (36, 38), (39, 51), (17, 51)])], soft=1.5, cast=1)   # wide hakama
-    torso(s, haori, hem=41)
-    s.part(trim, [('poly', [(21, 29), (24, 28.5), (31, 40), (28, 40.5)]), ('poly', [(35, 29), (32, 28.5), (27, 36), (29.5, 37)])], soft=.5)   # crossed collar
-    belt(s, trim, 39)
+    cloak, dark, ghost, wisp = ramp('#2a2440', 1.3), ramp('#141020', 1.2), ramp('#a88aff', 1.2, 1.25), ramp('#c8b8ff', 1.1, 1.3)
+    with s.grp('cape'):   # tattered cloak, ragged hem
+        s.part(cloak, [('poly', [(19, 27), (37, 27), (44, 50), (41, 47), (39, 52), (35, 48), (31, 53), (28, 49), (24, 53), (21, 48), (17, 52), (15, 47), (12, 50)])], soft=2)
+    legs(s, dark, ramp('#0e0c16'))
+    torso(s, dark, hem=46)
+    s.part(ramp('#3a2a5a', 1.2), [('poly', [(21, 29), (24, 28.5), (34, 44), (31, 45)])], soft=.5)   # sash
+    belt(s, ghost, 40)
     with s.grp('weapon'):   # ghost katana
         s.part(ghost, [('poly', [(41, 40), (43, 40), (48, 11), (47.5, 8), (45.6, 11)])], soft=.5, gloss=1.8)
-        s.part(ramp('#2a1e3a'), [('cap', 39.5, 41.4, 44.5, 41, .9), ('cap', 42, 41.5, 41.6, 47, .9)], soft=.4)
-    arm(s, haori, SKIN, (35, 30), (38.5, 36), (42, 41), r=2.9)
-    arm(s, haori, SKIN, (21, 30), (18.5, 35), (18, 39), r=2.9)
+        s.part(ramp('#1a1428'), [('cap', 39.5, 41.4, 44.5, 41, .9), ('cap', 42, 41.5, 41.6, 47, .9)], soft=.4)
+    arm(s, cloak, SKIN, (35, 30), (38.5, 36), (42, 41), r=3, glove=dark)
+    arm(s, cloak, SKIN, (21, 30), (18.5, 35), (18, 39), r=3, glove=dark)
     head(s)
-    bangs(s, ramp('#1e1a2a', 1.3), 'swept', shine=11)
-    s.part(ramp('#1e1a2a', 1.3), [('ell', 31, 7, 3.4, 2.6)], soft=1)   # hair tie
-    s.part(trim, [('rect', 29.5, 7.5, 32.5, 9)], soft=.3, line=False)
-    face(s, '#a88aff')
-    for x, y in ((8, 24), (51, 30), (10, 44)):
-        sparkle(s, x, y, (200, 180, 255))
+    bangs(s, ramp('#1a1626', 1.3), 'swept', shine=6)
+    s.part(cloak, [('chord', 28, 18, 14, 15, 180, 360), ('poly', [(14, 18), (18.5, 18), (19.5, 31), (13, 32)]),
+                   ('poly', [(42, 18), (37.5, 18), (36.5, 31), (43, 32)]), ('poly', [(24, 4), (28, 0), (32, 4)])],
+           sub=[('ell', 28, 21.5, 9, 8)], soft=2.5, cast=3)   # deep pointed hood, shadow falls over the face
+    face(s, '#c8a8ff', mouth=None, blush=False)   # the cloth hides the mouth
+    s.part(dark, [('poly', [(19, 23.5), (37, 23.5), (36, 30), (28, 32), (20, 30)])], soft=.8)   # face cloth
+    for x, y in ((24, 21), (32, 21)):   # glowing eyes in the shadow
+        s.glow(x, y, (200, 170, 255), 200)
+    for x, y in ((7, 26), (50, 20), (9, 44), (49, 40)):
+        sparkle(s, x, y, (190, 170, 255))
     return s
 
 
