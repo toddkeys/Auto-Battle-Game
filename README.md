@@ -1,0 +1,15 @@
+# Auto Battle Game
+
+A single-file auto battler (original anime-style pixel art). Open `ro-autobattler.html` in a browser to play.
+
+## Editing
+
+- Game code: `tools/game_template.html` (do not edit `ro-autobattler.html` by hand, it is generated)
+- Sprites: `tools/kit.py`, `tools/classes.py`, `tools/monsters.py` (engine in `tools/pixel.py`)
+
+Rebuild (needs Python with Pillow and numpy):
+
+```bash
+python tools/build_sprites.py   # redraw sprites -> assets/units/*.png, assets/preview.png
+python tools/build_game.py      # embed sprites into ro-autobattler.html
+```
