@@ -363,7 +363,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
-        <li><b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop.</li>
+        <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper replays the current song (Encore); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
@@ -2823,7 +2823,12 @@ function hideTip(){ clearTimeout(peekTimer); $('#tip').hidden=true; }
 $('#shop').addEventListener('pointerdown',e=>{ const b=e.target.closest('.su'); peeked=false; if(!b||e.pointerType==='mouse') return;
   peekTimer=setTimeout(()=>{ peeked=true; showTip(b); },350); });
 for(const ev of ['pointerup','pointercancel','pointerleave']) $('#shop').addEventListener(ev,hideTip);
-$('#shop').addEventListener('contextmenu',e=>{ if(e.target.closest('.su')) e.preventDefault(); });
+// right-click a shop hero: mark it (it glows in the shop and joins your Team Plan), or remove its mark
+$('#shop').addEventListener('contextmenu',e=>{ const b=e.target.closest('.su'); if(!b) return; e.preventDefault();
+  const id=b.dataset.id, m=readMarks(); if(!id) return;
+  if(m.includes(id)){ m.splice(m.indexOf(id),1); setMarks(m); msg(`Removed the mark from ${U[id].name}`); }
+  else if(m.length>=MAX_MARKS) msg(`You can mark up to ${MAX_MARKS} heroes — right-click a marked hero to remove its mark`);
+  else { m.push(id); setMarks(m); msg(`Marked ${U[id].name}: it glows in the shop`); } });
 $('#shop').addEventListener('click',e=>{ const b=e.target.closest('.su'); if(!b) return; if(peeked||shopDragged){ peeked=false; shopDragged=false; return; } buy(+b.dataset.k); });
 // drag a shop card onto the field or bench: buys it and puts it there
 $('#shop').addEventListener('dragstart',e=>e.preventDefault());   // no native image dragging inside the shop
