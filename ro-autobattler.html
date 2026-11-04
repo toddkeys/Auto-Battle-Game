@@ -359,7 +359,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Chrono</b> heroes mark enemies so their damage replays, and stop time.</li>
-        <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ Poison · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
+        <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ Poison (damage once per second) · 🔥 Burn (fire skills: damage twice per second, half each tick; stacks with poison) · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. Each shop Upgrade improves the odds; a fully upgraded shop late in the run rolls 1💰 heroes only 10% of the time. "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
         <li><b>Gold</b>: 5 per round, +1 every 5 rounds (9 from round 20) + 1 interest per 10 saved (max 5) + a streak bonus for 2/4/6 wins or losses in a row (+1/+2/+3). Losing costs HP; at 0 the run ends.</li>
@@ -685,7 +685,7 @@ function safest(a){ let best={x:a.x,y:a.y}, bd=-1; const ys=a.team===0?[5.5,6.5,
   for(const y of ys) for(let x=.5;x<COLS;x+=1){ const d=Math.min(...foes(a).map(e=>Math.hypot(e.x-x,e.y-y)),99); if(d>bd){ bd=d; best={x,y}; } } return best; }
 // small elemental touch on summons' basic attacks
 const SUMMON_HIT={
-  drake:(a,t)=>{ if(!t.psn) poison(t,a.atk*.08,2,a,'Burning','#ff8a3a'); },
+  drake:(a,t)=>{ if(!t.brn) burn(t,a.atk*.08,2,a); },
   mossling:(a,t)=>{ if(!t.psn) poison(t,a.atk*.06,2,a); },
   wolf:(a,t)=>{ if(!t.psn&&Math.random()<.3) poison(t,a.atk*.08,2,a,'Bleeding','#ff5a5a'); },
   guardian:(a,t)=>{ if(Math.random()<.15) inflict(t,'slow',1); },
@@ -744,7 +744,7 @@ const SKILLS = {
       V({k:'burst',x:a.x,y:a.y,r:.7,c:'#3a1030'}); a.x=t.x+(a.x<t.x?-.7:.7); a.y=t.y; a.tgt=t; a.face=t.x<a.x?-1:1;
       V({k:'burst',x:a.x,y:a.y,r:.7,c:'#ff4060'}); hit(a,t,3.5,true); inflict(t,'sil'); }},
   mage:{name:'Flame Burst', mp:60, desc:'Hurls a fire bolt that explodes: 220% damage to the target and 120% to enemies within 1.3 cells, all burning for 3s.',
-    cast(a,t){ shoot(a,t,2.2,'#ff7a2a',true,x=>{ poison(x,a.atk*.25,3,a); for(const e of foes(a)) if(e!==x&&dist(e,x)<=1.3){ hit(a,e,1.2); poison(e,a.atk*.25,3,a); }
+    cast(a,t){ shoot(a,t,2.2,'#ff7a2a',true,x=>{ burn(x,a.atk*.25,3,a); for(const e of foes(a)) if(e!==x&&dist(e,x)<=1.3){ hit(a,e,1.2); burn(e,a.atk*.25,3,a); }
       V({k:'ring',x:x.x,y:x.y,r:1.3,c:'#ff9a40'}); FX('blaze',x.x,x.y-.2,{s:.8,m:.55}); burst(x.x,x.y,'#ffb050',16,4,3,2); }); }},
   wizard:{name:'Frost Nova', mp:80, desc:'Blasts enemies within 2.2 cells of the target with ice for 180% damage. Each has a 35% chance to be Frozen for 3s (breaks when it takes damage); the rest are slowed for 2s.',
     cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=2.2){ hit(a,e,1.8); if(!freeze(e,.35,3)) inflict(e,'slow',2); } V({k:'ring',x:t.x,y:t.y,r:2.2,c:'#aee8ff'}); V({k:'burst',x:t.x,y:t.y,r:2.2,c:'#bfefff'}); burst(t.x,t.y,'#dff6ff',16,4,3,1); hitStop(.06); }},
@@ -765,7 +765,7 @@ const SKILLS = {
   dawnoracle:{name:'Rebirth', mp:100, desc:'Brings the strongest fallen ally back with 40% HP. If no ally has fallen, heals every ally for 150% of its heal.',
     cast(a){ const d=S.fight.f.filter(b=>b.team===a.team&&b.hp<=0&&!b.reborn&&!b.summon).sort((p,q)=>q.max-p.max)[0];
       if(!d){ for(const b of friends(a)) heal(b,a.heal*1.5,a); V({k:'ring',x:a.x,y:a.y,r:3,c:'#ffd27a'}); return; }
-      FX('strike',d.x,d.y+.35,{s:.9,tint:'#ffe27a',m:.7}); Object.assign(d,{hp:d.max*.4,hpLag:d.max*.4,dead:false,dieT:0,reborn:true,spawnT:.3,stun:0,sil:0,blind:0,slow:0,psn:null,mp:0,castT:0,tgt:null,leap:null,leapDelay:0});
+      FX('strike',d.x,d.y+.35,{s:.9,tint:'#ffe27a',m:.7}); Object.assign(d,{hp:d.max*.4,hpLag:d.max*.4,dead:false,dieT:0,reborn:true,spawnT:.3,stun:0,sil:0,blind:0,slow:0,psn:null,brn:null,mp:0,castT:0,tgt:null,leap:null,leapDelay:0});
       a.hl+=d.hp; pop(d,'Reborn!','#ffe27a',true); V({k:'pillar',x:d.x,y:d.y+.35,c:'#ffd27a',m:.6}); V({k:'ring',x:d.x,y:d.y+.3,r:.9,c:'#ffe27a'}); hitStop(.08); }},
   nightreaper:{name:'Reap', mp:70, desc:'Strikes for 280% damage. A target left under 30% HP (bosses: 15%) is executed, and the Reaper gets half its mana back.',
     cast(a,t){ hit(a,t,2.8,true); V({k:'slash',x:t.x,y:t.y,c:'#5ee08a',dir:a.face});
@@ -930,7 +930,7 @@ const SKILLS = {
       for(let i=1;i<=3;i++) later(i*.08,()=>FX('blaze',a.x+Math.cos(an)*i*1.05,a.y+Math.sin(an)*i*1.05-.2,{s:.55+i*.1,m:.5}));
       V({k:'flash',x:0,y:0,c:'#ff7020',m:.3});
       for(const e of foes(a)){ const d=dist(e,a), da=Math.abs(((Math.atan2(e.y-a.y,e.x-a.x)-an+Math.PI*3)%(Math.PI*2))-Math.PI);
-        if(d<=3.5&&da<=.5){ hit(a,e,2.2); poison(e,a.atk*.3,4,a); } } }},
+        if(d<=3.5&&da<=.5){ hit(a,e,2.2); burn(e,a.atk*.3,4,a); } } }},
   wisp:{name:'',mp:1e9,desc:'',cast(){}}, wolf:{name:'',mp:1e9,desc:'',cast(){}}, guardian:{name:'',mp:1e9,desc:'',cast(){}}, drake:{name:'',mp:1e9,desc:'',cast(){}}, skeleton:{name:'',mp:1e9,desc:'',cast(){}},
   highwizard:{name:'Meteor Rain', mp:90, desc:'Calls 5 meteors onto random enemies, each dealing 200% damage within 1.1 cells.',
     cast(a){ const es=foes(a); for(let i=0;i<5&&es.length;i++){ const t=es[Math.floor(Math.random()*es.length)], x=t.x, y=t.y;
@@ -1653,7 +1653,7 @@ function mkF(type,star,cx,cy,team,mult=1){
   const b=U[type], m=STAR_MULT[star-1]*mult;
   return {type,star,team,x:cx+.5,y:cy+.5,hp:b.hp*m,max:b.hp*m,atk:b.atk*m,heal:(b.heal||0)*m,range:b.range,as:b.as,ms:b.ms,
     splash:b.splash||0,cd:Math.random()*.5,tgt:null,red:0,crit:0,dmgM:1,asM:1,regen:0,lunge:0,flash:0,face:1,
-    mp:0,mpMax:SKILLS[type].mp,skPow:1,skHeal:1,stun:0,shield:0,mshield:0,psn:null,glow:0,
+    mp:0,mpMax:SKILLS[type].mp,skPow:1,skHeal:1,stun:0,shield:0,mshield:0,psn:null,brn:null,glow:0,
     atkT:0,castT:0,castTgt:null,kx:0,ky:0,hpLag:b.hp*m,dieT:0,dead:false,walk:0,moving:0,ph:Math.random()*6.28,
     dd:0,dtk:0,hl:0,healOut:0,fontK:0,bellK:0,bannerK:0,thorns:0,manaAtk:0,siphon:0,wound:0,shred:0,drain:0,wnd:0,exec:0,frostOn:0,phoenix:0,cloak:0,spellblade:0,sb:0,coin:0,frz:0,sil:0,blind:0,slow:0,spawnT:0,leapDelay:0,leap:null,leapP:0};
 }
@@ -1799,6 +1799,7 @@ function pop(u,txt,c,big){ S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?
 const STATUS={tstop:{label:'Time Stopped',c:'#7fe0e0',icon:'⏳',tint:'#5ad8e8'},shock:{label:'Shocked',c:'#9ad8ff',icon:'⚡',dur:.4,tint:'#bfe8ff'},root:{label:'Rooted',c:'#8be06a',icon:'🌿',tint:'#3a9a2a'},stun:{label:'Stunned',c:'#ffe066',icon:'💫',dur:1,tint:'#ffd84a'},sil:{label:'Silenced',c:'#c8a0ff',icon:'🤐',dur:2,tint:'#9a50ff'},
   blind:{label:'Blinded',c:'#c8c8c8',icon:'🌫️',dur:2,tint:'#14141c'},slow:{label:'Slowed',c:'#8fd0ff',icon:'🐌',tint:'#7fd0ff'},
   psn:{label:'Poisoned',c:'#8be06a',icon:'☠️',tint:'#4ad040'},
+  brn:{label:'Burning',c:'#ff9a40',icon:'🔥',tint:'#ff6a20'},
   frz:{label:'Frozen',c:'#bff2ff',icon:'🧊',tint:'#d8f6ff'},
   ward:{label:'Ice Ward',c:'#9ee8ff',icon:'❄️',tint:'#b8ecff'},          // ally protection: immune to physical, +20% magic damage
   dis:{label:'Disarmed',c:'#ffc080',icon:'🚫',dur:1,tint:'#b08050'},
@@ -1845,10 +1846,13 @@ function strip(u){ if(u.hp<=0||!u.items||!u.items.length||!u.itemDelta) return;
   pop(u,'Stripped '+u.items.map(k=>IT(k).icon).join(''),'#ffc080',true); burst(u.x,u.y-.4,'#ffd080',10,3,3,3); u.items=[]; u.itemDelta=null; }
 // ice: a chance to Freeze (bosses are immune). Returns true when it took hold.
 function freeze(u,chance,s){ if(u.hp<=0||U[u.type].boss||Math.random()>=chance) return false; const had=u.cloak>0; inflict(u,'frz',s); return !had; }
+// damage over time: poison ticks once per second, burn ticks twice per second (half the damage each tick)
+function burn(u,dps,s,src){ if(u.hp<=0) return; if(!u.brn){ pop(u,'Burning','#ff9a40'); burst(u.x,u.y-.3,'#ff9a40',8,2,3,-1.5); } u.brn={dps,t:s,T:s,src,acc:0}; }
+function dotTick(a,d,dmg,c){ a.hp-=dmg; a.dtk+=dmg; if(d.src) d.src.dd+=dmg; pop(a,Math.round(dmg),c); }
 function poison(u,dps,s,src,lbl='Poisoned',c='#8be06a'){ if(u.hp<=0) return; if(!u.psn){ pop(u,lbl,c); burst(u.x,u.y-.3,c,8,2,3,-1); } u.psn={dps,t:s,T:s,src}; }
 // holy cleanse: removes every status and restores 15% mana
 function cleanse(u){ const had=u.stun>0||u.sil>0||u.blind>0||u.slow>0||u.frz>0||u.dis>0||u.shred>0||u.drain>0||u.wnd>0||u.psn;
-  u.stun=u.sil=u.blind=u.slow=u.frz=u.dis=u.shred=u.drain=u.wnd=u.shock=u.root=0; if(u.hp>0) u.mp=Math.min(u.mpMax,u.mp+u.mpMax*.15); u.psn=null; if(had) pop(u,'Cleansed','#bfffe0'); }
+  u.stun=u.sil=u.blind=u.slow=u.frz=u.dis=u.shred=u.drain=u.wnd=u.shock=u.root=0; if(u.hp>0) u.mp=Math.min(u.mpMax,u.mp+u.mpMax*.15); u.psn=null; u.brn=null; if(had) pop(u,'Cleansed','#bfffe0'); }
 // hit-stop: freeze the battle for a split second on big hits (rate-limited so it never feels laggy)
 function hitStop(s){ const F=S.fight; addTrauma(s*5); if(s>=.07) SND.play('boom'); if(F.t-F.lastStop>.3){ F.stop=Math.max(F.stop,s); F.lastStop=F.t; } }
 let trauma=0;
@@ -2008,7 +2012,9 @@ function step(dt){
     if(a.regen) a.hp=Math.min(a.max,a.hp+a.max*a.regen*dt*healMul(a));
     if(a.sil>0) a.sil-=dt; if(a.blind>0) a.blind-=dt; if(a.slow>0) a.slow-=dt; if(a.dis>0) a.dis-=dt; if(a.shred>0) a.shred-=dt; if(a.drain>0) a.drain-=dt; if(a.wnd>0) a.wnd-=dt;
     const slowM=a.slow>0?.6:1;
-    if(a.psn){ const pd=a.psn.dps*dt; a.hp-=pd; a.dtk+=pd; if(a.psn.src) a.psn.src.dd+=pd; a.psn.t-=dt; if(a.psn.t<=0) a.psn=null; if(a.hp<=0) continue; }
+    if(a.psn){ const d=a.psn; d.acc=(d.acc||0)+dt; d.t-=dt; while(d.acc>=1-1e-6){ d.acc-=1; dotTick(a,d,d.dps,'#8be06a'); } if(d.t<=1e-6) a.psn=null; }
+    if(a.brn){ const d=a.brn; d.acc=(d.acc||0)+dt; d.t-=dt; while(d.acc>=.5-1e-6){ d.acc-=.5; dotTick(a,d,d.dps*.5,'#ff9a40'); } if(d.t<=1e-6) a.brn=null; }
+    if(a.hp<=0) continue;
     if(a.spawnT>0){ a.spawnT-=dt; if(a.spawnT<=0) burst(a.x,a.y+.35,'#d8d0b8',6,1.2,3,4); continue; }   // dropping onto the field
     if(a.leap){   // assassin jump arc
       const L=a.leap; L.t+=dt; const q=Math.min(1,L.t/L.T);
@@ -2088,7 +2094,7 @@ function tickFx(dt){
     a.kx*=Math.exp(-dt*10); a.ky*=Math.exp(-dt*10); a.flash=Math.max(0,a.flash-dt*5);
     if(a.hpLag>a.hp) a.hpLag=Math.max(a.hp,a.hpLag-Math.max(a.max*.4*dt,(a.hpLag-a.hp)*3*dt)); else a.hpLag=a.hp;
     if(a.wind&&a.hp>0&&a.hp<a.max*.3){ heal(a,a.max*a.wind,null); a.wind=0; pop(a,'Second Wind','#bff2ff',true); }   // blessing
-    if(a.hp<=0&&!a.dead&&a.phoenix){ a.hp=a.hpLag=a.max*Math.min(.7,a.phoenix); a.phoenix=0; a.frz=a.stun=0; a.psn=null;   // Phoenix Feather
+    if(a.hp<=0&&!a.dead&&a.phoenix){ a.hp=a.hpLag=a.max*Math.min(.7,a.phoenix); a.phoenix=0; a.frz=a.stun=0; a.psn=null; a.brn=null;   // Phoenix Feather
       pop(a,'Phoenix!','#ffb040',true); V({k:'pillar',x:a.x,y:a.y+.35,c:'#ff9030',m:.6}); burst(a.x,a.y-.3,'#ffb040',18,3,3,-2); }
     if(a.hp<=0&&!a.dead){ for(const b of F.f) if(b.team!==a.team&&b.hp>0&&b.killAS) b.asM+=b.killAS;
       a.dead=true; a.dieT=DIE_T; SND.play(a.team===1&&(U[a.type].cls==='monster'||U[a.type].cls==='summon')?'mdie':'hdie'); burst(a.x,a.y-.2,'#ffffff',10,2,3,2); burst(a.x,a.y,colorOf(a.type),8,1.5,3,-1); }
@@ -2275,8 +2281,8 @@ function buildRig(rig,R,tints,expr){
     rg.globalCompositeOperation='source-over'; rg.globalAlpha=1; }
 }
 // which statuses tint the unit right now, pulsing so it reads as "an effect", not a palette swap
-function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,blind:.42,slow:.3,psn:.26,frz:.5,dis:.3,shred:.28,drain:.3,wnd:.28,ward:.4};
-  A.root=.3; A.shock=.45; A.tstop=.45; const t=Object.keys(A).filter(k=>k==='psn'?o.psn:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
+function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,blind:.42,slow:.3,psn:.26,brn:.3,frz:.5,dis:.3,shred:.28,drain:.3,wnd:.28,ward:.4};
+  A.root=.3; A.shock=.45; A.tstop=.45; const t=Object.keys(A).filter(k=>k==='psn'||k==='brn'?o[k]:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
 function drawUnit(type,star,px,py,o={}){
   const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.scale||1, oy=-54*(sc-1);
   ctx.save(); ctx.globalAlpha=P.alpha;
@@ -2317,6 +2323,8 @@ function drawUnit(type,star,px,py,o={}){
   py+=oy;
   if(o.shield>0){ ctx.strokeStyle='rgba(255,226,122,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(px,py,24,30,0,0,Math.PI*2); ctx.stroke(); }   // physical shield: gold
   if(o.mshield>0){ ctx.strokeStyle=`rgba(190,120,255,${.75+.2*Math.sin(ANIM*5)})`; ctx.lineWidth=2; ctx.setLineDash([5,3]); ctx.beginPath(); ctx.ellipse(px,py,27,33,0,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]); }   // magic shield: violet
+  if(o.brn){ for(let i=0;i<4;i++){ const t=(performance.now()/380+i/4)%1, fx=px-12+i*8+Math.sin(performance.now()/90+i)*2;   // flickering flames
+      ctx.globalAlpha=(1-t)*.9; ctx.fillStyle=t<.4?'#ffe07a':'#ff7a2a'; ctx.beginPath(); ctx.ellipse(fx,py+12-t*26,3*(1-t*.5),4.5*(1-t*.5),0,0,Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; }
   if(o.psn){ ctx.fillStyle='#8be06a'; for(let i=0;i<3;i++){ const t=(performance.now()/600+i/3)%1; ctx.globalAlpha=1-t; ctx.beginPath(); ctx.arc(px-10+i*10,py+10-t*24,2.5,0,Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; }
   drawStatus(o,px,py);
   ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
@@ -2348,8 +2356,8 @@ function drawStatus(o,px,py){
     for(let i=0;i<4;i++){ const f=(T*.7+i/4)%1, x=px-14+i*9, y=py+22-f*20; ctx.globalAlpha=1-f; ctx.fillStyle='#dff6ff';
       ctx.beginPath(); ctx.moveTo(x,y-4); ctx.lineTo(x+2.5,y); ctx.lineTo(x,y+4); ctx.lineTo(x-2.5,y); ctx.fill(); } ctx.globalAlpha=1; }
   if(!o.ref) return;
-  const f=o.ref, act=['ward','frz','stun','sil','blind','slow','dis','shred','drain','wnd','psn'].filter(k=>k==='psn'?f.psn:f[k]>0);
-  act.forEach((k,i)=>{ const x=px+(i-(act.length-1)/2)*17, y=py-48, left=k==='psn'?f.psn.t/f.psn.T:f[k]/(f[k+'M']||f[k]);
+  const f=o.ref, act=['ward','frz','stun','sil','blind','slow','dis','shred','drain','wnd','psn','brn'].filter(k=>k==='psn'||k==='brn'?f[k]:f[k]>0);
+  act.forEach((k,i)=>{ const x=px+(i-(act.length-1)/2)*17, y=py-48, left=k==='psn'||k==='brn'?f[k].t/f[k].T:f[k]/(f[k+'M']||f[k]);
     ctx.fillStyle='rgba(15,15,25,.85)'; ctx.beginPath(); ctx.arc(x,y,7.5,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle=STATUS[k].c; ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(x,y,7.5,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(0,left)); ctx.stroke();
     ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(STATUS[k].icon,x,y+.5); ctx.textBaseline='alphabetic'; });
@@ -2518,7 +2526,7 @@ function render(){
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
     for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
-      ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,glow:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
+      ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
       const px=p.x*CELL, py=p.y*CELL, r=p.big?8:p.arrow?1.5:p.mini?1.8:5;
