@@ -61,6 +61,20 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 .sumgrid b{font:400 26px var(--pixel);letter-spacing:.03em}
 .sumbox p{color:var(--muted);margin:0 0 14px}
 .sumbox .go{width:100%}
+.lb{margin:0 0 14px;text-align:left}
+.lb h3{margin:0 0 8px;font:400 22px var(--pixel);color:var(--gold);text-align:center}
+.lb .hint{font-size:12px;color:var(--muted)}
+.lbt{width:100%;border-collapse:collapse;font-size:14px}
+.lbt th{color:var(--muted);font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:3px 6px}
+.lbt td{padding:4px 6px;border-top:1px solid #5a4024}
+.lbt td:first-child,.lbt th:first-child{width:28px;text-align:right}
+.lbt tr.me td{background:rgba(255,210,90,.18);color:#fff3b0}
+.lbform{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:10px;border:1px solid var(--gold);border-radius:8px;background:rgba(255,210,90,.08)}
+.lbform b{width:100%;color:#fff3b0}
+.lbform input{flex:1;min-width:0;padding:8px 10px;font:inherit;color:var(--text);background:rgba(0,0,0,.35);border:1px solid #5a4024;border-radius:6px}
+.lbform .go{width:auto;flex:0 0 auto}
+.lbtabs{margin-bottom:10px}
+.lbtab.on{border-color:var(--gold);color:var(--gold)}
 #cards{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(30,18,8,.75),rgba(0,0,0,.88))}
 #cards[hidden]{display:none}
 .cardsbox{text-align:center}.cardsbox h2{margin:0;font:400 52px var(--pixel);color:var(--gold);text-shadow:0 3px 0 #7a4a10,0 6px 0 var(--ink)}
@@ -1083,11 +1097,14 @@ function openModes(first){
     <button class="mode" data-m="normal"><div class="mi">⚔</div><div class="mn">Normal</div><div class="md">The classic run.</div><div class="mb">🏆 Best ${nb?'round '+nb.round:'–'}</div></button>
     <button class="mode" data-m="daily"><div class="mi">📅</div><div class="mn">Daily Challenge</div><div class="md">Everyone gets the same shops, enemies and events today (${today()}). Compare with friends!</div><div class="mb">🏆 Today ${db?'round '+db.round:'–'}</div></button>
     <button class="mode" data-m="hard" ${open?'':'disabled'}><div class="mi">💀</div><div class="mn">Hard</div><div class="md">${open?'Enemies 20% stronger, plus a run modifier you pick.':`Reach round ${HARD_UNLOCK} in Normal to unlock.`}</div><div class="mb">🏆 Best ${hb?'round '+hb.round:'–'}</div></button></div>
-    <button class="b" id="modesCodex">📖 Hero Codex</button> <button class="b" id="modesClose" ${first?'hidden':''}>Back to the current run</button>`;
+    <button class="b" id="modesCodex">📖 Hero Codex</button> <button class="b" id="modesTop">🏆 Top 10</button> <button class="b" id="modesClose" ${first?'hidden':''}>Back to the current run</button>`;
   $('#modes').hidden=false;
 }
 $('#modesbox').addEventListener('click',e=>{
   if(e.target.closest('#modesCodex')) return openCodex();
+  if(e.target.closest('#modesTop')) return openBoards();
+  const tab=e.target.closest('.lbtab'); if(tab) return openBoards(tab.dataset.lb);
+  if(e.target.closest('#lbBack')) return openModes(!S||S.phase==='over');
   if(e.target.closest('#modesClose')){ $('#modes').hidden=true; return; }
   const m=e.target.closest('.mode'); if(!m||m.disabled) return;
   if(m.dataset.mod){ newGame('hard',m.dataset.mod); $('#modes').hidden=true; return; }
@@ -1150,6 +1167,63 @@ function openEvent(){
   main(); $('#event').hidden=false;
 }
 
+// ====== top-10 leaderboard: online (Supabase) when LB_URL and LB_KEY are set, otherwise kept in this browser ======
+const LB_URL='', LB_KEY='';   // Supabase project URL and its public "anon" key (safe to publish; the table only allows reading and adding scores)
+const LB_ONLINE=!!(LB_URL&&LB_KEY);
+const boardId=m=>m==='daily'?'daily-'+today():m;
+const boardName=m=>({normal:'Normal',hard:'Hard',daily:'Daily '+today()})[m];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const lbBetter=(a,b)=>a.round!==b.round?a.round>b.round:a.bosses>b.bosses;   // does score a beat score b
+const lbHeaders=()=>({apikey:LB_KEY,Authorization:'Bearer '+LB_KEY});
+async function lbFetch(board){
+  if(!LB_ONLINE){ try{ return JSON.parse(localStorage.getItem('ab_lb_'+board)||'[]'); }catch(e){ return []; } }
+  const r=await fetch(`${LB_URL}/rest/v1/scores?board=eq.${encodeURIComponent(board)}&select=name,round,bosses,created_at&order=round.desc,bosses.desc,created_at.asc&limit=10`,{headers:lbHeaders()});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return r.json();
+}
+async function lbSubmit(board,name,round,bosses){
+  if(!LB_ONLINE){
+    const l=await lbFetch(board); l.push({name,round,bosses,created_at:new Date().toISOString()});
+    l.sort((a,b)=>b.round-a.round||b.bosses-a.bosses||a.created_at.localeCompare(b.created_at));
+    try{ localStorage.setItem('ab_lb_'+board,JSON.stringify(l.slice(0,10))); }catch(e){}
+    return;
+  }
+  const r=await fetch(`${LB_URL}/rest/v1/scores`,{method:'POST',headers:{...lbHeaders(),'Content-Type':'application/json',Prefer:'return=minimal'},
+    body:JSON.stringify({board,name,round,bosses})});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+}
+const qualifies=(list,sc)=>list.length<10||lbBetter(sc,list[list.length-1]);
+function lbTable(list,mine){
+  if(!list.length) return '<p>No scores yet — be the first!</p>';
+  let marked=false;
+  return '<table class="lbt"><tr><th>#</th><th>Name</th><th>Round</th><th>Bosses</th></tr>'+list.map((e,i)=>{
+    const me=!marked&&mine&&e.name===mine.name&&e.round===mine.round&&e.bosses===mine.bosses; if(me) marked=true;
+    return `<tr class="${me?'me':''}"><td>${i+1}</td><td>${esc(e.name)}</td><td>${e.round}</td><td>${e.bosses}</td></tr>`; }).join('')+'</table>';
+}
+const lbHead=m=>`<h3>🏆 Top 10 · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
+async function lbRunOver(){   // after a run: show the board, plus a name box when the run made the top 10
+  const el=$('#lb'); if(!el) return;
+  const mode=S.mode, board=boardId(mode), sc={round:S.round,bosses:S.bosses};
+  let list; try{ list=await lbFetch(board); }catch(e){ el.innerHTML=lbHead(mode)+"<p>Couldn't reach the leaderboard.</p>"; return; }
+  if(!qualifies(list,sc)){ el.innerHTML=lbHead(mode)+lbTable(list); return; }
+  let saved=''; try{ saved=localStorage.getItem('ab_lb_name')||''; }catch(e){}
+  el.innerHTML=lbHead(mode)+`<div class="lbform"><b>You made the top 10!</b><input id="lbName" maxlength="16" placeholder="Your name" value="${esc(saved)}"><button class="b go" id="lbSend">Submit</button></div>`+lbTable(list);
+  const send=async()=>{
+    const name=$('#lbName').value.trim().replace(/\s+/g,' ').slice(0,16); if(!name) return $('#lbName').focus();
+    $('#lbSend').disabled=true; try{ localStorage.setItem('ab_lb_name',name); }catch(e){}
+    try{ await lbSubmit(board,name,sc.round,sc.bosses); el.innerHTML=lbHead(mode)+lbTable(await lbFetch(board),{name,...sc}); SND.play('star'); }
+    catch(e){ $('#lbSend').disabled=false; el.querySelector('.lbform b').textContent="Couldn't send — try again"; }
+  };
+  $('#lbSend').onclick=send;
+  $('#lbName').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') send(); });
+}
+async function openBoards(m='normal'){   // browse the boards from the run menu
+  const tabs=['normal','daily','hard'].map(k=>`<button class="b lbtab ${k===m?'on':''}" data-lb="${k}">${boardName(k)}</button>`).join(' ');
+  $('#modesbox').innerHTML=`<h2>Top 10</h2><div class="lbtabs">${tabs}</div><div id="lbView" class="lb">Loading…</div><button class="b" id="lbBack">← Back</button>`;
+  try{ $('#lbView').innerHTML=lbTable(await lbFetch(boardId(m)))+(LB_ONLINE?'':'<p class="hint">Scores are kept in this browser until the online board is set up.</p>'); }
+  catch(e){ $('#lbView').innerHTML="<p>Couldn't reach the leaderboard.</p>"; }
+}
+
 // ====== best run (kept in this browser) ======
 function readBest(m=S&&S.mode||'normal'){ try{ return JSON.parse(localStorage.getItem(bestKey(m))||'null'); }catch(e){ return null; } }
 function showSummary(){
@@ -1163,9 +1237,11 @@ function showSummary(){
     <div><span>Main class</span><b style="color:${tc?CLASSES[tc[0]]?.color:''}">${tc&&CLASSES[tc[0]]?CLASSES[tc[0]].name:'–'}</b></div>
     <div><span>Main origin</span><b>${to&&ORIGINS[to[0]]?ORIGINS[to[0]].icon+' '+ORIGINS[to[0]].name:'–'}</b></div></div>
     ${!rec&&best?`<p>Your best is round ${best.round}${best.date?` (${best.date})`:''} — ${best.round-S.round} more to beat it.</p>`:''}
+    <div id="lb" class="lb">Loading top 10…</div>
     <button class="b go" id="bAgain">⚔ Play again</button><button class="b" id="bOther" style="margin-top:8px;width:100%">☰ Other runs · 📖 Codex</button></div>`;
   $('#summary').hidden=false; $('#bAgain').onclick=()=>{ newGame(S.mode,S.mode==='hard'?S.mod:undefined); }; $('#bOther').onclick=()=>{ $('#summary').hidden=true; openModes(); };
   if(rec) SND.play('star');
+  lbRunOver();
 }
 function newGame(mode='normal',mod){ $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
