@@ -138,6 +138,30 @@ button.go:disabled{animation:none}
 .evunits button{width:86px;padding:6px 4px;border:2px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.3);color:var(--text);font:inherit;font-size:12px;cursor:pointer}
 .evunits button:hover{border-color:var(--gold)}.evunits img{width:56px;height:54px;image-rendering:pixelated;display:block;margin:0 auto}
 .codexbox{width:min(980px,96vw);max-height:92vh;display:flex;flex-direction:column}
+#planner{position:fixed;top:0;right:0;bottom:0;width:min(470px,96vw);z-index:45;display:flex;flex-direction:column;gap:8px;padding:12px 12px 10px;
+  background:linear-gradient(180deg,#3a2614,#22160b);border-left:3px solid var(--ink);box-shadow:-8px 0 24px rgba(0,0,0,.55);color:var(--text)}
+#planner[hidden]{display:none}
+#planner .cxpre{margin:0;justify-content:flex-start}
+.plhead{display:flex;align-items:center;gap:8px}.plhead b{font:400 26px var(--pixel);color:var(--gold)}.plhead span{flex:1;color:var(--muted);font-size:12px;line-height:1.2}
+.plnote{font-size:13px;color:#ff9a80}.plnote:empty{display:none}
+.plslots{flex:1 1 55%;min-height:120px;overflow:auto;display:flex;flex-direction:column;gap:5px;padding-right:4px}
+.pc{display:grid;grid-template-columns:22px 48px 1fr auto;gap:7px;align-items:start;padding:6px 8px;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.28);cursor:grab}
+.pc .no{color:var(--muted);font:400 18px var(--pixel);align-self:center;text-align:right}
+.pc .th{display:flex;align-items:flex-end;justify-content:center;height:50px}.pc .th img{max-width:48px;max-height:50px;image-rendering:pixelated}
+.pc.empty{display:flex;align-items:center;gap:10px;min-height:40px;border-style:dashed;color:var(--muted);cursor:default;font-size:13px}
+.pc.over{border-color:var(--gold);background:rgba(255,210,90,.14)}
+.pc.dragging{opacity:.35}
+.pc .nm{font-weight:700}.pc .meta{font-size:12px;color:var(--muted)}.pc .sk{font-size:12.5px;margin-top:3px;line-height:1.3}.pc .sk b{color:#8fd0ff}
+.pc .rm{background:none;border:0;color:var(--muted);cursor:pointer;font-size:15px;padding:0 2px}.pc .rm:hover{color:#ff9a80}
+.plpick{flex:1 1 45%;min-height:150px;display:flex;flex-direction:column;border-top:1px solid #5a4024;padding-top:8px;border-radius:6px}
+.plpick.over{outline:2px dashed #ff8080;outline-offset:-2px;background:rgba(255,80,80,.06)}
+.plfilter{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.plfilter input{padding:6px 8px;font:inherit;color:var(--text);background:rgba(0,0,0,.35);border:1px solid #5a4024;border-radius:6px}
+#planCls{display:flex;flex-wrap:wrap;gap:4px}#planCls button{font-size:12px;padding:2px 8px}#planCls button.on{border-color:var(--gold);color:var(--gold)}
+.plgrid{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:6px;align-content:start}
+.pt{display:flex;flex-direction:column;align-items:center;padding:4px 2px;border:1px solid #5a4024;border-radius:6px;background:rgba(0,0,0,.25);cursor:grab;font-size:11px;text-align:center;line-height:1.15}
+.pt .ti{height:44px;display:flex;align-items:flex-end}.pt img{max-width:42px;max-height:44px;image-rendering:pixelated}
+.pt.in{border-color:var(--gold);box-shadow:0 0 6px rgba(255,210,90,.5)}.pt .c{color:var(--gold)}
 .cxpre{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin:-4px 0 12px;font-size:13px;color:var(--muted)}
 .cxpre .pre{display:inline-flex;align-items:center;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.28);overflow:hidden}
 .cxpre .pre.on{border-color:var(--gold);box-shadow:0 0 8px rgba(255,210,90,.45)}
@@ -290,7 +314,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
-      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
     </div>
     <div class="board"><canvas id="cv"></canvas><div id="msg"></div></div>
   </main>
@@ -347,9 +371,19 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 <div id="bubble" hidden></div>
 <div id="confirm" hidden></div>
 <div id="summary" hidden></div>
+<aside id="planner" hidden>
+  <div class="plhead"><b>📋 Team Plan</b><span id="planCount"></span><button class="b mkreset" id="planClear">Clear</button><button class="b" id="planClose" title="Close">✕</button></div>
+  <div id="planPresets" class="cxpre"></div>
+  <div id="planNote" class="plnote"></div>
+  <div id="planSlots" class="plslots"></div>
+  <div class="plpick" id="planPickBox">
+    <div class="plfilter"><input id="planSearch" placeholder="Search name, class, origin or skill…"><div id="planCls"></div></div>
+    <div id="planPick" class="plgrid"></div>
+  </div>
+</aside>
 <div id="modes" class="overlay" hidden><div class="sumbox wide" id="modesbox"></div></div>
 <div id="event" class="overlay" hidden><div class="sumbox wide" id="eventbox"></div></div>
-<div id="codex" class="overlay" hidden><div class="sumbox codexbox"><h2>Hero Codex</h2><p id="codexCount"></p><div id="codexPresets" class="cxpre"></div><div class="codexgrid" id="codexGrid"></div><button class="b go" id="codexClose">Close</button></div></div>
+<div id="codex" class="overlay" hidden><div class="sumbox codexbox"><h2>Hero Codex</h2><p id="codexCount"></p><div class="cxpre"><button class="b mkreset" id="codexPlan">📋 Open Team Plan — drag heroes side by side, save presets</button></div><div class="codexgrid" id="codexGrid"></div><button class="b go" id="codexClose">Close</button></div></div>
 <div id="cards" hidden><div class="cardsbox"><h2>Choose a blessing</h2><p>The boss is down! Pick one blessing for the rest of the run.</p><div class="cardrow" id="cardrow"></div></div></div>
 <input type="file" id="file" accept="image/*" hidden>
 <div id="cropModal" hidden>
@@ -1138,44 +1172,101 @@ function openCodex(note){
   $('#codexGrid').innerHTML=heroes.map(u=>{ const k=c[u.id], cl=CLASSES[u.cls], o=ORIGINS[u.org], sk=SKILLS[u.id], m=marks.includes(u.id);
     return `<div class="cx ${k?'':'locked'} ${m?'marked':''}" title="${sk.name}: ${sk.desc.replace(/"/g,'&quot;')}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
       <span class="cs">HP ${u.hp} · ATK ${u.atk} · R ${u.range}<br>${k?`Fielded ${k}×`:'Not fielded yet'}</span></div><button class="mk" data-mark="${u.id}" title="${m?'Unmark':'Mark: glow in the shop'}">${m?'★':'☆'}</button></div>`; }).join('');
-  renderPresets();
   $('#codex').hidden=false;
 }
-// mark presets: save the current marks under a name and switch between sets with one click
+// ====== Team Plan side panel ======
+// The 10 plan slots are the marked heroes (they glow in the shop). Drag heroes from the list into a slot,
+// drag slots to reorder, drag a slot back to the list to remove it. Presets save and load whole plans.
 const MAX_PRESETS=6;
 function readPresets(){ try{ return JSON.parse(localStorage.getItem('ab_mark_presets')||'[]'); }catch(e){ return []; } }
 function savePresets(p){ try{ localStorage.setItem('ab_mark_presets',JSON.stringify(p)); }catch(e){} }
 const sameSet=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
-let presetNaming=false;
+let presetNaming=false, planCls='all', planUndo=null, planDrag=null;
+const undoBtn='<button class="b mkreset" data-pundo>Undo</button>';
+function setMarks(m,note){
+  saveMarks(m.filter(id=>U[id]).slice(0,MAX_MARKS)); renderPlanner(note);
+  if(!$('#codex').hidden){ const sc=$('#codexGrid').scrollTop; openCodex(); $('#codexGrid').scrollTop=sc; }
+  renderUI();
+}
+const skillHTML=id=>SKILLS[id]?`<b>${SKILLS[id].name}</b> — ${SKILLS[id].desc}`:'';
+function openPlanner(){ hideBubble(); $('#planner').hidden=false; renderPlanner(); }
+function renderPlanner(note){
+  if($('#planner').hidden) return;
+  const marks=readMarks();
+  $('#planCount').textContent=`${marks.length} / ${MAX_MARKS} planned — they glow in the shop`;
+  $('#planNote').innerHTML=note||'';
+  $('#planSlots').innerHTML=Array.from({length:MAX_MARKS},(_,i)=>{ const id=marks[i];
+    if(!id) return `<div class="pc empty" data-slot="${i}"><span class="no">${i+1}</span>Drag a hero here</div>`;
+    const u=U[id], cl=CLASSES[u.cls], o=ORIGINS[u.org];
+    return `<div class="pc" draggable="true" data-slot="${i}" data-hero="${id}"><span class="no">${i+1}</span><div class="th">${thumbHTML(id,40)}</div>
+      <div><span class="nm">${u.name}</span> <span class="meta"><span style="color:${cl?cl.color:''}">${cl?cl.name:''}</span> · ${o?o.icon+' '+o.name:''} · ${u.cost}g · HP ${u.hp} · ATK ${u.atk} · R ${u.range}</span>
+      <div class="sk">${skillHTML(id)}</div></div><button class="rm" data-rm="${i}" title="Remove from plan">✕</button></div>`; }).join('');
+  const used=[...new Set(UNITS.map(u=>u.cls))].filter(k=>CLASSES[k]);
+  $('#planCls').innerHTML=['all',...used].map(k=>`<button class="b ${k===planCls?'on':''}" data-cls="${k}" ${k==='all'?'':`style="color:${CLASSES[k].color}"`}>${k==='all'?'All':CLASSES[k].name}</button>`).join('');
+  const q=$('#planSearch').value.toLowerCase().trim(), has=s=>(s||'').toLowerCase().includes(q);
+  const heroes=[...UNITS].sort((a,b)=>a.cls.localeCompare(b.cls)||a.cost-b.cost)
+    .filter(u=>(planCls==='all'||u.cls===planCls)&&(!q||has(u.name)||has(CLASSES[u.cls]?.name)||has(ORIGINS[u.org]?.name)||has(SKILLS[u.id]?.name)));
+  $('#planPick').innerHTML=heroes.map(u=>`<div class="pt ${marks.includes(u.id)?'in':''}" draggable="true" data-hero="${u.id}"
+    data-tip="${esc(`<b>${u.name}</b> · ${CLASSES[u.cls]?.name||''} · ${ORIGINS[u.org]?.icon||''} ${ORIGINS[u.org]?.name||''} · ${u.cost}g<br>`+skillHTML(u.id))}">
+    <div class="ti">${thumbHTML(u.id,36)}</div><span>${u.name}</span><span class="c">${u.cost}g</span></div>`).join('')||'<p class="hint">No heroes match.</p>';
+  renderPresets();
+}
 function renderPresets(){
   const ps=readPresets(), marks=readMarks();
-  const chips=ps.map((p,i)=>`<span class="pre ${sameSet(p.ids,marks)?'on':''}"><button class="pl" data-load="${i}" title="Mark these ${p.ids.length} heroes">${esc(p.name)} (${p.ids.length})</button><button class="pd" data-del="${i}" title="Delete this preset">✕</button></span>`).join('');
+  const chips=ps.map((p,i)=>`<span class="pre ${sameSet(p.ids,marks)?'on':''}"><button class="pl" data-load="${i}" title="Load this plan (${p.ids.length} heroes)">${esc(p.name)} (${p.ids.length})</button><button class="pd" data-del="${i}" title="Delete this preset">✕</button></span>`).join('');
   const add=presetNaming?`<input id="presetName" maxlength="20" placeholder="Preset name" value="Preset ${ps.length+1}"><button class="b mkreset" data-psave>Save</button><button class="b mkreset" data-pcancel>Cancel</button>`
     :ps.length>=MAX_PRESETS?`<span>Max ${MAX_PRESETS} presets — delete one to save another</span>`
-    :marks.length?`<button class="b mkreset" data-pnew>＋ Save marks as preset</button>`:'<span>Mark some heroes, then save them as a preset</span>';
-  $('#codexPresets').innerHTML=`<span>Presets:</span>${chips||''}${add}`;
+    :marks.length?`<button class="b mkreset" data-pnew>＋ Save plan as preset</button>`:'<span>Plan some heroes, then save them as a preset</span>';
+  $('#planPresets').innerHTML=`<span>Presets:</span>${chips}${add}`;
   if(presetNaming){ const inp=$('#presetName'); inp.focus(); inp.select();
-    inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') $('#codexPresets [data-psave]').click(); if(e.key==='Escape') $('#codexPresets [data-pcancel]').click(); }); }
+    inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') $('#planPresets [data-psave]').click(); if(e.key==='Escape') $('#planPresets [data-pcancel]').click(); }); }
 }
-$('#codexPresets').addEventListener('click',e=>{
-  const sc=$('#codexGrid').scrollTop, ps=readPresets(), q=s=>e.target.closest(s);
-  if(q('[data-pnew]')){ presetNaming=true; renderPresets(); return; }
-  if(q('[data-pcancel]')){ presetNaming=false; renderPresets(); return; }
+$('#planner').addEventListener('click',e=>{
+  const q=s=>e.target.closest(s), ps=readPresets(), m=readMarks();
+  if(q('#planClose')){ $('#planner').hidden=true; presetNaming=false; return; }
+  if(q('[data-pundo]')&&planUndo){ const u=planUndo; planUndo=null; return setMarks(u); }
+  if(q('#planClear')){ if(!m.length) return; planUndo=m; return setMarks([],`Plan cleared ${undoBtn}`); }
+  if(q('[data-cls]')){ planCls=q('[data-cls]').dataset.cls; return renderPlanner(); }
+  if(q('[data-rm]')){ m.splice(+q('[data-rm]').dataset.rm,1); return setMarks(m); }
+  const tile=q('.pt[data-hero]');
+  if(tile){ const id=tile.dataset.hero;   // click a hero: add it to the next free slot, or take it out
+    if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS) return renderPlanner('Plan is full — drag the hero onto a slot to replace it');
+    else m.push(id);
+    return setMarks(m); }
+  if(q('[data-pnew]')){ presetNaming=true; return renderPresets(); }
+  if(q('[data-pcancel]')){ presetNaming=false; return renderPresets(); }
   if(q('[data-psave]')){
     const name=($('#presetName').value.trim()||`Preset ${ps.length+1}`).slice(0,20), same=ps.findIndex(p=>p.name===name);
-    if(same>=0) ps[same].ids=readMarks(); else ps.push({name,ids:readMarks()});   // same name overwrites
-    savePresets(ps.slice(0,MAX_PRESETS)); presetNaming=false; openCodex(`Saved preset “${esc(name)}”`);
-  } else if(q('[data-load]')){
-    const p=ps[+q('[data-load]').dataset.load]; undoMarks=readMarks(); saveMarks(p.ids.filter(id=>U[id]).slice(0,MAX_MARKS));
-    openCodex(`Loaded “${esc(p.name)}” <button class="b mkreset" data-undo>Undo</button>`);
-  } else if(q('[data-del]')){
-    const i=+q('[data-del]').dataset.del, gone=ps.splice(i,1)[0]; savePresets(ps); openCodex(`Deleted preset “${esc(gone.name)}”`);
-  } else return;
-  $('#codexGrid').scrollTop=sc; renderUI();
+    if(same>=0) ps[same].ids=m; else ps.push({name,ids:m});   // same name overwrites
+    savePresets(ps.slice(0,MAX_PRESETS)); presetNaming=false; return renderPlanner(`Saved preset “${esc(name)}”`);
+  }
+  if(q('[data-load]')){ const p=ps[+q('[data-load]').dataset.load]; planUndo=m; return setMarks(p.ids,`Loaded “${esc(p.name)}” ${undoBtn}`); }
+  if(q('[data-del]')){ const gone=ps.splice(+q('[data-del]').dataset.del,1)[0]; savePresets(ps); return renderPlanner(`Deleted preset “${esc(gone.name)}”`); }
 });
+// drag and drop between the hero list and the plan slots
+const clearOver=()=>document.querySelectorAll('#planner .over,#planner .dragging').forEach(x=>x.classList.remove('over','dragging'));
+$('#planner').addEventListener('dragstart',e=>{ const el=e.target.closest('[data-hero]'); if(!el) return;
+  planDrag={id:el.dataset.hero,fromSlot:el.dataset.slot!==undefined}; e.dataTransfer.setData('text/plain',planDrag.id); e.dataTransfer.effectAllowed='move';
+  hideBubble(); if(planDrag.fromSlot) el.classList.add('dragging'); });
+$('#planner').addEventListener('dragend',()=>{ planDrag=null; clearOver(); });
+$('#planner').addEventListener('dragover',e=>{ if(!planDrag) return;
+  const slot=e.target.closest('[data-slot]'), pick=e.target.closest('#planPickBox'), tgt=slot||(pick&&planDrag.fromSlot?pick:null);
+  if(!tgt) return; e.preventDefault(); e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('#planner .over').forEach(x=>{ if(x!==tgt) x.classList.remove('over'); }); tgt.classList.add('over'); });
+$('#planner').addEventListener('drop',e=>{ if(!planDrag) return; e.preventDefault(); const d=planDrag; planDrag=null; clearOver();
+  const m=readMarks(), slot=e.target.closest('[data-slot]');
+  if(slot){ const to=+slot.dataset.slot, cur=m.indexOf(d.id);
+    if(cur>=0) m.splice(cur,1);                               // moving within the plan
+    else if(m.length>=MAX_MARKS) m.splice(Math.min(to,m.length-1),1);   // plan full: replace the hero in that slot
+    m.splice(Math.min(to,m.length),0,d.id); return setMarks(m); }
+  if(e.target.closest('#planPickBox')&&d.fromSlot){ m.splice(m.indexOf(d.id),1); setMarks(m); } });
+$('#planSearch').addEventListener('input',()=>renderPlanner());
+$('#planSearch').addEventListener('keydown',e=>e.stopPropagation());
+$('#bPlan').onclick=()=>{ $('#planner').hidden?openPlanner():($('#planner').hidden=true); };
+$('#codexPlan').onclick=()=>{ $('#codex').hidden=true; openPlanner(); };
 $('#codexGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-mark]'); if(!b) return; const id=b.dataset.mark, m=readMarks(), sc=$('#codexGrid').scrollTop;
   if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS){ openCodex(`You can mark up to ${MAX_MARKS} heroes — unmark one first`); $('#codexGrid').scrollTop=sc; return; } else m.push(id);
-  saveMarks(m); openCodex(); $('#codexGrid').scrollTop=sc; renderUI(); });
+  saveMarks(m); openCodex(); $('#codexGrid').scrollTop=sc; renderUI(); renderPlanner(); });
 // reset every mark at once, with a one-click undo in case it was a slip
 let undoMarks=null;
 $('#codexCount').addEventListener('click',e=>{ const sc=$('#codexGrid').scrollTop;
@@ -1183,7 +1274,7 @@ $('#codexCount').addEventListener('click',e=>{ const sc=$('#codexGrid').scrollTo
   else if(e.target.closest('[data-undo]')&&undoMarks){ saveMarks(undoMarks); undoMarks=null; openCodex(); }
   else return;
   $('#codexGrid').scrollTop=sc; renderUI(); });
-$('#codexClose').onclick=()=>{ $('#codex').hidden=true; presetNaming=false; };
+$('#codexClose').onclick=()=>{ $('#codex').hidden=true; };
 
 // ====== events between rounds (every 4th round) ======
 const isEventRound=r=>r>=4&&r%4===0;
