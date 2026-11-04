@@ -71,35 +71,63 @@ def deadshot():
 
 
 def gearmaster():
-    # veteran inventor: leather apron over a brass harness with a mechanical claw arm over the shoulder,
-    # big goggles, a glowing power wrench
+    # master engineer in a power rig: a steam backpack with two glowing exhaust stacks, a huge mechanical
+    # right arm ending in a three-finger claw with a coil, a visor of glowing lenses, a heavy leather coat
     s = Spr()
-    apron, shirt, brass, steel, glowc = ramp('#6a4a30', 1.1), ramp('#3a5a8a', 1.1), ramp('#d8a040', 1.2, 1.1), P['steel'], ramp('#7ff0ff', 1.3, 1.2)
-    with s.grp('cape'):   # backpack engine with a mechanical claw arm reaching over the shoulder
-        s.part(ramp('#4a4a52', 1.2), [('rect', 16, 22, 40, 36)], soft=1.5)
-        s.part(brass, [('ell', 22, 23, 3, 3), ('ell', 34, 23, 3, 3)], soft=.6, gloss=1)
-        s.part(steel, [('line', [(36, 24), (44, 16), (50, 18)], 1.2)], soft=.5, gloss=1.2)
-        s.part(steel, [('poly', [(49, 15), (54, 14), (53, 16.5), (51, 17)]), ('poly', [(49, 19), (54, 21), (52, 22.5), (50.5, 20.5)])], soft=.3, gloss=1.2)
-    legs(s, ramp('#3a3a48'), P['darkleather'])
-    torso(s, shirt, hem=44)
+    coat, plate, brass, dark, glowc = ramp('#5a3a24', 1.2), ramp('#5a6474', 1.3), ramp('#d8a040', 1.25, 1.1), ramp('#22242c', 1.2), ramp('#7ff0ff', 1.3, 1.3)
+    s.piv.update(armR=(37, 31))   # the mechanical arm swings from the shoulder
+    s.hands['armR'] = (45, 37)    # its wrist, where the weapon pivots
+    with s.grp('cape'):   # steam backpack with glowing exhaust stacks
+        s.part(dark, [('rect', 16, 20, 40, 37)], soft=1.5)
+        for x in (19, 37):
+            s.part(plate, [('rect', x - 2, 8, x + 2, 22)], soft=.6, gloss=1)
+            s.part(brass, [('rect', x - 2.6, 7, x + 2.6, 9)], soft=.4, gloss=1.2)
+        s.part(glowc, [('ell', 28, 28, 3, 3)], soft=1, gloss=1.5, line=False)
+    legs(s, plate, ramp('#2a2a32', 1.2))
+    torso(s, coat, hem=45)
     with s.grp('body'):
-        s.part(apron, [('poly', [(22, 31), (34, 31), (35.5, 46), (20.5, 46)])], soft=1.2)
-        s.part(brass, [('cap', 21, 29, 35, 29, .8)], soft=.3, gloss=1)
-        s.part(glowc, [('ell', 28, 36, 2.2, 2.2)], soft=.8, gloss=1.5, line=False)   # power cell
-    belt(s, P['leather'], 41, brass)
-    with s.grp('weapon'):   # glowing power wrench
-        s.part(steel, [('cap', 42, 43, 46, 26, 1.3), ('poly', [(42.5, 26), (49.5, 23.5), (49.5, 20), (46.5, 22), (45, 19), (42.5, 22.5)])], soft=.6, gloss=1)
-        s.part(glowc, [('cap', 43, 38, 45.5, 29, .4)], soft=.2, line=False, flat=True, bias=.3)
-    arm(s, shirt, SKIN, (35, 30), (38.5, 36), (42, 40), glove=P['leather'])
-    arm(s, shirt, SKIN, (21, 30), (18.5, 35), (18, 39), glove=P['leather'])
+        s.part(plate, [('poly', [(21.5, 29), (34.5, 29), (34, 38), (22, 38)])], soft=1.4, gloss=1)   # chest plate
+        s.part(glowc, [('ell', 28, 33.5, 2.4, 2.4)], soft=.8, gloss=1.6, line=False)   # power core
+        for x, y in ((23.5, 30.5), (32.5, 30.5), (23.5, 36.5), (32.5, 36.5)):
+            s.mark(int(x), int(y), (230, 190, 100))
+    belt(s, P['leather'], 40, brass)
+    with s.grp('weapon'):   # huge mechanical arm with a three-finger claw and a crackling coil
+        s.part(plate, [('cap', 37, 31, 45, 37, 3.2), ('cap', 45, 37, 47, 43, 2.8)], soft=1.2, gloss=1.1)
+        s.part(brass, [('ell', 37, 31, 3.6, 3.6), ('ell', 45, 37, 2.4, 2.4)], soft=.6, gloss=1.3)
+        s.part(dark, [('poly', [(44, 43), (42, 49), (44, 48)]), ('poly', [(47, 44), (47.5, 50.5), (49, 48)]), ('poly', [(49, 42.5), (53, 46), (51, 47)])], soft=.3)
+        s.part(glowc, [('cap', 43, 39.5, 48, 41.5, .5)], soft=.2, line=False, flat=True, bias=.35)
+    arm(s, coat, SKIN, (21, 30), (18.5, 35), (18, 39.5), glove=P['leather'])
     head(s)
-    bangs(s, ramp('#a8a8b0', 1.0), 'spiky', shine=9)
-    s.part(ramp('#3a2a20'), [('rect', 17, 12, 39, 14.5)], soft=.4, cast=1)
-    s.part(brass, [('ell', 23, 12.5, 3.4, 3.2), ('ell', 33, 12.5, 3.4, 3.2)], soft=.5, gloss=1.2)   # big goggles
-    s.part(glowc, [('ell', 23, 12.5, 2, 1.9), ('ell', 33, 12.5, 2, 1.9)], soft=.5, gloss=1.4, line=False)
-    face(s, '#3a7ad0')
-    sparkle(s, 50, 26, (180, 240, 255))
+    bangs(s, ramp('#c8c8d0', 1.0), 'spiky', shine=9)
+    s.part(dark, [('rect', 17.5, 17.5, 38.5, 21.5)], soft=.4, cast=1)   # visor band over the eyes
+    for x in (22, 27.5, 33):
+        s.part(glowc, [('ell', x, 19.5, 2, 1.6)], soft=.4, gloss=1.5, line=False)   # three glowing lenses
+    s.part(ramp('#3a2a20'), [('rect', 17, 11.5, 39, 13.5)], soft=.4, cast=1)
+    face(s, '#3a7ad0', mouth='smile', blush=False)
+    for x, y in ((19, 4), (37, 4), (52, 41), (8, 22)):
+        sparkle(s, x, y, (180, 240, 255))
     return s
 
 
-GUNSLINGERS = dict(gunslinger=gunslinger, deadshot=deadshot, gearmaster=gearmaster)
+def arctower():
+    # the Gearmaster's lightning tower: a riveted base, a tall coil wound in copper, a crackling orb on top
+    s = Spr()
+    plate, copper, dark, glowc = ramp('#5a6474', 1.3), ramp('#c8742a', 1.25, 1.1), ramp('#22242c', 1.2), ramp('#9ff6ff', 1.3, 1.3)
+    s.piv.update(head=(28, 24))
+    with s.grp('body'):
+        s.part(dark, [('poly', [(17, 53), (39, 53), (36, 45), (20, 45)])], soft=1)   # base
+        s.part(plate, [('rect', 21, 41, 35, 46)], soft=.8, gloss=1)
+        for x in (22, 28, 34):
+            s.mark(x, 43, (230, 190, 100))
+        s.part(dark, [('rect', 25.5, 24, 30.5, 41)], soft=.6)   # coil post
+        for y in range(26, 41, 3):
+            s.part(copper, [('ell', 28, y, 5.2, 1.3)], soft=.3, gloss=1.2)   # copper windings
+    with s.grp('head'):
+        s.part(plate, [('ell', 28, 22, 6, 2.2)], soft=.6, gloss=1)
+        s.part(glowc, [('ell', 28, 16, 5.5, 5.5)], soft=1.5, gloss=1.8, line=False)   # crackling orb
+        s.part(ramp('#ffffff', .5), [('ell', 26.5, 14.5, 1.6, 1.6)], soft=.4, line=False, flat=True, bias=.4)
+    for x, y, a in ((20, 10, 220), (36, 9, 220), (17, 18, 160), (39, 19, 160), (28, 7, 200)):
+        s.glow(x, y, (170, 250, 255), a)
+    return s
+
+GUNSLINGERS = dict(gunslinger=gunslinger, deadshot=deadshot, gearmaster=gearmaster, arctower=arctower)
