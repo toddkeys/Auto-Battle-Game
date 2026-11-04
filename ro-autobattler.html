@@ -357,7 +357,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Samurai</b> hit harder below half HP (Bushido). <b>Frost Healers</b> heal over time and can wrap an ally in <b>Ice Ward</b>: it can't act, heals, ignores physical damage but takes 20% more magic damage.</li>
         <li><b>Occultists</b> curse enemies: armor break (+25% damage taken), mana drain, slows, and Dispel strips shields and buffs.</li>
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
-        <li><b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
+        <li><b>Right-click an item</b> to <b>🎲 reroll</b> it into another random item of the same rarity, keeping its enchant level (30 gold), or to sell it. <b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
         <li><b>🪝 Grapplers</b> hook the enemy's back line and drag it in: the 2💰 Harpooner hooks the farthest enemy, the 4💰 Anchor Brute hooks the two farthest. Hooked enemies are stunned for 1s, and with the class bonus they take more damage for 3s. Bosses can't be dragged.</li>
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
@@ -1693,8 +1693,17 @@ cv.addEventListener('contextmenu',e=>{   // right-click a hero: confirm, then se
 const itemValue=k=>5*ILV(k);   // 5 gold per item (an enchanted item is made of several)
 function sellItem(i){ const k=S.inv[i]; if(!k) return; const v=itemValue(k); S.gold+=v; S.inv.splice(i,1); SND.play('sell');
   msg(`Sold ${IT(k).icon} ${INAME(k)} for ${v} gold`); renderUI(); }
-$('#items').addEventListener('contextmenu',e=>{ const b=e.target.closest('.it'); if(!b) return; e.preventDefault(); const k=S.inv[+b.dataset.i];
-  askSell(e,`${IT(k).icon} ${INAME(k)}`,itemValue(k),()=>sellItem(+b.dataset.i)); });
+// right-click an item: reroll it into another random item (same rarity and enchant level) for 30 gold, or sell it
+const REROLL_COST=30;
+function rerollItem(i){ const k=S.inv[i]; if(!k||IT(k).use) return; if(S.gold<REROLL_COST) return msg(`Rerolling an item costs ${REROLL_COST} gold`);
+  const base=k.split(':')[0], pool=(ITEMS[base].rare?RARE:COMMON).filter(b=>b!==base), nb=pool[Math.floor(Math.random()*pool.length)], nk=ILV(k)>1?nb+':'+ILV(k):nb;
+  S.gold-=REROLL_COST; S.inv[i]=nk; SND.play('reroll'); msg(`🎲 ${IT(k).icon} ${INAME(k)} → ${IT(nk).icon} ${INAME(nk)}`); renderUI(); }
+function askItem(e,i){ const k=S.inv[i], c=$('#confirm'), can=!IT(k).use;
+  c.innerHTML=`<div><b>${IT(k).icon} ${INAME(k)}</b></div><div class="row">${can?`<button class="b" data-reroll ${S.gold<REROLL_COST?'disabled':''}>🎲 Reroll (${REROLL_COST} gold)</button> `:''}<button class="b" data-sell>Sell (${itemValue(k)} gold)</button> <button class="b" data-no>Cancel</button></div>`+
+    (can?`<div style="font-size:12px;margin-top:6px;max-width:300px">Reroll turns it into another random ${IT(k).rare?'rare ':''}item and keeps its enchant level.</div>`:'');
+  c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
+  c.onclick=ev=>{ if(ev.target.closest('[data-reroll]')) rerollItem(i); if(ev.target.closest('[data-sell]')) sellItem(i); if(ev.target.closest('button')) c.hidden=true; }; }
+$('#items').addEventListener('contextmenu',e=>{ const b=e.target.closest('.it'); if(!b) return; e.preventDefault(); askItem(e,+b.dataset.i); });
 document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#confirm')) $('#confirm').hidden=true; },true);
 addEventListener('keydown',e=>{ if(e.key==='Escape') $('#confirm').hidden=true; });
 cv.addEventListener('pointermove',e=>{
