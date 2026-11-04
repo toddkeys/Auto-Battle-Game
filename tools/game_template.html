@@ -358,7 +358,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
-        <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
+        <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper replays the current song (Encore); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
         <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ <b>Poison</b>: damage once per second, <b>stacks up to 5</b>, lasts at least 5s and cuts healing on the target by 30% (good vs healers) · 🔥 <b>Burn</b>: fire skills, damage twice per second, refreshes instead of stacking, <b>deals double damage to shields</b> and <b>jumps to a nearby enemy</b> when the target dies (good vs shields and groups). Fire melts Frozen; freezing puts out fire. A hero can be poisoned and burning at once · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. Each shop Upgrade improves the odds; a fully upgraded shop late in the run rolls 1💰 heroes only 10% of the time, and each slot has a 5% extra chance to show a hero you already own (not yet ★★★). "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
@@ -490,7 +490,8 @@ const UNITS = [
   {id:'stonebinder', name:'Stonebinder',  cls:'summoner',org:'ironvow',  cost:3,hp:980, atk:72, range:3,as:1.1, ms:1.4,calls:'guardian'},
   {id:'starcaller',  name:'Starcaller',   cls:'summoner',org:'starborn', cost:4,hp:1080,atk:100,range:4,as:1.1, ms:1.3,calls:'drake'},
   // bards: a song aura that cycles every 4s: Haste (attack speed) -> Guard (less damage taken) -> Spirit (mana)
-  {id:'minstrel',    name:'Minstrel',     cls:'bard',org:'starborn',     cost:1,hp:480, atk:36, range:3,as:1.0, ms:1.4},
+  {id:'piper',       name:'Piper',        cls:'bard',org:'gilded',       cost:1,hp:460, atk:34, range:3,as:1.0, ms:1.4},
+  {id:'minstrel',    name:'Minstrel',     cls:'bard',org:'starborn',     cost:4,hp:1150,atk:85, range:3,as:1.0, ms:1.4},
   {id:'dancer',      name:'Blade Dancer', cls:'bard',org:'moonblood',    cost:3,hp:1050,atk:95, range:1,as:.7, ms:2.0},
   // alchemists: potions and gold
   {id:'apothecary',  name:'Apothecary',   cls:'alchemist',org:'wildheart',cost:1,hp:470, atk:42, range:3,as:1.0, ms:1.4},
@@ -792,7 +793,10 @@ const SKILLS = {
   winterqueen:{name:'Absolute Zero', mp:100, desc:'Wards the two most endangered allies in ice for 2.5s, gives every ally 120% of its heal over 5s, and enemies next to the warded allies have a 40% chance to Freeze for 2s.',
     cast(a){ V({k:'flash',x:0,y:0,c:'#dff8ff',m:.3}); for(const w of friends(a).sort(byHurt).slice(0,2)){ ward(w,2.5,a); for(const e of foes(a)) if(dist(e,w)<=1.5) freeze(e,.4,2); }
       for(const b of friends(a)) hot(b,a.heal*1.2,5,a); FX('strike',a.x,a.y+.3,{s:.9,tint:'#cff6ff',m:.6}); }},
-  minstrel:{name:'Crescendo', mp:70, desc:'Plays all three songs at once at double strength for 4s for allies within 3 cells: +40% attack speed, 30% less damage taken and +8 mana per second.',
+  piper:{name:'Encore', mp:60, desc:'Replays the song that is playing right now at double strength for 3s for allies within 2 cells (Haste: +40% attack speed · Guard: 30% less damage taken · Spirit: +8 mana per second).',
+    cast(a){ const s=S.fight.song||0; for(const b of friends(a)) if(dist(a,b)<=2){ b.enc={t:3,song:s}; FX('spark',b.x,b.y-.5,{s:.45,tint:SONGS[s].c,m:.5}); }
+      V({k:'ring',x:a.x,y:a.y,r:2,c:SONGS[s].c,m:.6}); notes(a,3); }},
+  minstrel:{name:'Crescendo', mp:90, desc:'Plays all three songs at once at double strength for 4s for allies within 3 cells: +40% attack speed, 30% less damage taken and +8 mana per second.',
     cast(a){ for(const b of friends(a)) if(dist(a,b)<=3){ b.cresc=4; FX('spark',b.x,b.y-.5,{s:.5,tint:'#ffd27a',m:.5}); } V({k:'ring',x:a.x,y:a.y,r:3,c:'#ffb050',m:.7}); notes(a,6); }},
   dancer:{name:'Blade Waltz', mp:60, desc:'Spins through the enemies around it: 160% damage to every enemy within 1.5 cells, and allies within 2 cells gain haste (+30% attack speed) for 4s.',
     cast(a){ for(const e of foes(a)) if(dist(a,e)<=1.5) hit(a,e,1.6); for(const b of friends(a)) if(dist(a,b)<=2) b.haste=Math.max(b.haste||0,4);
@@ -1123,7 +1127,7 @@ const SND=(()=>{
     get musVol(){ return musVol; }, get sfxVol(){ return sfxVol; }, get musicOn(){ return musVol>0; }};
 })();
 // which sound each skill makes when it goes off
-const SKILL_SND={minstrel:'bless',dancer:'flurry',apothecary:'curse',merchant:'reroll',gravecaller:'summon',bonelord:'summon',tinkerer:'zap',mechanist:'boom',brawler:'flurry',grandmaster:'slam',chronomancer:'teleport',timekeeper:'teleport',turret:'zap',swordsman:'slam',knight:'stun',lordknight:'slam',archer:'shoot',hunter:'trap',sniper:'snipe',acolyte:'heal',priest:'heal',highpriest:'bless',
+const SKILL_SND={minstrel:'bless',piper:'bless',dancer:'flurry',apothecary:'curse',merchant:'reroll',gravecaller:'summon',bonelord:'summon',tinkerer:'zap',mechanist:'boom',brawler:'flurry',grandmaster:'slam',chronomancer:'teleport',timekeeper:'teleport',turret:'zap',swordsman:'slam',knight:'stun',lordknight:'slam',archer:'shoot',hunter:'trap',sniper:'snipe',acolyte:'heal',priest:'heal',highpriest:'bless',
   thief:'steal',assassin:'flurry',assassincross:'teleport',mage:'fire',wizard:'ice',highwizard:'fire',starwarden:'bash',stormranger:'arrows',dawnoracle:'bless',
   nightreaper:'curse',voidsage:'zap',bulwark:'bash',templar:'teleport',aegispaladin:'bless',spiritcaller:'summon',beastmaster:'summon',stonebinder:'quake',
   starcaller:'summon',cardshark:'reroll',fortuneteller:'star',highroller:'boom',glacierwarden:'ice',ronin:'steal',kensei:'flurry',shogun:'bash',snowmender:'heal',frostoracle:'ice',winterqueen:'freeze',hexer:'curse',bogwitch:'poison',doomherald:'curse',mossling:'slime',shroomkin:'poison',emberbat:'fire',golem:'quake',lich:'ice',wyrm:'flame'};
@@ -1822,7 +1826,7 @@ function burst(x,y,c,n,spd=2.5,size=3,g=6){
     S.fight.parts.push({x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-(g>0?1.5:0),life,max:life,c,size,g}); }
 }
 function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal'); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
-const PROJ={thornmother:'p_plant',stormdjinn:'p_light',colossus:'p_light',cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
+const PROJ={thornmother:'p_plant',stormdjinn:'p_light',colossus:'p_light',cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',piper:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
   acolyte:'p_light',priest:'p_light',highpriest:'p_light',dawnoracle:'p_light',spiritcaller:'p_arcane',starcaller:'p_arcane',stonebinder:'p_arcane',wisp:'p_arcane',shroomkin:'p_plant'};
 // basic ranged attacks fly as small missiles (skills keep the big spell sprites)
 const MINI_PROJ={p_ice:'shard',p_plant:'thorn',p_dark:'dark',p_arcane:'needle',p_light:'spark',magic:'ember',wizard:'shard',voidsage:'dark',holy:'spark'};
@@ -1942,7 +1946,8 @@ function step(dt){
   for(const b of alive) if(b.fontK||b.bannerK) for(const x of alive) if(x.team===b.team&&dist(b,x)<=2){   // Mana Fountain, War Banner
     if(b.fontK) gainMp(x,2*b.fontK*dt); if(b.bannerK) x.bannerAmp=Math.max(x.bannerAmp||0,.08*b.bannerK); }
   for(const x of alive){ x.sAS=0; x.sRed=0; x.sMp=0;
-    if(x.cresc>0){ x.cresc-=dt; x.sAS=.4; x.sRed=.3; x.sMp=8; } }
+    if(x.cresc>0){ x.cresc-=dt; x.sAS=.4; x.sRed=.3; x.sMp=8; }
+    if(x.enc){ if((x.enc.t-=dt)<=0) x.enc=null; else if(x.enc.song===0) x.sAS=Math.max(x.sAS,.4); else if(x.enc.song===1) x.sRed=Math.max(x.sRed,.3); else x.sMp=Math.max(x.sMp,8); } }
   for(const b of alive) if(U[b.type].cls==='bard'&&!(b.stun>0)&&!(b.frz>0)) for(const x of alive) if(x.team===b.team&&dist(b,x)<=b.songR){ const k=b.songK;
     if(song===0) x.sAS=Math.max(x.sAS,.2*k); else if(song===1) x.sRed=Math.max(x.sRed,.15*k); else x.sMp=Math.max(x.sMp,4*k); }
   for(const a of alive){

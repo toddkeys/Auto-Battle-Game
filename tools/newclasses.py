@@ -31,6 +31,29 @@ def minstrel():
     return s
 
 
+def piper():   # 1-gold bard: a travelling flute player
+    s = Spr()
+    tunic, patch, gold = ramp('#3a8ab8', 1.1), ramp('#e8c45a', 1.0), P['gold']
+    legs(s, ramp('#6a4a32'), P['leather'])
+    torso(s, tunic, hem=44)
+    s.part(patch, [('rect', 21.5, 33, 25.5, 37), ('rect', 30.5, 38, 34.5, 42)], soft=.6)   # patched tunic
+    belt(s, P['darkleather'], 39, P['steel'])
+    s.part(ramp('#b84a3a'), [('ell', 28, 28.5, 8, 2.6)], soft=1, cast=1)   # scarf
+    with s.grp('weapon'):   # a wooden flute held out to the side
+        s.part(P['wood'], [('cap', 33, 37, 47, 27, 1.0)], soft=.5, gloss=.5)
+        for i in range(3):
+            s.part(ramp('#3a2014'), [('ell', 39 + i * 2.3, 32.6 - i * 1.65, .5, .5)], soft=.2, line=False, flat=True)
+    arm(s, tunic, SKIN, (35, 30), (37.5, 35.5), (39, 33.5))
+    arm(s, tunic, SKIN, (21, 30), (18.5, 35), (18, 39))
+    head(s)
+    bangs(s, ramp('#b0602e', 1.0), 'neat', shine=9)
+    s.part(ramp('#5a3a7a', 1.1), [('ell', 26, 10.5, 12.5, 4.5), ('rect', 16, 10, 37, 13)], soft=1.2, cast=2)   # floppy beret
+    s.part(ramp('#f2f2f2', .8), [('poly', [(35, 9), (44, 1.5), (42, 7.5), (37, 11)])], soft=.5)   # feather
+    face(s, '#3a8ab8', 'smile')
+    for x, y in ((49, 22), (51, 30)):
+        sparkle(s, x, y, (180, 230, 255))
+    return s
+
 def dancer():
     s = Spr()
     silk, rose, gold = ramp('#e84a8a', 1.1, 1.1), ramp('#ffc0d8', .8), P['gold']
@@ -294,6 +317,6 @@ def timekeeper():
     return s
 
 
-NEWCLASSES = dict(minstrel=minstrel, dancer=dancer, apothecary=apothecary, merchant=merchant, gravecaller=gravecaller,
+NEWCLASSES = dict(piper=piper, minstrel=minstrel, dancer=dancer, apothecary=apothecary, merchant=merchant, gravecaller=gravecaller,
                   bonelord=bonelord, tinkerer=tinkerer, mechanist=engineer, brawler=brawler, grandmaster=grandmaster,
                   chronomancer=chronomancer, timekeeper=timekeeper, turret=turret)
