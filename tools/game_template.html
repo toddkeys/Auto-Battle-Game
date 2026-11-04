@@ -374,6 +374,8 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Flank attacks</b>: hitting a hero or monster from the <b>side</b> (above or below it) deals 10% more damage (yellow numbers), from <b>behind</b> (the side it isn't facing) 20% more (orange numbers). Assassins who leap behind the enemy and Grapplers who drag enemies past them make good use of it.</li>
         <li><b>Right-click an item</b> to <b>🎲 reroll</b> it into another random item of the same rarity, keeping its enchant level (30 gold), or to sell it. <b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
+        <li><b>⟲ Mimics</b> steal enemy spells. The 4💰 <b>Masked Magus</b> copies the skill of a random living enemy — bosses too, a different one each time when it can — — the victim takes 220% damage and is silenced — and casts it with 25% more damage. The 2💰 <b>Mirror Mage</b> can only copy enemies that cost 2 gold or less (no bosses), but can copy fallen ones; with nothing to copy it blasts the area and inflicts a random debuff. Class bonus: mimics gain mana whenever an enemy casts.</li>
+        <li><b>🌀 Mesmers</b> turn enemies on each other. <b>Mesmerized</b> enemies must attack one of their own allies. The 2💰 <b>Puppeteer</b> mesmerizes the strongest enemy for 2.5s; the 4💰 <b>Rime Dragoness</b> freezes the enemy standing among the most foes and makes every enemy near it attack it for 2s. Class bonus: mesmerized enemies take more damage.</li>
         <li><b>🐒 Monkeys</b> count their normal hits. Every 4th hit: the 2💰 <b>Stone Monkey</b> attacks 30% faster for 3s; the 4💰 <b>Wukong</b> gains <b>Sage's Fury</b> — his next 4 hits deal +40% damage and he heals for 30% of all damage he deals (skills included) until they're used. Wukong's skill <b>Ruyi Smash</b> slams his staff in a long line: 160% damage that always crits and a 1s stun. Class bonus: the team dodges attacks.</li>
         <li>The 4💰 <b>Gearmaster</b> builds <b>Arc Towers</b> instead of turrets: their shots chain lightning to 2 more enemies. It starts every battle with one built, and its skill Storm Foundry builds more and supercharges them.</li>
         <li><b>🔫 Gunslingers</b>: the 2💰 Gunslinger fans 4 quick shots that can each crit; the 4💰 Deadshot snipes the farthest enemy with a piercing bullet. Their class bonus makes the whole team's critical hits hit harder. The 4💰 <b>Gearmaster</b> is the top Engineer: it builds two turrets at once and overclocks them.</li>
@@ -456,6 +458,8 @@ const CLASSES = {
   monk:{name:'Monk',color:'#ffcc66', desc:['Monks dodge 20% of attacks; each hit stacks +4% attack speed (max 10)','Monks dodge 35% of attacks; each hit stacks +6% attack speed (max 10)']},
   chrono:{name:'Teleporter',color:'#7fe0e0', desc:['Team gains 15% more mana from attacks','Team gains 30% more mana from attacks']},
   ninja:{name:'Ninja',color:'#e04a5a', desc:['After a skill, ninjas dodge 25% of attacks for 2s','Ninja skills deal 25% more damage; after a skill ninjas dodge 40% of attacks for 2s']},
+  mimic:{name:'Mimic',color:'#5ad8a8', desc:['Mimics gain 10 mana whenever an enemy casts a skill','Mimics gain 20 mana whenever an enemy casts a skill; copied spells deal 15% more damage']},
+  mesmer:{name:'Mesmer',color:'#c88aff', desc:['Enemies forced to attack their own allies take 15% more damage','Enemies forced to attack their own allies take 30% more damage']},
   monkey:{name:'Monkey',color:'#e8a040', desc:['Team dodges 10% of attacks','Team dodges 20% of attacks']},
   gunner:{name:'Gunslinger',color:'#d8a05a', desc:['Team critical hits deal 2.4x damage (from 2x)','Team critical hits deal 2.8x damage (from 2x)']},
   grapple:{name:'Grappler',color:'#c8b48a', desc:['Hooked enemies take 15% more damage for 3s','Hooked enemies take 30% more damage for 3s']},
@@ -542,6 +546,12 @@ const UNITS = [
   // ninjas: dashing damage dealers
   {id:'phantomblade',name:'Phantom Blade',cls:'ninja',org:'gilded',       cost:2,hp:680, atk:88, range:1,as:.65,ms:2.4},
   {id:'shadowstep',  name:'Shadowstep',   cls:'ninja',org:'moonblood',    cost:4,hp:1300,atk:175,range:1,as:.6, ms:2.5},
+  // mimics: steal and recast enemy spells
+  {id:'mirrormage',  name:'Mirror Mage',  cls:'mimic',org:'moonblood',    cost:2,hp:760, atk:56, range:3,as:1.1, ms:1.4},
+  {id:'maskedmagus', name:'Masked Magus', cls:'mimic',org:'starborn',     cost:4,hp:1400,atk:125,range:3,as:1.1, ms:1.4},
+  // mesmers: turn enemies against each other
+  {id:'puppeteer',   name:'Puppeteer',    cls:'mesmer',org:'gilded',      cost:2,hp:720, atk:54, range:3,as:1.1, ms:1.4},
+  {id:'rimedragoness',name:'Rime Dragoness',cls:'mesmer',org:'wildheart', cost:4,hp:1550,atk:125,range:3,as:1.1, ms:1.4},
   // monkeys: agile staff fighters whose every 4th hit powers them up
   {id:'stonemonkey', name:'Stone Monkey', cls:'monkey',org:'wildheart',   cost:2,hp:760, atk:68, range:1,as:.8,  ms:2.0},
   {id:'wukong',      name:'Wukong',       cls:'monkey',org:'starborn',    cost:4,hp:1500,atk:145,range:1,as:.8,  ms:2.0,scale:1.18},
@@ -593,6 +603,8 @@ const CLASS_STAR={
   monk:[['Dodge +8%',{fx:x=>{ x.dodge=(x.dodge||0)+.08; }}],['Dodge +15%; each combo stack gives 2% more attack speed',{fx:x=>{ x.dodge=(x.dodge||0)+.15; x.comboStep=(x.comboStep||.03)+.02; }}]],
   chrono:[['Skill costs 15% less mana',{mana:.85}],['Skill costs 30% less mana; skill damage +20%',{mana:.7,skPow:1.2}]],
   ninja:[['Skill damage +25%',{skPow:1.25}],['Skill damage +50%; dodges 30% of attacks for 2s after a skill',{skPow:1.5,fx:x=>{ x.nDodge=Math.max(x.nDodge||0,.3); }}]],
+  mimic:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
+  mesmer:[['Control lasts 0.5s longer',{fx:x=>{ x.mesPlus=.5; }}],['Control lasts 1s longer; skill costs 20% less mana',{mana:.8,fx:x=>{ x.mesPlus=1; }}]],
   monkey:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   gunner:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   grapple:[['Hook damage +20%',{skPow:1.2}],['Hook damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
@@ -904,6 +916,19 @@ const SKILLS = {
       const x=t.x, y=t.y;
       later(.12,()=>{ V({k:'ring',x,y,r:1.6,c:'#7fe0e0',m:.6}); V({k:'flash',x:0,y:0,c:'#bff6ff',m:.2}); FX('sigil',x,y-.1,{s:1,tint:'#7fe0e0',m:.6}); hitStop(.06);
         for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.6){ hit(a,e,1.2); stun(e); } }); }},
+  maskedmagus:{name:'Spell Steal', mp:60, desc:'Steals the skill of a random living enemy (bosses too, a different one than last time when possible): the victim takes 220% damage and is silenced for 2s, then the Magus casts the stolen skill as its own with 25% more damage. If no enemy has a skill to steal, blasts the target area instead.',
+    cast(a,t){ mimicCast(a,t,true); }},
+  mirrormage:{name:'Mirror Copy', mp:60, desc:'Copies the skill of an enemy that costs 2 gold or less — even one that has already fallen — and casts it as its own. If there is none to copy, deals 150% damage around the target and inflicts a random debuff (slow, blind, silence, armor break or wound) on everyone hit.',
+    cast(a,t){ mimicCast(a,t,false); }},
+  puppeteer:{name:'Puppet Strings', mp:60, desc:'Hooks the strongest enemy (highest attack) with strings: 80% damage, and for 2.5s it is Mesmerized — forced to attack its nearest ally.',
+    cast(a){ const e=foes(a).filter(e=>!U[e.type].boss).sort((p,q)=>q.atk*q.dmgM-p.atk*p.dmgM)[0]||foes(a)[0]; if(!e) return;
+      V({k:'beam',x:a.x,y:a.y-.5,x2:e.x,y2:e.y-.4,c:'#e8c0ff',m:.4}); hit(a,e,.8); const by=nearestAlly(e); if(by) mesmerize(e,by,2.5,a);
+      FX('sigil',e.x,e.y-.6,{s:.5,tint:'#d0a0ff',m:.6}); }},
+  rimedragoness:{name:'Wyrm\'s Curse', mp:75, desc:'Curses the enemy standing among the most foes: it takes 200% damage and is locked in ice, unable to act, for 2.5s, and every other enemy within 2.5 cells takes 60% damage and is Mesmerized for 2s — forced to attack the cursed one.',
+    cast(a){ const es=foes(a); if(!es.length) return; const c=[...es].sort((p,q)=>es.filter(e=>dist(e,q)<=2.5).length-es.filter(e=>dist(e,p)<=2.5).length)[0];
+      V({k:'flash',x:0,y:0,c:'#bfefff',m:.3}); V({k:'ring',x:c.x,y:c.y,r:2.5,c:'#bfefff',m:.7}); V({k:'dome',x:c.x,y:c.y,c:'#bfefff',r:.8,m:2.5});
+      FX('nova',c.x,c.y,{s:1.1,tint:'#bfefff',m:.8}); hit(a,c,2); if(c.hp>0&&!c.spin){ c.stun=Math.max(c.stun||0,2.5); pop(c,'Cursed','#bfefff',true); } SND.play('freeze'); addTrauma(.2);
+      for(const e of es) if(e!==c&&dist(e,c)<=2.5){ hit(a,e,.6); mesmerize(e,c,2,a); } }},
   wukong:{name:'Ruyi Smash', mp:95, desc:'Grows his staff and slams it down in a straight line toward the target, 5.5 cells long: 160% damage that always crits and a 1s stun to every enemy on the line.',
     cast(a,t){ if(!t) return; const d=dist(a,t)||1, ux=(t.x-a.x)/d, uy=(t.y-a.y)/d, x1=a.x+ux*5.5, y1=a.y+uy*5.5;
       V({k:'beam',x:a.x,y:a.y-.2,x2:x1,y2:y1,c:'#ffd060',m:.25});
@@ -1214,7 +1239,7 @@ const SND=(()=>{
     get musVol(){ return musVol; }, get sfxVol(){ return sfxVol; }, get musicOn(){ return musVol>0; }};
 })();
 // which sound each skill makes when it goes off
-const SKILL_SND={minstrel:'bless',piper:'bless',dancer:'flurry',apothecary:'curse',merchant:'reroll',gravecaller:'summon',bonelord:'summon',tinkerer:'zap',mechanist:'boom',brawler:'flurry',grandmaster:'slam',chronomancer:'teleport',timekeeper:'teleport',turret:'zap',swordsman:'slam',knight:'stun',lordknight:'slam',archer:'shoot',hunter:'trap',sniper:'snipe',acolyte:'heal',priest:'heal',highpriest:'bless',
+const SKILL_SND={maskedmagus:'teleport',mirrormage:'teleport',puppeteer:'curse',rimedragoness:'freeze',minstrel:'bless',piper:'bless',dancer:'flurry',apothecary:'curse',merchant:'reroll',gravecaller:'summon',bonelord:'summon',tinkerer:'zap',mechanist:'boom',brawler:'flurry',grandmaster:'slam',chronomancer:'teleport',timekeeper:'teleport',turret:'zap',swordsman:'slam',knight:'stun',lordknight:'slam',archer:'shoot',hunter:'trap',sniper:'snipe',acolyte:'heal',priest:'heal',highpriest:'bless',
   thief:'steal',assassin:'flurry',assassincross:'teleport',mage:'fire',wizard:'ice',highwizard:'fire',starwarden:'bash',stormranger:'arrows',dawnoracle:'bless',
   nightreaper:'curse',voidsage:'zap',bulwark:'bash',templar:'teleport',aegispaladin:'bless',spiritcaller:'summon',beastmaster:'summon',stonebinder:'quake',
   starcaller:'summon',cardshark:'reroll',fortuneteller:'star',highroller:'boom',glacierwarden:'ice',ronin:'steal',kensei:'flurry',shogun:'bash',snowmender:'heal',frostoracle:'ice',winterqueen:'freeze',hexer:'curse',bogwitch:'poison',doomherald:'curse',mossling:'slime',shroomkin:'poison',emberbat:'fire',golem:'quake',lich:'ice',wyrm:'flame'};
@@ -1781,7 +1806,8 @@ function applySynergy(f){
       if(U[x.type].cls==='monk'){ x.dodge=[0,.2,.35][lv.monk]; x.comboStep=[.03,.04,.06][lv.monk]; }
       x.manaMul=(x.manaMul||1)*[1,1.15,1.3][lv.chrono];
       if(U[x.type].cls==='ninja'){ x.nDodge=[0,.25,.4][lv.ninja]; x.nSkill=lv.ninja>=2?1.25:1; }
-      x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.critX=[0,.4,.8][lv.gunner]; if(lv.monkey) x.dodge=(x.dodge||0)+[0,.1,.2][lv.monkey]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
+      x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.critX=[0,.4,.8][lv.gunner]; if(lv.monkey) x.dodge=(x.dodge||0)+[0,.1,.2][lv.monkey];
+      if(U[x.type].cls==='mimic'){ x.mimicMp=[0,10,20][lv.mimic]; x.mimicAmp=lv.mimic>=2?.15:0; } x.mesAmp=[0,.15,.3][lv.mesmer]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
       if(U[x.type].cls==='berserker'){ x.cleave=[0,.3,.6][lv.berserker]; if(lv.berserker>=2) x.leech+=.1; } }
     if(team===0) S.alchGold=[0,1,2][lv.alchemist];
     if(team===0) S.goldBonus=[[0,0],[1,0],[2,1]][olv.gilded];   // [on win, on loss]
@@ -1885,6 +1911,10 @@ function nearest(a,list){ let best=null,bd=1e9; for(const b of list) if(b.team!=
 // --- helpers used by skills ---
 const foes=a=>S.fight.f.filter(b=>b.team!==a.team&&b.hp>0);
 const friends=a=>S.fight.f.filter(b=>b.team===a.team&&b.hp>0);
+const nearestAlly=a=>friends(a).filter(b=>b!==a&&!(b.ghost>0)).sort((p,q)=>dist(a,p)-dist(a,q))[0]||null;
+// Mesmers: force an enemy to attack one of its own allies for s seconds
+function mesmerize(e,by,s,src){ if(e.hp<=0||e.spin||!by||by.hp<=0) return; s+=(src&&src.mesPlus)||0; inflict(e,'crs',s); if(!(e.crs>0)) return;
+  e.crsBy=by; e.tgt=by; e.taunt=0; e.tauntBy=null; e.mesAmp=(src&&src.mesAmp)||0; V({k:'beam',x:e.x,y:e.y-.4,x2:by.x,y2:by.y-.4,c:'#d0a0ff',m:.35}); }
 const byHurt=(p,q)=>p.hp/p.max-q.hp/q.max;
 const V=o=>{ o.m=o.m||.4; if(o.t===undefined) o.t=o.m; o.s=o.s??(Math.random()*1e4|0); S.fight.vfx.push(o); };
 let CASTER=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
@@ -1904,11 +1934,12 @@ const STATUS={tstop:{label:'Time Stopped',c:'#7fe0e0',icon:'⏳',tint:'#5ad8e8'}
   dis:{label:'Disarmed',c:'#ffc080',icon:'🚫',dur:1,tint:'#b08050'},
   shred:{label:'Armor Broken',c:'#ff7050',icon:'💢',tint:'#ff5030'},    // takes 25% more damage
   drain:{label:'Mana Drained',c:'#7090ff',icon:'💧',tint:'#3050ff'},    // gains 50% less mana
-  wnd:{label:'Wounded',c:'#e04050',icon:'🩸',tint:'#a01020'}};          // heals and regenerates 50% less
+  wnd:{label:'Wounded',c:'#e04050',icon:'🩸',tint:'#a01020'},          // heals and regenerates 50% less
+  crs:{label:'Mesmerized',c:'#d0a0ff',icon:'🌀',tint:'#b070ff'}};       // forced to attack one of its own allies          // heals and regenerates 50% less
 // all mana gain goes through here: Mana Drained and the Occultist bonus cut it
 const gainMp=(u,amt)=>{ u.mp=Math.min(u.mpMax,u.mp+amt*(u.drain>0?.5:1)*(1-(u.manaCut||0))); };
 const healMul=u=>(u.wnd>0?.5:1)*(u.psn?.7:1);   // Wounded halves healing, poison cuts it by 30%
-const MAGIC_CLS={magic:1,holy:1,occultist:1,summoner:1,frost:1,gambler:1,bard:1,alchemist:1,necro:1,chrono:1,gravity:1,druid:1}, MAGIC_TYPES={wisp:1,drake:1,lich:1,shroomkin:1};
+const MAGIC_CLS={mimic:1,mesmer:1,magic:1,holy:1,occultist:1,summoner:1,frost:1,gambler:1,bard:1,alchemist:1,necro:1,chrono:1,gravity:1,druid:1}, MAGIC_TYPES={wisp:1,drake:1,lich:1,shroomkin:1};
 const isMagic=src=>!!src&&(MAGIC_CLS[U[src.type].cls]||MAGIC_TYPES[src.type]);
 // dice: a d6, rolled twice (best kept) with the Gambler bonus
 const roll=a=>{ const r=()=>1+Math.floor(Math.random()*6); return a.lucky?Math.max(r(),r()):r(); };
@@ -1934,8 +1965,8 @@ function ward(u,secs,src){ if(u.hp<=0) return; secs+=(src&&src.wardPlus)||0; u.w
 // strip an enemy's buffs: shields, Quicksilver charges, Spellblade charges
 function dispel(u){ if(u.hp<=0) return; u.haste=0; u.hotT=0; u.furyT=0; if(u.mshield>1){ u.mshield=0; pop(u,'Dispelled','#d0a0ff'); } if(u.shield>1||u.cloak>0||u.sb>0){ pop(u,'Dispelled','#d0a0ff'); burst(u.x,u.y-.3,'#d0a0ff',10,3,3,-1); } u.shield=0; u.cloak=0; u.sb=0; }   // can still move and cast, but not attack   // can't act at all, but any direct damage shatters it
 // a Berserker starting to spin throws off its debuffs (it is immune until the spin ends)
-function spinStart(a){ for(const k of ['stun','sil','blind','slow','dis','shred','drain','wnd','shock','root','frz','taunt']) if(a[k]>0) a[k]=0; a.psn=null; a.brn=null; a.tauntBy=null; }
-function inflict(u,k,s){ if(u.hp<=0||u.spin) return;   // spinning Berserkers shrug off every debuff s=STATUS[k].dur||s;
+function spinStart(a){ for(const k of ['stun','sil','blind','slow','dis','shred','drain','wnd','shock','root','frz','taunt','crs']) if(a[k]>0) a[k]=0; a.psn=null; a.brn=null; a.tauntBy=null; }
+function inflict(u,k,s){ if(u.hp<=0||u.spin) return; s=STATUS[k].dur||s;   // spinning Berserkers shrug off every debuff
   if(u.cloak>0){ u.cloak--; pop(u,'Blocked','#e8e8ff'); burst(u.x,u.y-.3,'#e8e8ff',8,2,3,-1); return; }   // Quicksilver Cloak
   if(!(u[k]>0)){ pop(u,STATUS[k].label,STATUS[k].c); V({k:'ring',x:u.x,y:u.y,r:.6,c:STATUS[k].c,m:.35}); burst(u.x,u.y-.3,STATUS[k].c,8,2,3,-1); }
   if(k==='frz') SND.play('freeze');
@@ -1986,7 +2017,7 @@ function burst(x,y,c,n,spd=2.5,size=3,g=6){
     S.fight.parts.push({x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-(g>0?1.5:0),life,max:life,c,size,g}); }
 }
 function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal'); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
-const PROJ={thornmother:'p_plant',stormdjinn:'p_light',colossus:'p_light',cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',piper:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
+const PROJ={maskedmagus:'p_arcane',mirrormage:'p_arcane',puppeteer:'p_dark',rimedragoness:'p_ice',thornmother:'p_plant',stormdjinn:'p_light',colossus:'p_light',cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',piper:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
   acolyte:'p_light',priest:'p_light',highpriest:'p_light',dawnoracle:'p_light',spiritcaller:'p_arcane',starcaller:'p_arcane',stonebinder:'p_arcane',wisp:'p_arcane',shroomkin:'p_plant'};
 // basic ranged attacks fly as small missiles (skills keep the big spell sprites)
 const MINI_PROJ={p_ice:'shard',p_plant:'thorn',p_dark:'dark',p_arcane:'needle',p_light:'spark',magic:'ember',wizard:'shard',voidsage:'dark',holy:'spark'};
@@ -2001,7 +2032,7 @@ function shoot(a,t,mult=1,c,big,onHit){
 function deal(t,dmg,crit,src){
   if(t.ghost>0&&src) return;   // ninja mid-strike: untouchable
   if(src&&(t.dodge||t.zen>0||t.nDodgeT>0)&&Math.random()<(t.dodge||0)+(t.zen>0?.5:0)+(t.nDodgeT>0?t.nDodge:0)){ pop(t,'Dodge','#fff3c0'); return; }   // Monks, Ninjas
-  dmg*=(1-t.red)*(1-(t.sRed||0))*(t.spin?.6:1)*(0.9+Math.random()*.2);   // spinning Berserkers take 40% less damage
+  dmg*=(1-t.red)*(1-(t.sRed||0))*(t.spin?.6:1)*(t.crs>0&&t.mesAmp?1+t.mesAmp:1)*(0.9+Math.random()*.2);   // spinning Berserkers take 40% less damage
   if(U[t.type].armor&&t.hp>t.max*.5) dmg*=1-U[t.type].armor;   // boss stoneskin while above half HP
   if(t.ward>0){ if(!isMagic(src)){ if(src) pop(t,'Immune','#dff8ff'); return; } dmg*=1.2; }   // Ice Ward: physical can't touch it, magic hurts more
   if(t.backRed) dmg*=1-t.backRed;   // Crusader bonus
@@ -2024,6 +2055,24 @@ function deal(t,dmg,crit,src){
   if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else pop(t,Math.round(dmg),['#fff','#ffe27a','#ffb050'][BACKHIT],false);
   if(BACKHIT===2&&Math.random()<.35) pop({x:t.x,y:t.y-.7},'Back!','#ffb050');
 }
+// Mimics: steal an enemy's skill and cast it as your own
+const MIMICS={maskedmagus:1,mirrormage:1};
+const canCopy=e=>{ const k=SKILLS[e.type]; return k&&k.cast&&k.mp<1e9&&!MIMICS[e.type]; };
+function mimicCast(a,t,big){
+  const F=S.fight, pool=F.f.filter(e=>e.team!==a.team&&canCopy(e)&&(big?e.hp>0:(U[e.type].cost||0)<=2&&!U[e.type].boss));
+  let e=null;
+  if(big){ const fresh=pool.filter(x=>x.type!==a.lastCopy); e=(fresh.length?fresh:pool)[Math.random()*(fresh.length||pool.length)|0]; }
+  else e=pool[Math.random()*pool.length|0];
+  t=t&&t.hp>0?t:nearest(a,F.f);
+  if(!e){ if(!t) return;   // nothing to copy: a hex blast with a random debuff
+    V({k:'ring',x:t.x,y:t.y,r:1.5,c:'#5ad8a8',m:.5}); FX('sigil',t.x,t.y-.4,{s:.7,tint:'#5ad8a8',m:.5});
+    for(const x of foes(a)) if(dist(x,t)<=1.5){ hit(a,x,1.5); const k=['slow','blind','sil','shred','wnd'][Math.random()*5|0]; inflict(x,k,2.5); }
+    return; }
+  a.lastCopy=e.type; const k=SKILLS[e.type], amp=(big?1.25:1)*(1+(a.mimicAmp||0)), sp=a.skPow;
+  if(big&&e.hp>0){ hit(a,e,2.2); inflict(e,'sil',2); }
+  pop(a,'⟲ '+k.name,'#7fffd0',true); V({k:'beam',x:e.x,y:e.y-.4,x2:a.x,y2:a.y-.4,c:'#5ad8a8',m:.4}); burst(e.x,e.y-.4,'#5ad8a8',10,2.5,3,-1);
+  a.skPow=sp*amp; try{ k.cast(a,t); }catch(err){ for(const x of foes(a)) if(t&&dist(x,t)<=1.5) hit(a,x,1.5); }
+  later(2.5,()=>{ a.skPow=sp; }); }
 // monkeys: count basic hits; every 4th one triggers their passive
 const MONKEY_PASSIVE={
   wukong:{dmg:.4,ls:.3},        // Sage's Fury: the next 4 basic hits deal +40% damage, and he heals 30% of all damage he deals (skills too) while it lasts
@@ -2103,6 +2152,7 @@ function releaseCast(a){
   if(!a.heal&&!t) return;
   a.atkT=ATK_T; a.relT=REL_T; a.glow=.5; if(t) a.tgt=t; if(a.spellblade) a.sb=a.spellblade;
   if(a.star===3){ FXS=1.3; V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.6,m:.8}); V({k:'ring',x:a.x,y:a.y,r:1.1,c:'#fff3c0',m:.6}); burst(a.x,a.y-.4,'#ffe9a0',18,3.5,3,-2); }   // 3 stars: a golden flourish
+  for(const m of S.fight.f) if(m.mimicMp&&m.team!==a.team&&m.hp>0) gainMp(m,m.mimicMp);   // Mimic class bonus
   CASTER=a; SND.play(SKILL_SND[a.type]||'skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
   burst(a.x,a.y-.3,colorOf(a.type),10,3,3,0);
   V({k:'pillar',x:a.x,y:a.y+.35,c:colorOf(a.type),m:.4});   // light pillar on release
@@ -2163,6 +2213,7 @@ function step(dt){
     a.atkT=Math.max(0,a.atkT-dt); a.relT=Math.max(0,(a.relT||0)-dt); a.moving=Math.max(0,a.moving-dt); a.glow=Math.max(0,a.glow-dt);
     if(a.regen) a.hp=Math.min(a.max,a.hp+a.max*a.regen*dt*healMul(a));
     if(a.taunt>0&&(a.taunt-=dt)<=0) a.tauntBy=null;
+    if(a.crs>0&&(a.crs-=dt)<=0) a.crsBy=null;
     if(a.sil>0) a.sil-=dt; if(a.blind>0) a.blind-=dt; if(a.slow>0) a.slow-=dt; if(a.dis>0) a.dis-=dt; if(a.shred>0) a.shred-=dt; if(a.drain>0) a.drain-=dt; if(a.wnd>0) a.wnd-=dt;
     const slowM=a.slow>0?.6:1;
     if(a.psn){ const d=a.psn; d.acc=(d.acc||0)+dt; d.t-=dt; while(d.acc>=1-1e-6){ d.acc-=1; dotTick(a,d,d.dps*(d.n||1),'#8be06a'); } if(d.t<=1e-6) a.psn=null; }
@@ -2202,7 +2253,8 @@ function step(dt){
         later(ATK_T*.45,()=>{ if(a.hp>0){ if(U[a.type].hot) hot(hurt,a.heal*1.2,3,a); else heal(hurt,a.heal,a); } }); } continue; }
     }
     if(a.taunt>0&&a.tauntBy&&a.tauntBy.hp>0) a.tgt=a.tauntBy;   // Taunted: forced onto the taunter
-    if(!a.tgt||a.tgt.hp<=0||a.tgt.ghost>0) a.tgt=nearest(a,alive);
+    if(a.crs>0){ if(!a.crsBy||a.crsBy.hp<=0) a.crsBy=nearestAlly(a); if(a.crsBy) a.tgt=a.crsBy; else a.crs=0; }   // Mesmerized: attacks its own ally
+    if(!a.tgt||a.tgt.hp<=0||a.tgt.ghost>0||(a.tgt.team===a.team&&!(a.crs>0))) a.tgt=nearest(a,alive);
     if(a.root>0&&a.tgt&&dist(a,a.tgt)>a.range+.5){ const r=alive.filter(b=>b.team!==a.team&&!(b.ghost>0)&&dist(a,b)<=a.range+.5).sort((p,q)=>dist(a,p)-dist(a,q))[0]; if(r) a.tgt=r; }   // rooted: fight what is in reach
     const t=a.tgt; if(!t) continue;
     if(Math.abs(t.x-a.x)>.05) a.face=t.x<a.x?-1:1;
@@ -2339,7 +2391,7 @@ function pose(o,b,rigged){
 }
 // ====== rig: each sprite is split into pieces (legs, body, arms + weapons, head, cape...) that turn on their joints ======
 // attack style per unit: how the arms move on a basic attack
-const CLS_ANIM={monkey:'slash',gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
+const CLS_ANIM={mimic:'staff',mesmer:'staff',monkey:'slash',gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',arctower:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
 const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
@@ -2545,7 +2597,7 @@ function drawStatus(o,px,py){
     for(let i=0;i<4;i++){ const f=(T*.7+i/4)%1, x=px-14+i*9, y=py+22-f*20; ctx.globalAlpha=1-f; ctx.fillStyle='#dff6ff';
       ctx.beginPath(); ctx.moveTo(x,y-4); ctx.lineTo(x+2.5,y); ctx.lineTo(x,y+4); ctx.lineTo(x-2.5,y); ctx.fill(); } ctx.globalAlpha=1; }
   if(!o.ref) return;
-  const f=o.ref, act=['ward','frz','stun','taunt','sil','blind','slow','dis','shred','drain','wnd','psn','brn'].filter(k=>k==='psn'||k==='brn'?f[k]:f[k]>0);
+  const f=o.ref, act=['ward','frz','stun','taunt','crs','sil','blind','slow','dis','shred','drain','wnd','psn','brn'].filter(k=>k==='psn'||k==='brn'?f[k]:f[k]>0);
   act.forEach((k,i)=>{ const x=px+(i-(act.length-1)/2)*17, y=py-48, left=k==='psn'||k==='brn'?f[k].t/f[k].T:f[k]/(f[k+'M']||f[k]);
     ctx.fillStyle='rgba(15,15,25,.85)'; ctx.beginPath(); ctx.arc(x,y,7.5,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle=STATUS[k].c; ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(x,y,7.5,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(0,left)); ctx.stroke();
@@ -2797,7 +2849,7 @@ function thumbHTML(id,size){
 function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
   const u=U[id], m=STAR_MULT[star-1], sk=SKILLS[id], c=CLASSES[u.cls]||{name:u.boss?'Boss':u.cls==='summon'?'Summon':'Monster',color:colorOf(id)}, o=ORIGINS[u.org];
   const side=live?(live.team===0?'<span style="color:#7fd0ff">Ally</span>':'<span style="color:#ff8a80">Enemy</span>')+' · ':'';
-  const st=live?['ward','frz','stun','taunt','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
+  const st=live?['ward','frz','stun','taunt','crs','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
   return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${u.name} ${fuse?'<span class="stars" style="color:#ff3a3a">★</span>':`<span class="stars">${'★'.repeat(star)}</span>`}</div>
     <div class="tags">${side}<span style="color:${c.color}">${c.name}</span>${o?` · <span style="color:${o.color}">${o.icon} ${o.name}</span>`:''}${u.cost&&u.cost<5?` · ${u.cost} gold`:''}</div></div></div>
     <div class="chips">${live?`<span>❤ ${Math.max(0,Math.round(live.hp))} / ${Math.round(live.max)}</span><span>⚔ ${Math.round(live.atk*live.dmgM)}</span>${live.mshield>1?`<span style="color:#d0a0ff">🔮 ${Math.round(live.mshield)}</span>`:''}${live.shield>1?`<span>🛡 ${Math.round(live.shield)}</span>`:''}${sk.mp<1e9?`<span>💧 ${Math.round(live.mp)} / ${sk.mp}</span>`:''}`
