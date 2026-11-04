@@ -697,7 +697,7 @@ const BOSSES=['golem','lich','wyrm','thornmother','stormdjinn','colossus'];   //
 const BOSS_MINIONS={golem:['emberbat','shroomkin'],lich:['skeleton','shroomkin'],wyrm:['emberbat','emberbat'],thornmother:['mossling','shroomkin'],stormdjinn:['emberbat','wisp'],colossus:['guardian','emberbat']};
 const bossFor=r=>{ const B=S.bossOrder||BOSSES; return B[((r-15)/5)%B.length]; };
 const BOSS_ENRAGE={
-  thornmother:a=>{ a.asM*=1.3; a.regen+=.01; for(let i=0;i<3;i++) summon(a,'shroomkin',6); },
+  thornmother:a=>{ a.asM*=1.3; a.regen+=.004; for(let i=0;i<3;i++) summon(a,'shroomkin',6); },
   stormdjinn:a=>{ a.asM*=1.4; for(let i=0;i<6;i++) later(.4+i*.6,()=>{ const es=foes(a); if(!es.length||a.hp<=0) return; const t=pick(es);   // lightning from above
     V({k:'bolt',x:t.x,y:t.y-4,x2:t.x,y2:t.y,c:'#ffe45a',m:.3}); V({k:'flash',x:0,y:0,c:'#fff7c0',m:.15}); hit(a,t,1.5); inflict(t,'shock'); burst(t.x,t.y,'#fff3a0',12,3,3,2); }); },
   colossus:a=>{ a.asM*=1.5; build(a,4); build(a,4); },
@@ -896,8 +896,8 @@ const SKILLS = {
   starcaller:{name:'Starfall Drake', mp:100, desc:'Calls a Star Drake (1 at a time) that breathes starfire on an area. If it is already out, a falling star hits the target area for 300% damage.',
     cast(a,t){ if(summon(a,'drake',1)) return; const x=t.x, y=t.y; V({k:'meteor',x,y,m:.45});
       later(.45,()=>{ FX('strike',x,y+.3,{s:.9,tint:'#bfe0ff',m:.6}); V({k:'burst',x,y,r:1.2,c:'#9ad0ff'}); V({k:'shards',x,y,c:'#fff3a0',r:1.3,n:10}); hitStop(.07); for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.2) hit(a,e,3); }); }},
-  thornmother:{name:'Bramble Snare', names:['Bramble Snare','Spore Bloom'], mp:70, desc:'Alternates Bramble Snare (140% damage and roots every hero within 2.5 cells of the most crowded spot for 2s) and Spore Bloom (poisons every hero within 3 cells for 4s and heals herself 8% max HP). At half HP she enrages: faster, regenerates and sprouts shroomkin.',
-    cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ for(const e of foes(a)) if(dist(a,e)<=3) poison(e,a.atk*.25,4,a); heal(a,a.max*.08,a);
+  thornmother:{name:'Bramble Snare', names:['Bramble Snare','Spore Bloom'], mp:70, desc:'Alternates Bramble Snare (140% damage and roots every hero within 2.5 cells of the most crowded spot for 2s) and Spore Bloom (poisons every hero within 3 cells for 4s and heals herself 3% max HP). At half HP she enrages: faster, regenerates slowly and sprouts shroomkin.',
+    cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ for(const e of foes(a)) if(dist(a,e)<=3) poison(e,a.atk*.25,4,a); heal(a,a.max*.03,a);
         FX('geyser',a.x,a.y+.4,{s:1.4,tint:'#bff27a',m:.7}); for(let i=0;i<14;i++) later(i*.04,()=>burst(a.x+(Math.random()-.5)*5,a.y+(Math.random()-.5)*4,'#d8ff9a',3,1,3,-1.5)); return; }
       const c=densest(a,1.6); if(!c) return; V({k:'quake',x:c.x,y:c.y+.3,r:2.5,c:'#4a6a2a',m:.9});
       for(const e of foes(a)) if(dist(e,c)<=2.5){ hit(a,e,1.4); root(e,2,a); FX('geyser',e.x,e.y+.3,{s:.6,tint:'#7ad66a',m:.5}); } }},
@@ -908,8 +908,8 @@ const SKILLS = {
       for(let i=0;i<5&&cur;i++){ seen.add(cur); const f0=from, c0=cur, m0=m;
         later(i*.09,()=>{ V({k:'bolt',x:f0.x,y:f0.y-.3,x2:c0.x,y2:c0.y,c:'#ffe45a',m:.35}); burst(c0.x,c0.y-.2,'#fff3a0',6,2.5,2,0); if(a.hp>0&&c0.hp>0){ hit(a,c0,m0); inflict(c0,'shock'); } });
         from=cur; m*=.85; cur=foes(a).filter(e=>!seen.has(e)&&dist(e,from)<=3).sort((p,q)=>dist(p,from)-dist(q,from))[0]; } }},
-  colossus:{name:'Overcharge Beam', names:['Overcharge Beam','Shield Matrix'], mp:75, desc:'Alternates Overcharge Beam (a beam at the farthest hero: 260% damage to every hero on the line) and Shield Matrix (a physical and a magic shield worth 15% of its max HP each, and heroes within 2 cells must attack it). Takes 20% less damage above half HP; at half HP it overclocks: faster, and builds two turrets.',
-    cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ a.shield+=a.max*.15; a.mshield+=a.max*.15; for(const e of foes(a)) if(dist(a,e)<=2) e.tgt=a;
+  colossus:{name:'Overcharge Beam', names:['Overcharge Beam','Shield Matrix'], mp:75, desc:'Alternates Overcharge Beam (a beam at the farthest hero: 260% damage to every hero on the line) and Shield Matrix (a physical and a magic shield worth 7% of its max HP each, up to 15%, and heroes within 2 cells must attack it). Takes 20% less damage above half HP; at half HP it overclocks: faster, and builds two turrets.',
+    cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ a.shield=Math.min(a.max*.15,a.shield+a.max*.07); a.mshield=Math.min(a.max*.15,a.mshield+a.max*.07); for(const e of foes(a)) if(dist(a,e)<=2) e.tgt=a;
         V({k:'dome',x:a.x,y:a.y,c:'#7ff0ff',r:1,m:1}); SND.play('shield'); return; }
       const t=foes(a).sort((p,q)=>dist(q,a)-dist(p,a))[0]; if(!t) return; const d=dist(a,t)||1, x1=a.x+(t.x-a.x)/d*9, y1=a.y+(t.y-a.y)/d*9;
       V({k:'bolt',x:a.x,y:a.y-.4,x2:x1,y2:y1,c:'#ff9a3a',m:.45}); V({k:'flash',x:0,y:0,c:'#ffb060',m:.25}); addTrauma(.3);
@@ -1711,7 +1711,7 @@ function genEnemies(r){
 }
 function genMonsters(r){
   const mult=1+(r/5-1)*0.5, out=[], add=(type,cx,cy,m=1)=>out.push({type,star:1,cx,cy,mult:mult*m});
-  if(r>=15){ const b=bossFor(r), bm=1+(r-15)*.05;
+  if(r>=15){ const b=bossFor(r), bm=1+(r-15)*.03;
     add(b,3,1,bm); if(r>=30) add(bossFor(r+5),5,0,bm*.85);
     const minion=BOSS_MINIONS[b];
     add(minion[0],1,3); add(minion[0],6,3); add(minion[1],0,1); add(minion[1],7,1); if(r>=25) add('mossling',4,3); }
@@ -1719,8 +1719,22 @@ function genMonsters(r){
   else { add('mossling',1,3); add('mossling',4,3); add('mossling',6,3); add('shroomkin',2,1); add('shroomkin',5,1); }
   return out;
 }
+// forgot to fill the field? empty slots are filled with random bench heroes (melee in front, ranged behind)
+function autoFill(){
+  const bench=S.units.filter(u=>u.loc.w==='bench').sort(()=>Math.random()-.5), placed=[];
+  while(onBoard().length<cap()&&bench.length){
+    const u=bench.pop(), rows=U[u.type].range<=1?[4,5,6,7]:[7,6,5,4];
+    let spot=null;
+    for(const cy of rows){ const free=[...Array(COLS).keys()].filter(cx=>!S.units.some(v=>v.loc.w==='board'&&v.loc.cx===cx&&v.loc.cy===cy));
+      if(free.length){ spot={w:'board',cx:free[Math.floor(Math.random()*free.length)],cy}; break; } }
+    if(!spot) break;
+    u.loc=spot; placed.push(U[u.type].name);
+  }
+  return placed;
+}
 function startFight(){
   if(S.phase!=='prep') return;
+  const auto=autoFill(); if(auto.length) msg(`Auto-placed ${auto.join(', ')} from the bench`);
   if(!onBoard().length) return msg('Place units on the field first');
   S.sel=null; S.selItem=null;
   const kind=roundKind(S.round);
