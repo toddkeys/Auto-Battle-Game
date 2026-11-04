@@ -29,7 +29,8 @@ def prep(src, cid, box, erase=()):
     bg = np.isin(lab, list(edge))
     sizes = ndimage.sum(np.ones_like(lab), lab, range(1, lab.max() + 1))
     pure = (rgb.min(axis=2) > 240)
-    big = [i + 1 for i, n in enumerate(sizes) if n > 600 and pure[lab == i + 1].mean() > .8]
+    gap = 600 * ((box[3] - box[1]) / 800) ** 2   # smaller figures on the sheet have smaller gaps
+    big = [i + 1 for i, n in enumerate(sizes) if n > gap and pure[lab == i + 1].mean() > .8]
     bg |= np.isin(lab, big)   # large pure-white gaps enclosed by hair (armour and eye highlights are smaller)
     # keep only the biggest shape (drops sparkles, scenery and stray specks)
     body, n = ndimage.label(~bg, structure=np.ones((3, 3)))
