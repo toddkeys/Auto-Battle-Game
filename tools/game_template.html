@@ -364,6 +364,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Flank attacks</b>: hitting a hero or monster from the <b>side</b> (above or below it) deals 10% more damage (yellow numbers), from <b>behind</b> (the side it isn't facing) 20% more (orange numbers). Assassins who leap behind the enemy and Grapplers who drag enemies past them make good use of it.</li>
         <li><b>Right-click an item</b> to <b>🎲 reroll</b> it into another random item of the same rarity, keeping its enchant level (30 gold), or to sell it. <b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
+        <li><b>🐒 Monkeys</b> count their normal hits. Every 4th hit: the 2💰 <b>Stone Monkey</b> attacks 30% faster for 3s; the 4💰 <b>Wukong</b> gains <b>Sage's Fury</b> — his next 4 hits deal +40% damage and he heals for 30% of all damage he deals (skills included) until they're used. Wukong's skill <b>Ruyi Smash</b> slams his staff in a long line: 160% damage that always crits and a 1s stun. Class bonus: the team dodges attacks.</li>
         <li><b>🔫 Gunslingers</b>: the 2💰 Gunslinger fans 4 quick shots that can each crit; the 4💰 Deadshot snipes the farthest enemy with a piercing bullet. Their class bonus makes the whole team's critical hits hit harder. The 4💰 <b>Gearmaster</b> is the top Engineer: it builds two turrets at once and overclocks them.</li>
         <li><b>🪝 Grapplers</b> hook the enemy's back line and drag it in: the 2💰 Harpooner hooks the farthest enemy, the 4💰 Anchor Brute hooks the two farthest. Hooked enemies are stunned for 1s, and with the class bonus they take more damage for 3s. Bosses can't be dragged.</li>
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
@@ -443,6 +444,7 @@ const CLASSES = {
   monk:{name:'Monk',color:'#ffcc66', desc:['Monks dodge 20% of attacks; each hit stacks +4% attack speed (max 10)','Monks dodge 35% of attacks; each hit stacks +6% attack speed (max 10)']},
   chrono:{name:'Teleporter',color:'#7fe0e0', desc:['Team gains 15% more mana from attacks','Team gains 30% more mana from attacks']},
   ninja:{name:'Ninja',color:'#e04a5a', desc:['After a skill, ninjas dodge 25% of attacks for 2s','Ninja skills deal 25% more damage; after a skill ninjas dodge 40% of attacks for 2s']},
+  monkey:{name:'Monkey',color:'#e8a040', desc:['Team dodges 10% of attacks','Team dodges 20% of attacks']},
   gunner:{name:'Gunslinger',color:'#d8a05a', desc:['Team critical hits deal 2.4x damage (from 2x)','Team critical hits deal 2.8x damage (from 2x)']},
   grapple:{name:'Grappler',color:'#c8b48a', desc:['Hooked enemies take 15% more damage for 3s','Hooked enemies take 30% more damage for 3s']},
   gravity:{name:'Gravity',color:'#8a6aff', desc:['Enemies pulled by a gravity skill take 15% more damage for 3s','Pulled enemies take 30% more damage for 3s']},
@@ -528,6 +530,9 @@ const UNITS = [
   // ninjas: dashing damage dealers
   {id:'phantomblade',name:'Phantom Blade',cls:'ninja',org:'gilded',       cost:2,hp:680, atk:88, range:1,as:.65,ms:2.4},
   {id:'shadowstep',  name:'Shadowstep',   cls:'ninja',org:'moonblood',    cost:4,hp:1300,atk:175,range:1,as:.6, ms:2.5},
+  // monkeys: agile staff fighters whose every 4th hit powers them up
+  {id:'stonemonkey', name:'Stone Monkey', cls:'monkey',org:'wildheart',   cost:2,hp:760, atk:68, range:1,as:.8,  ms:2.0},
+  {id:'wukong',      name:'Wukong',       cls:'monkey',org:'starborn',    cost:4,hp:1500,atk:145,range:1,as:.8,  ms:2.0},
   // gunslingers: quick revolver shots and long-range sniping
   {id:'gunslinger',  name:'Gunslinger',   cls:'gunner',org:'gilded',      cost:2,hp:620, atk:58, range:3,as:.8,  ms:1.5},
   {id:'deadshot',    name:'Deadshot',     cls:'gunner',org:'starborn',    cost:4,hp:1150,atk:185,range:6,as:1.1, ms:1.3},
@@ -575,6 +580,7 @@ const CLASS_STAR={
   monk:[['Dodge +8%',{fx:x=>{ x.dodge=(x.dodge||0)+.08; }}],['Dodge +15%; each combo stack gives 2% more attack speed',{fx:x=>{ x.dodge=(x.dodge||0)+.15; x.comboStep=(x.comboStep||.03)+.02; }}]],
   chrono:[['Skill costs 15% less mana',{mana:.85}],['Skill costs 30% less mana; skill damage +20%',{mana:.7,skPow:1.2}]],
   ninja:[['Skill damage +25%',{skPow:1.25}],['Skill damage +50%; dodges 30% of attacks for 2s after a skill',{skPow:1.5,fx:x=>{ x.nDodge=Math.max(x.nDodge||0,.3); }}]],
+  monkey:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   gunner:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   grapple:[['Hook damage +20%',{skPow:1.2}],['Hook damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   gravity:[['Pulled enemies take 10% more damage',{fx:x=>{ x.gAmp+=.1; }}],['Pulled enemies take 20% more damage; skill costs 20% less mana',{mana:.8,fx:x=>{ x.gAmp+=.2; }}]],
@@ -879,6 +885,14 @@ const SKILLS = {
       const x=t.x, y=t.y;
       later(.12,()=>{ V({k:'ring',x,y,r:1.6,c:'#7fe0e0',m:.6}); V({k:'flash',x:0,y:0,c:'#bff6ff',m:.2}); FX('sigil',x,y-.1,{s:1,tint:'#7fe0e0',m:.6}); hitStop(.06);
         for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.6){ hit(a,e,1.2); stun(e); } }); }},
+  wukong:{name:'Ruyi Smash', mp:95, desc:'Grows his staff and slams it down in a straight line toward the target, 5.5 cells long: 160% damage that always crits and a 1s stun to every enemy on the line.',
+    cast(a,t){ if(!t) return; const d=dist(a,t)||1, ux=(t.x-a.x)/d, uy=(t.y-a.y)/d, x1=a.x+ux*5.5, y1=a.y+uy*5.5;
+      V({k:'beam',x:a.x,y:a.y-.2,x2:x1,y2:y1,c:'#ffd060',m:.25});
+      later(.25,()=>{ if(a.hp<=0) return; V({k:'beam',x:a.x,y:a.y-.2,x2:x1,y2:y1,c:'#fff3c0',m:.45}); V({k:'quake',x:(a.x+x1)/2,y:(a.y+y1)/2+.2,r:1.4,c:'#5a3a1a',m:.6}); hitStop(.08); SND.play('slam');
+        for(const e of foes(a)) if(segDist(e.x,e.y,a.x,a.y,x1,y1)<=.7){ a.firstCrit=true; hit(a,e,1.6,true); stun(e); burst(e.x,e.y-.3,'#ffd060',8,3,3,2); } }); }},
+  stonemonkey:{name:'Staff Sweep', mp:60, desc:'Spins its staff: 140% damage to every enemy within 1.4 cells, knocking them back.',
+    cast(a){ for(const e of foes(a)) if(dist(a,e)<=1.4){ hit(a,e,1.4); const d=dist(e,a)||1; e.x=Math.min(COLS-.5,Math.max(.5,e.x+(e.x-a.x)/d*.9)); e.y=Math.min(ROWS-.5,Math.max(.5,e.y+(e.y-a.y)/d*.9)); }
+      V({k:'arc',x:a.x,y:a.y,c:'#e8d0a0',r:1.4,dir:a.face,m:.3}); V({k:'arc',x:a.x,y:a.y,c:'#e8d0a0',r:1.4,dir:-a.face,m:.3}); }},
   gunslinger:{name:'Fan the Hammer', mp:60, desc:'Fires 4 quick shots at the target, 70% damage each. Every shot can crit.',
     cast(a,t){ for(let i=0;i<4;i++) later(i*.1,()=>{ if(a.hp<=0||t.hp<=0) return; V({k:'beam',x:a.x,y:a.y-.3,x2:t.x,y2:t.y-.3,c:'#ffd27a',m:.12}); hit(a,t,.7,true); }); SND.play('shoot'); }},
   deadshot:{name:'Long Shot', mp:70, desc:'Takes aim and shoots the farthest enemy for 350% damage; the bullet pierces, hitting every enemy on the way for 150%.',
@@ -1727,7 +1741,7 @@ function applySynergy(f){
       if(U[x.type].cls==='monk'){ x.dodge=[0,.2,.35][lv.monk]; x.comboStep=[.03,.04,.06][lv.monk]; }
       x.manaMul=(x.manaMul||1)*[1,1.15,1.3][lv.chrono];
       if(U[x.type].cls==='ninja'){ x.nDodge=[0,.25,.4][lv.ninja]; x.nSkill=lv.ninja>=2?1.25:1; }
-      x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.critX=[0,.4,.8][lv.gunner]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
+      x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.critX=[0,.4,.8][lv.gunner]; if(lv.monkey) x.dodge=(x.dodge||0)+[0,.1,.2][lv.monkey]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
       if(U[x.type].cls==='berserker'){ x.cleave=[0,.3,.6][lv.berserker]; if(lv.berserker>=2) x.leech+=.1; } }
     if(team===0) S.alchGold=[0,1,2][lv.alchemist];
     if(team===0) S.goldBonus=[[0,0],[1,0],[2,1]][olv.gilded];   // [on win, on loss]
@@ -1968,6 +1982,19 @@ function deal(t,dmg,crit,src){
   if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else pop(t,Math.round(dmg),['#fff','#ffe27a','#ffb050'][BACKHIT],false);
   if(BACKHIT===2&&Math.random()<.35) pop({x:t.x,y:t.y-.7},'Back!','#ffb050');
 }
+// monkeys: count basic hits; every 4th one triggers their passive
+const MONKEY_PASSIVE={
+  wukong:{dmg:.4,ls:.3},        // Sage's Fury: the next 4 basic hits deal +40% damage, and he heals 30% of all damage he deals (skills too) while it lasts
+  stonemonkey:{as:.3},           // Agile Rhythm: +30% attack speed for 3s
+};
+function monkeyAfterHit(a,basic,dealt){ const mk=MONKEY_PASSIVE[a.type];
+  if(mk.ls&&a.mkEmp>0&&dealt>0&&a.hp>0){ const h=Math.min(dealt*mk.ls*healMul(a),a.max-a.hp); a.hp+=h; a.hl+=h; }   // life steal (and spell life steal) while empowered
+  if(!basic) return;
+  if(a.mkEmp>0){ if(--a.mkEmp===0) a.mkGlow=0; return; }
+  a.mkHits=(a.mkHits||0)+1;
+  if(a.mkHits>=4){ a.mkHits=0;
+    if(mk.dmg){ a.mkEmp=4; a.mkGlow=1; pop(a,'Fury!','#ffb040'); burst(a.x,a.y-.4,'#ffd060',14,2.5,3,-1); }
+    if(mk.as){ a.haste=Math.max(a.haste||0,3); pop(a,'Rhythm!','#ffd060'); burst(a.x,a.y-.4,'#e8e0c0',8,2,3,-1); } } }
 // flank attacks: where the attacker stands relative to the way the target faces.
 // front (within 60° of its facing) +0%, side (60-120°, above or below it) +10%, back (more than 120°) +20%
 const SIDE_BONUS=.1, BACK_BONUS=.2; let BACKHIT=0;   // 0 front, 1 side, 2 back
@@ -1981,7 +2008,10 @@ function hit(a,t,mult=1,canCrit=mult===1){
   if(a.exec&&t.hp<t.max*.35) dmg*=1+a.exec;                 // Executioner's Axe
   if(mult===1&&a.sb>0){ dmg*=1.6; a.sb--; }                 // Spellblade charges
   const fl=flankOf(a,t); dmg*=1+[0,SIDE_BONUS,BACK_BONUS][fl];   // side and back attacks hit harder
-  BACKHIT=fl; deal(t,dmg,crit,a); BACKHIT=0;
+  const basic=mult===1&&CASTER!==a, mk=MONKEY_PASSIVE[a.type];
+  if(mk&&basic&&a.mkEmp>0) dmg*=1+(mk.dmg||0);   // Wukong: empowered hit
+  BACKHIT=fl; const hp0=t.hp; deal(t,dmg,crit,a); BACKHIT=0;
+  if(mk) monkeyAfterHit(a,basic,Math.max(0,hp0-Math.max(0,t.hp)));
   if(mult===1) combo(a);
   if(mult===1&&a.cleave) for(const o of S.fight.f) if(o!==t&&o.team!==a.team&&o.hp>0&&dist(o,t)<=1.1) deal(o,dmg*a.cleave,false,a);   // Berserker cleave
   if(mult===1&&a.summon&&!a.raised&&SUMMON_HIT[a.type]&&t.hp>0) SUMMON_HIT[a.type](a,t);
@@ -2267,7 +2297,7 @@ function pose(o,b,rigged){
 }
 // ====== rig: each sprite is split into pieces (legs, body, arms + weapons, head, cape...) that turn on their joints ======
 // attack style per unit: how the arms move on a basic attack
-const CLS_ANIM={gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
+const CLS_ANIM={monkey:'slash',gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
 const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
@@ -2643,7 +2673,7 @@ function render(){
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
     for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
-      ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
+      ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.mkEmp>0?.35:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
       const px=p.x*CELL, py=p.y*CELL, r=p.big?8:p.arrow?1.5:p.mini?1.8:5;

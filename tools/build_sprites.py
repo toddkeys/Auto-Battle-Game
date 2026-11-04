@@ -24,10 +24,11 @@ import newclasses2  # noqa: E402
 import bosses  # noqa: E402
 import hookers  # noqa: E402
 import gunslingers  # noqa: E402
+import monkeys  # noqa: E402
 from pixel import W, H  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets')
-CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **crusaders.CRUSADERS, **occultists.OCCULTISTS, **samurai.SAMURAI, **frostkin.FROSTKIN, **gamblers.GAMBLERS, **newclasses.NEWCLASSES, **newclasses2.NEWCLASSES2, **hookers.HOOKERS, **gunslingers.GUNSLINGERS, **summoners.SUMMONERS,
+CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **crusaders.CRUSADERS, **occultists.OCCULTISTS, **samurai.SAMURAI, **frostkin.FROSTKIN, **gamblers.GAMBLERS, **newclasses.NEWCLASSES, **newclasses2.NEWCLASSES2, **hookers.HOOKERS, **gunslingers.GUNSLINGERS, **monkeys.MONKEYS, **summoners.SUMMONERS,
              **monsters.MONSTERS, **creatures.CREATURES, **bosses.BOSSES)
 
 
