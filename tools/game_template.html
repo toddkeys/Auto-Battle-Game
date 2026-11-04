@@ -353,6 +353,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Occultists</b> curse enemies: armor break (+25% damage taken), mana drain, slows, and Dispel strips shields and buffs.</li>
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
+        <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
         <li><b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop.</li>
@@ -557,8 +558,9 @@ const CLASS_STAR={
   berserker:[['Cleave +20%',{fx:x=>{ x.cleave=(x.cleave||0)+.2; }}],['Cleave +40%; heals for 10% of the damage it deals',{fx:x=>{ x.cleave=(x.cleave||0)+.4; x.leech+=.1; }}]],
 };
 const starPerk=(cls,star)=>star>1&&CLASS_STAR[cls]?CLASS_STAR[cls][star-2][1]:null;
-function applyStars(x){ const p=starPerk(U[x.type].cls,x.star); if(!p) return;
-  if(p.skPow) x.skPow=p.skPow; if(p.skHeal) x.skHeal=p.skHeal; if(p.mana) x.mpMax*=p.mana; if(p.fx) p.fx(x); }
+function applyStars(x){ const ps=typesOf(x).map(t=>starPerk(U[t].cls,x.star)).filter(Boolean); if(!ps.length) return;   // fused: both classes' star perks
+  for(const p of ps){ if(p.skPow) x.skPow=Math.max(x.skPow,p.skPow); if(p.skHeal) x.skHeal=Math.max(x.skHeal,p.skHeal); if(p.fx) p.fx(x); }
+  const mana=Math.min(...ps.map(p=>p.mana||1)); x.mpMax*=mana; }
 // monster rounds (every 5th round); stats grow with the round
 const MONSTERS = [
   {id:'mossling',  name:'Mossling',  cls:'monster',cost:1,hp:520, atk:38, range:1,as:1.1,ms:1.2},
@@ -1410,6 +1412,33 @@ const onBoard=()=>S.units.filter(u=>u.loc.w==='board');
 const roundKind=r=>r%5===0?(r>=15?'boss':'monster'):'pvp';
 const KIND_LABEL={pvp:'⚔ Battle',monster:'👾 Monster round (item drop)',boss:'💀 Boss round (2 item drops)'};
 const MAX_ITEMS=1;   // one item per hero
+// ====== fusion (late game): two 3-star heroes of different classes become one hero with both classes, origins and skills ======
+const FUSE_COST=100, FUSE_ROUND=15;
+const typesOf=u=>u.fuse?[u.type,u.fuse]:[u.type];   // what a hero counts as for class/origin bonuses
+const canTryFuse=(a,b)=>a&&b&&a!==b&&a.star===3&&b.star===3&&!a.fuse&&!b.fuse&&U[a.type].cls!==U[b.type].cls&&U[a.type].cost<5&&U[b.type].cost<5;
+function fuseError(){ if(S.round<FUSE_ROUND) return `Fusion unlocks at round ${FUSE_ROUND}`; if(S.gold<FUSE_COST) return `Fusion costs ${FUSE_COST} gold`; return null; }
+function fuse(a,b){   // a is dragged onto b; the pricier hero (or b on a tie) leads: its picture, range and basic attack
+  const [lead,other]=U[a.type].cost>U[b.type].cost?[a,b]:[b,a], items=[...b.items,...a.items];
+  b.type=lead.type; b.fuse=other.type; b.star=3; b.items=items.slice(0,MAX_ITEMS); S.inv.push(...items.slice(MAX_ITEMS));
+  S.units=S.units.filter(v=>v!==a); S.gold-=FUSE_COST; S.sel=b.uid;
+  S.ufx.push({k:'star',uid:b.uid,t:1.1,m:1.1}); SND.play('star'); msg(`⚭ Fused ${U[b.type].name} + ${U[b.fuse].name}: both classes, both origins, both skills`);
+}
+function askFuse(e,a,b){
+  const err=fuseError(), c=$('#confirm');
+  c.innerHTML=`<div>⚭ Fuse <b>${U[a.type].name} ★★★</b> + <b>${U[b.type].name} ★★★</b>${err?'':` for <b>${FUSE_COST} gold</b>`}?</div>
+    <div style="font-size:13px;margin-top:4px;max-width:300px">${err?`<span style="color:#ff9a80">${err}</span>`:'One hero that counts as both classes and both origins, uses the best stats of the two (+10%) and alternates both skills.'}</div>
+    <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`;
+  c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
+  c.onclick=ev=>{ if(ev.target.closest('[data-yes]')&&!fuseError()&&S.units.includes(a)&&S.units.includes(b)){ fuse(a,b); render(); renderUI(); } if(ev.target.closest('button')) c.hidden=true; };
+}
+// a fused fighter: the better of each stat from both heroes, +10%; skills alternate (see releaseCast)
+function fuseFighter(x,fuseType,mult=1){
+  const a=U[x.type], b=U[fuseType], m=STAR_MULT[2]*mult*1.1;
+  x.fuse=fuseType; x.fAlt=0;
+  x.max=x.hp=x.hpLag=Math.max(a.hp,b.hp)*m; x.atk=Math.max(a.atk,b.atk)*m; x.heal=Math.max(a.heal||0,b.heal||0)*m;
+  x.as=Math.min(a.as,b.as); x.ms=Math.max(a.ms,b.ms); x.splash=Math.max(a.splash||0,b.splash||0);
+  x.mpMax=Math.max(SKILLS[x.type].mp,SKILLS[fuseType].mp);
+}
 // drop item S.inv[i] on a hero: equip it, enchant the same item it already holds, or (scroll) take its item off
 function giveItem(u,i){
   const k=S.inv[i]; if(k===undefined) return;
@@ -1489,7 +1518,7 @@ function merge(){
   }
 }
 // selling gives half back, but a hero bought this same round (a misclick) refunds in full
-const sellValue=u=>u.star===1&&u.bought===S.round?U[u.type].cost:Math.max(1,Math.floor(U[u.type].cost*3**(u.star-1)/2));
+const sellValue=u=>u.star===1&&u.bought===S.round?U[u.type].cost:Math.max(1,Math.floor((U[u.type].cost+(u.fuse?U[u.fuse].cost:0))*3**(u.star-1)/2));
 function sellUnit(u){
   if(!u||S.phase!=='prep') return msg('Select a unit to sell first');
   const val=sellValue(u); S.gold+=val; SND.play('sell'); S.units=S.units.filter(v=>v!==u); S.sel=null; S.inv.push(...u.items);
@@ -1576,7 +1605,9 @@ cv.addEventListener('pointerup',e=>{
   const d=dragU; dragU=null; shopCard.classList.remove('sellzone');
   if(S.phase!=='prep') return;
   if(d.moved&&d.sell){ sellUnit(d.u); return; }
-  if(d.moved){ place(d.u,cellAt(e)); S.sel=null; }
+  if(d.moved){ const l=cellAt(e), tgt=l&&S.units.find(v=>sameLoc(v.loc,l));
+    if(canTryFuse(d.u,tgt)){ askFuse(e,d.u,tgt); render(); renderUI(); return; }
+    place(d.u,l); S.sel=null; }
   else clickCell(d.u.loc);
   render(); renderUI();
 });
@@ -1609,7 +1640,7 @@ function synLevels(types){
 }
 function applySynergy(f){
   for(const team of [0,1]){
-    const fs=f.filter(x=>x.team===team), {lv,olv}=synLevels(fs.map(x=>x.type));
+    const fs=f.filter(x=>x.team===team), {lv,olv}=synLevels(fs.flatMap(typesOf));
     for(const x of fs){ x.red=[0,.2,.4][lv.warrior]; x.asM=[1,1.25,1.5][lv.archer]; x.regen=[0,.01,.02][lv.holy]; x.crit=[0,.2,.4][lv.rogue]; x.dmgM=[1,1.3,1.6][lv.magic];
       x.killAS=[0,.08,.15][olv.wildheart]; x.leech=[0,.15,.3][olv.moonblood];
       x.mp=x.mpMax*[0,.3,.6][olv.starborn]; x.shield=x.max*[0,.15,.3][olv.ironvow];
@@ -1629,7 +1660,7 @@ function applySynergy(f){
     if(team===0) S.alchGold=[0,1,2][lv.alchemist];
     if(team===0) S.goldBonus=[[0,0],[1,0],[2,1]][olv.gilded];   // [on win, on loss]
   }
-  const occ=[0,1].map(team=>synLevels(f.filter(x=>x.team===team).map(x=>x.type)).lv.occultist);   // Occultists weaken the other side
+  const occ=[0,1].map(team=>synLevels(f.filter(x=>x.team===team).flatMap(typesOf)).lv.occultist);   // Occultists weaken the other side
   for(const x of f){ const l=occ[1-x.team]; x.vuln=[0,.1,.2][l]; x.manaCut=l>=2?.25:0; }
 }
 // difficulty: enemy stats grow 6% per round, teams build around a class/origin, and carry items later on
@@ -1683,8 +1714,8 @@ function startFight(){
   S.sel=null; S.selItem=null;
   const kind=roundKind(S.round);
   for(const u of onBoard()){ const b=U[u.type]; S.clsUse[b.cls]=(S.clsUse[b.cls]||0)+1; S.orgUse[b.org]=(S.orgUse[b.org]||0)+1; }   // for the end-of-run summary
-  const f=onBoard().map(u=>Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items}));
-  noteCodex(onBoard().map(u=>u.type));
+  const f=onBoard().map(u=>{ const x=Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items}); if(u.fuse) fuseFighter(x,u.fuse); return x; });
+  noteCodex(onBoard().flatMap(typesOf));
   const hardM=(S.mode==='hard'?1.2:1)*(S.mod==='titan'?1.15:1);
   const foesNow=seeded('enemy'+S.round,()=>kind==='pvp'?genEnemies(S.round):genMonsters(S.round));
   for(const e of foesNow){ const m=(e.mult||1)*hardM; f.push(Object.assign(mkF(e.type,e.star,e.cx,e.cy,1,m),{items:e.items||[],mult:m})); }
@@ -1920,7 +1951,9 @@ function releaseCast(a){
   CASTER=a; SND.play(SKILL_SND[a.type]||'skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
   burst(a.x,a.y-.3,colorOf(a.type),10,3,3,0);
   V({k:'pillar',x:a.x,y:a.y+.35,c:colorOf(a.type),m:.4});   // light pillar on release
-  SKILLS[a.type].cast(a,t); FXS=1; CASTER=null;
+  const skId=a.fuse&&(a.fAlt=(a.fAlt||0)+1)%2===0?a.fuse:a.type;   // fused heroes alternate their two skills
+  if(a.fuse) pop(a,'⚭','#ffe27a');
+  SKILLS[skId].cast(a,t); FXS=1; CASTER=null;
   if(a.bellK){ for(const b of friends(a)) if(dist(a,b)<=2){ b.shield+=b.max*.08*a.bellK; V({k:'dome',x:b.x,y:b.y,c:'#ffe27a',r:.55,m:.5}); } SND.play('shield'); }   // Warding Bell
   if(a.castShield) a.shield+=a.max*a.castShield;   // Warrior 3-star
   if(a.nDodge) a.nDodgeT=2;   // Ninja bonus
@@ -2257,6 +2290,10 @@ function drawUnit(type,star,px,py,o={}){
   ctx.fillStyle=o.team===1?'rgba(255,80,80,.45)':'rgba(90,169,255,.45)';
   ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,20*sh,7*sh,0,0,Math.PI*2); ctx.fill();
   if(o.sel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+  if(o.fuse&&!o.ghost&&o.die===undefined){   // fused: two class colours circling under the hero
+    const c2=colorOf(o.fuse), r=ANIM*2;
+    ctx.lineWidth=2.5; for(const [cc,off] of [[col,0],[c2,Math.PI]]){ ctx.strokeStyle=cc; ctx.globalAlpha=P.alpha*.85;
+      ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,24*sh,9*sh,0,r+off,r+off+Math.PI*.9); ctx.stroke(); } ctx.globalAlpha=P.alpha; }
   if(o.pmark){ ctx.strokeStyle=`rgba(127,224,224,${.55+.3*Math.sin(ANIM*6)})`; ctx.lineWidth=1.5; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,15,5,0,ANIM*3,ANIM*3+Math.PI*1.5); ctx.stroke(); }   // Paradox Mark: a ticking ring
   if(star===3&&!o.ghost&&o.die===undefined&&!(o.spawn>1)){   // 3 stars: a very faint golden aura and a few rising motes
     const k=.07+.03*Math.sin(ANIM*2.4+(o.ph||0)), g=ctx.createRadialGradient(px,py+2,4,px,py+2,30*sc);
@@ -2296,6 +2333,7 @@ function drawUnit(type,star,px,py,o={}){
   drawStatus(o,px,py);
   ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
   ctx.fillText('★'.repeat(star),px,py-24);
+  if(o.fuse){ ctx.font='bold 12px system-ui'; ctx.fillStyle=colorOf(o.fuse); ctx.textAlign='right'; ctx.fillText('⚭',px-star*5-2,py-23); ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; }
   if(o.org&&ORIGINS[b.org]){ ctx.font='11px system-ui'; ctx.textAlign='left'; ctx.fillText(ORIGINS[b.org].icon,px+star*5+2,py-23); ctx.textAlign='center'; }   // origin badge
   if(o.hp!==undefined){
     ctx.fillStyle='#000'; ctx.fillRect(px-22,py-36,44,8);
@@ -2449,7 +2487,7 @@ function render(){
     if(S.phase!=='prep'&&S.phase!=='over'&&u.loc.w==='board') continue;
     const px=u.loc.w==='board'?u.loc.cx*CELL+32:u.loc.i*CELL+32, py=u.loc.w==='board'?u.loc.cy*CELL+32:BENCH_Y+32;
     if(dragging&&dragging.u===u){ drawUnit(u.type,u.star,px,py,{team:0,ph:u.uid*1.7,ghost:1}); continue; }
-    drawUnit(u.type,u.star,px,py,{team:0,sel:u.uid===S.sel,ph:u.uid*1.7,items:u.items,org:1});
+    drawUnit(u.type,u.star,px,py,{team:0,sel:u.uid===S.sel,ph:u.uid*1.7,items:u.items,org:1,fuse:u.fuse});
   }
   if(itemDrag&&itemDrag.moved&&itemDrag.over){   // where a dragged item will land
     const l=itemDrag.over, u=S.units.find(v=>sameLoc(v.loc,l)), x=l.w==='board'?l.cx*CELL:l.i*CELL, y=l.w==='board'?l.cy*CELL:BENCH_Y;
@@ -2492,7 +2530,7 @@ function render(){
     ctx.restore();
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
-    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
+    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
       ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
@@ -2559,7 +2597,7 @@ function thumbHTML(id,size){
   return `<div class="dot" style="background:${colorOf(id)};width:${size}px;height:${size}px"></div>`;
 }
 // live = a fighter in the current battle: shows its real HP, attack, mana and statuses
-function infoHTML(id,star,items,live){
+function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
   const u=U[id], m=STAR_MULT[star-1], sk=SKILLS[id], c=CLASSES[u.cls]||{name:u.boss?'Boss':u.cls==='summon'?'Summon':'Monster',color:colorOf(id)}, o=ORIGINS[u.org];
   const side=live?(live.team===0?'<span style="color:#7fd0ff">Ally</span>':'<span style="color:#ff8a80">Enemy</span>')+' · ':'';
   const st=live?['ward','frz','stun','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
@@ -2570,6 +2608,8 @@ function infoHTML(id,star,items,live){
     ${st.length?`<div class="chips">${st.map(x=>`<span>${x}</span>`).join('')}</div>`:''}
     <div class="sk">${sk.mp<1e9?`<b>${sk.names?sk.names.join(' / '):sk.name}</b> <span class="mp">${Math.round(sk.mp*((starPerk(u.cls,star)||{}).mana||1))} mana</span><br>${sk.desc}`:'No skill — fights until the battle ends.'}</div>`+
     (u.cost>=1&&u.cost<5&&CLASS_STAR[u.cls]?`<div class="stl">${['Base',...CLASS_STAR[u.cls].map(p=>p[0])].map((t,i)=>`<div class="${i<star?'on':''}">${i===star?'<b>Next:</b> ':''}${'★'.repeat(i+1)} ${t}</div>`).join('')}</div>`:'')+
+    (fuse?`<div class="sk">⚭ <b>Fused with ${U[fuse].name}</b> · <span style="color:${colorOf(fuse)}">${CLASSES[U[fuse].cls].name}</span> · ${ORIGINS[U[fuse].org].icon} ${ORIGINS[U[fuse].org].name}<br>
+      <b>${SKILLS[fuse].name}</b> <span class="mp">${SKILLS[fuse].mp} mana</span><br>${SKILLS[fuse].desc}<br><i>Counts as both classes and origins; the two skills alternate.</i></div>`:'')+
     (items&&items.length?`<div class="held">Holding: ${items.map(k=>`<span class="hi" data-item="${k}">${IT(k).icon} ${INAME(k)}</span>`).join(' ')}</div>`:'');
 }
 const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare?' <span class="rare">RARE</span>':''}<div>${IDESC(k)}</div>${subOf(k)?`<div class="sub">Sub-stat: ${subOf(k).s.d(subOf(k).t)}</div>`:''}${IT(k).use?'':ILV(k)<MAX_ILV?`<div class="next">Next +${ILV(k)}: ${IT(k).desc(IK_TAB[ILV(k)])}${subOf(k,ILV(k)+1)?` · sub-stat ${subOf(k,ILV(k)+1).s.d(subOf(k,ILV(k)+1).t)}`:ILV(k)+1<4&&ITEM_SUB[k.split(':')[0]]?` · sub-stat unlocks at +3`:''}</div><div class="ench">Combine with another ${IT(k).name} to enchant it</div>`:'<div class="ench">Fully enchanted</div>'}<div class="ench">Sells for ${itemValue(k)} gold (drag to the shop or right-click)</div></div>`;
@@ -2602,7 +2642,7 @@ function renderMeter(){
 function renderInfo(){
   const sel=S.units.find(v=>v.uid===S.sel), ins=S.inspect&&S.fight&&S.fight.f.includes(S.inspect)?S.inspect:null;
   if(ins&&!hoverId){ $('#info').innerHTML=infoHTML(ins.type,ins.star,ins.items,ins); if(bubbleFor&&!document.body.contains(bubbleFor)) hideBubble(); return; }
-  $('#info').innerHTML = hoverId? infoHTML(hoverId,1) : sel? infoHTML(sel.type,sel.star,sel.items) : 'Hover a hero in the shop, or click one of yours, to see its stats and skill.';
+  $('#info').innerHTML = hoverId? infoHTML(hoverId,1) : sel? infoHTML(sel.type,sel.star,sel.items,null,sel.fuse) : 'Hover a hero in the shop, or click one of yours, to see its stats and skill.';
 }
 function renderUI(){
   SND.music(S.phase==='fight'||S.phase==='result'?'battle':'prep');
@@ -2625,7 +2665,7 @@ function renderUI(){
   $('#odds').innerHTML='Odds '+odds(shopRound()).map((p,i)=>p?`<span class="c${i+1}">${i+1}💰 ${Math.round(p*100)}%</span>`:'').join(' ')
     +(shopMaxed()?` <span data-tip="Fully upgraded shop: each slot has a ${OWNED_BONUS*100}% extra chance to show a hero you already own (not yet ★★★)">· ⭐ owned +${OWNED_BONUS*100}%</span>`:'');
   $('#bCap').disabled=!prep||capMax||S.gold<capCost();
-  const {cnt,lv,ocnt,olv}=synLevels(onBoard().map(u=>u.type));
+  const {cnt,lv,ocnt,olv}=synLevels(onBoard().flatMap(typesOf));
   const pips=n=>[1,2,3].map(i=>`<i class="${i<=(n||0)?'on':''}"></i>`).join('');
   const row=(c,n,l,mark)=>`<div class="sy ${l?'on':''}" style="--sc:${c.color}"><span class="ic">${mark}</span><span class="nm">${c.name}</span><span class="pips">${pips(n)}</span><span class="ds">${l?c.desc[l-1]:'2: '+c.desc[0]}</span></div>`;
   $('#bless').innerHTML=S.buffs.length?Object.entries(S.buffs.reduce((m,k)=>(m[k]=(m[k]||0)+1,m),{})).map(([k,n])=>`<span class="bl" data-tip="${BLESSINGS[k].desc}${n>1?`<br><b>×${n} stacked:</b> ${BLESSINGS[k].total(n)}`:''}">${BLESSINGS[k].icon} ${BLESSINGS[k].name}${n>1?' ×'+n:''}</span>`).join('')
