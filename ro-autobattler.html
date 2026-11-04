@@ -2496,7 +2496,6 @@ function drawUnit(type,star,px,py,o={}){
     const im=sp.img, s=Math.min(54/im.naturalHeight,60/im.naturalWidth,3)*sc, w=im.naturalWidth*s, h=im.naturalHeight*s;
     const flip=o.face!==undefined&&((o.face<0)!==!!sp.faceLeft);
     ctx.translate(px+P.dx,py+26+P.dy-P.lift); ctx.rotate(P.rot); ctx.scale(flip?-P.sx:P.sx,P.sy);
-    if(o.fuse) ctx.scale(1.08,1.08);   // fused heroes stand a little taller
     const fuseTint=o.fuse?[[colorOf(o.fuse),.1+.08*Math.sin(ANIM*2.2+(o.ph||0))]]:[];   // a soft shimmer in the partner's class colour
     if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
@@ -2524,8 +2523,8 @@ function drawUnit(type,star,px,py,o={}){
   drawStatus(o,px,py);
   ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
   const sw=o.fuse?6:star*5;   // half-width of the star label
-  if(o.fuse){ ctx.font='bold 15px system-ui'; ctx.lineWidth=3; ctx.strokeStyle='#3a0808'; ctx.strokeText('★',px,py-23); ctx.fillStyle='#ff3a3a'; ctx.fillText('★',px,py-23);   // fused: one red star
-    ctx.font='bold 12px system-ui'; ctx.fillStyle=colorOf(o.fuse); ctx.textAlign='right'; ctx.fillText('⚭',px-sw-2,py-23); ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; }
+  if(o.fuse){ ctx.font='bold 11px system-ui'; ctx.lineWidth=2.5; ctx.strokeStyle='#3a0808'; ctx.strokeText('★',px,py-28); ctx.fillStyle='#ff3a3a'; ctx.fillText('★',px,py-28);   // fused: one small red star, clear of the head
+    ctx.font='bold 12px system-ui'; ctx.fillStyle=colorOf(o.fuse); ctx.textAlign='right'; ctx.fillText('⚭',px-sw-2,py-28); ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; }
   else ctx.fillText('★'.repeat(star),px,py-24);
   if(o.org&&ORIGINS[b.org]){ ctx.font='11px system-ui'; ctx.textAlign='left'; ctx.fillText(ORIGINS[b.org].icon,px+sw+2,py-23); ctx.textAlign='center'; }   // origin badge
   if(o.hp!==undefined){
