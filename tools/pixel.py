@@ -5,7 +5,9 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 K = 6            # supersampling factor
-W, H = 56, 54    # sprite size in pixels (game draws 54px tall at scale 1)
+W, H = 56, 54    # sprite size in design units: every shape is placed on this 56x54 grid
+R = 2            # output pixels per design unit: 2 = HD sprites (112x108) with finer lines; 1 = the original 56x54
+PW, PH = W * R, H * R   # output size in pixels
 LIGHT = np.array([-0.62, -0.78])  # light comes from the upper left
 
 
@@ -82,7 +84,7 @@ class Spr:
     @staticmethod
     def _draw(d, sh, val):
         kind, *a = sh
-        S = lambda v: v * K
+        S = lambda v: v * K * R
         if kind == 'ell':
             cx, cy, rx, ry = a
             d.ellipse([S(cx - rx), S(cy - ry), S(cx + rx), S(cy + ry)], fill=val)
@@ -111,7 +113,7 @@ class Spr:
 
     def part(self, rp, shapes, sub=(), soft=1.6, cast=0, line=True, flat=False,
              thr=0.5, bias=0.0, gloss=0.0, clip=None, shine=None):
-        im = Image.new('L', (W * K, H * K), 0)
+        im = Image.new('L', (PW * K, PH * K), 0)
         d = ImageDraw.Draw(im)
         for sh in shapes:
             self._draw(d, sh, 255)
@@ -139,12 +141,13 @@ class Spr:
         for p in self.parts:
             if p['g']:
                 continue
-            m = p['m'].reshape(H, K, W, K).mean(axis=(1, 3)) >= p['thr']
+            m = p['m'].reshape(PH, K, PW, K).mean(axis=(1, 3)) >= p['thr']
             ys, xs = np.nonzero(m)
             if not len(xs):
                 p['g'] = 'body'
                 continue
-            near = lambda pt, r=1: m[max(0, int(pt[1]) - r):int(pt[1]) + r + 1, max(0, int(pt[0]) - r):int(pt[0]) + r + 1].any()
+            ys, xs = ys / R, xs / R
+            near = lambda pt, r=1: m[max(0, int(pt[1] * R) - r * R):int(pt[1] * R) + r * R + R, max(0, int(pt[0] * R) - r * R):int(pt[0] * R) + r * R + R].any()
             g = next((a for a, hd in self.hands.items() if near(hd)), None)
             if g == 'armR':
                 g = 'weapon'   # whatever the right hand holds turns at the wrist (see rig drawing in the game)
@@ -177,82 +180,83 @@ class Spr:
 
     def _render(self, parts, marks, fxs):
         n = len(parts)
-        owner = -np.ones((H, W), int)
-        level = np.zeros((H, W), int)
+        owner = -np.ones((PH, PW), int)
+        level = np.zeros((PH, PW), int)
         cov_all = []
         for i, p in enumerate(parts):
             m = p['m']
-            cov = m.reshape(H, K, W, K).mean(axis=(1, 3))
+            cov = m.reshape(PH, K, PW, K).mean(axis=(1, 3))
             inside = cov >= p['thr']
             cov_all.append(inside)
             if p['flat']:
-                v = np.full((H, W), 0.6 + p['bias'])
+                v = np.full((PH, PW), 0.6 + p['bias'])
             else:
-                r = max(1, int(p['soft'] * K))
+                r = max(1, int(p['soft'] * K * R))
                 b = blur(m, r)
                 gy, gx = np.gradient(b)
                 g = (-gx * LIGHT[0] - gy * LIGHT[1]) * r * 2.2
-                ys = np.arange(H * K)[:, None] / (H * K)
+                ys = np.arange(PH * K)[:, None] / (PH * K)
                 v = 0.56 + g * 0.55 - (ys - 0.5) * 0.12 + p['bias']
                 if p['gloss']:
                     v = v + p['gloss'] * np.clip(g, 0, None) ** 2 * 2
-                w = m.reshape(H, K, W, K).sum(axis=(1, 3)) + 1e-6
-                v = (v * m).reshape(H, K, W, K).sum(axis=(1, 3)) / w
+                w = m.reshape(PH, K, PW, K).sum(axis=(1, 3)) + 1e-6
+                v = (v * m).reshape(PH, K, PW, K).sum(axis=(1, 3)) / w
             lv = np.digitize(v, [0.46, 0.80]) + 2  # anime cel: shadow / base / highlight
             if p['shine'] is not None:  # glossy streak across hair
                 sy = p['shine']
-                for x in range(W):
-                    yy = int(round(sy + abs(x - 27) * 0.12))
-                    if (x + 1) % 5 and 0 <= yy < H and inside[yy, x]:
-                        lv[yy, x] = 5
+                for x in range(PW):
+                    yy = int(round((sy + abs(x // R - 27) * 0.12) * R))
+                    for yr in range(yy, yy + R):
+                        if (x // R + 1) % 5 and 0 <= yr < PH and inside[yr, x]:
+                            lv[yr, x] = 5
             owner[inside] = i
             level[inside] = lv[inside]
         # cast shadows from parts in front onto parts behind
-        for y in range(H):
-            for x in range(W):
+        for y in range(PH):
+            for x in range(PW):
                 o = owner[y, x]
                 if o < 0:
                     continue
-                for dy in (1, 2):
+                for dy in range(1, 2 * R + 1):
                     if y - dy < 0:
                         break
                     up = owner[y - dy, x]
-                    if up > o and parts[up]['cast'] >= dy:
+                    if up > o and parts[up]['cast'] * R >= dy:
                         level[y, x] = max(1, level[y, x] - 1)
                         break
-        img = np.zeros((H, W, 4), np.uint8)
-        for y in range(H):
-            for x in range(W):
+        img = np.zeros((PH, PW, 4), np.uint8)
+        for y in range(PH):
+            for x in range(PW):
                 o = owner[y, x]
                 if o >= 0:
                     img[y, x, :3] = parts[o]['rp'][level[y, x]]
                     img[y, x, 3] = 255
         # internal lines: back part pixels touching a front part
-        for y in range(H):
-            for x in range(W):
+        for y in range(PH):
+            for x in range(PW):
                 o = owner[y, x]
                 if o < 0 or not parts[o]['line']:
                     continue
                 for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                     xx, yy = x + dx, y + dy
-                    if 0 <= xx < W and 0 <= yy < H:
+                    if 0 <= xx < PW and 0 <= yy < PH:
                         q = owner[yy, xx]
                         if q > o and parts[q]['rp'] is not parts[o]['rp'] and parts[q]['line']:
                             img[y, x, :3] = parts[o]['rp'][1] if dy == 1 else parts[o]['rp'][0]
                             break
-        for x, y, rgb in marks:
-            img[y, x, :3] = rgb
-            img[y, x, 3] = 255
+        for x, y, rgb in marks:   # marks are design units: an R x R block each
+            img[y * R:(y + 1) * R, x * R:(x + 1) * R, :3] = rgb
+            img[y * R:(y + 1) * R, x * R:(x + 1) * R, 3] = 255
         # outer outline (selective: darker on bottom/right)
         out = img.copy()
-        for y in range(H):
-            for x in range(W):
+        for y in range(PH):
+            for x in range(PW):
                 if img[y, x, 3]:
                     continue
                 best = None
                 for dx, dy in ((0, 1), (1, 0), (-1, 0), (0, -1)):
                     xx, yy = x + dx, y + dy
-                    if 0 <= xx < W and 0 <= yy < H and owner[yy, xx] >= 0:
+                    if 0 <= xx < PW and 0 <= yy < PH and owner[yy, xx] >= 0:
                         best = owner[yy, xx]
                         break
                 if best is not None:
@@ -260,6 +264,7 @@ class Spr:
                     out[y, x, 3] = 255
         for x, y, rgba in fxs:
             if 0 <= x < W and 0 <= y < H:
-                if out[y, x, 3] == 0 or rgba[3] == 255:
-                    out[y, x] = rgba
+                blk = out[y * R:(y + 1) * R, x * R:(x + 1) * R]
+                if blk[..., 3].max() == 0 or rgba[3] == 255:
+                    blk[:] = rgba
         return Image.fromarray(out, 'RGBA')

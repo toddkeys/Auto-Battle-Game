@@ -14,6 +14,8 @@ for cid in re.findall(r"\{id:'(\w+)'", tpl):
     with open(os.path.join(ROOT, 'assets', 'units', cid + '.png'), 'rb') as f:
         # every generated sprite looks down-left
         data[cid] = {'src': 'data:image/png;base64,' + base64.b64encode(f.read()).decode(), 'faceLeft': True}
+    if os.path.exists(os.path.join(ROOT, 'assets', 'art', cid + '.png')):
+        data[cid]['art'] = True   # hand-made picture: drawn smoothly, not as crisp pixels
     back = os.path.join(ROOT, 'assets', 'art', cid + '_back.png')
     if os.path.exists(back):   # a hand-made back view, shown while the hero faces away
         with open(back, 'rb') as f:

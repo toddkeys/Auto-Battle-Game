@@ -1,1 +1,1 @@
-{"layers": ["cape", "legR", "legL", "body", "head"], "piv": {"head": [16, 34], "body": [28, 44], "cape": [44, 38], "legL": [18, 41], "legR": [38, 41]}}
+{"layers": ["cape", "legR", "legL", "body", "head"], "piv": {"head": [16, 34], "body": [28, 44], "cape": [44, 38], "legL": [18, 41], "legR": [38, 41]}, "k": 2}

@@ -1085,7 +1085,8 @@ function setSprite(id,src,faceLeft,rig){
 }
 /*DEFAULT_SPRITES*/
 for(const [id,v] of Object.entries(DEFAULT_SPRITES)) setSprite(id,v.src,v.faceLeft,v.rig);
-for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.back&&SPR[id]){ const b=new Image(); b.src=v.back; SPR[id].back=b; }   // back view, shown while facing away (target above)
+for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.back&&SPR[id]){ const b=new Image(); b.src=v.back; SPR[id].back=b; }
+for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.art&&SPR[id]){ SPR[id].art=true; if(SPR[id].rig) SPR[id].rig.art=true; }   // hand-made pictures scale smoothly   // back view, shown while facing away (target above)
 for(const [id,v] of Object.entries(readStore())) setSprite(id,v.src,v.faceLeft);
 
 // ====== background: a sunny hand-painted-style pixel meadow (original art) ======
@@ -1112,7 +1113,7 @@ function makeBG(){
   // --- grass with sunlight from the top-left, dithered between tones
   for(let y=0;y<bh;y++) for(let x=0;x<w;x++){
     const v=n1(x,y)*.55+n2(x,y)*.3+n4(x,y)*.15, sun=1-Math.hypot(x/w,y/bh*.8)*.45;
-    const t=Math.max(0,Math.min(7,(v*.85+sun*.55-.22)*8+BAYER[(y%4)*4+x%4]*.9));
+    const t=Math.max(1.5,Math.min(5.99,1.5+(v*.85+sun*.55-.22)*5.2+BAYER[(y%4)*4+x%4]*.55));
     put(x,y,GRASS[Math.floor(t)]);
   }
   // --- a shallow river between the two sides: sandy banks, clear water darker in the middle, stepping stones
@@ -1131,8 +1132,8 @@ function makeBG(){
       put(x+xx,rc+yy+1,[40,90,120],.4); put(x+xx,rc+yy,STONE[yy<0?4:yy>0?1:2+((xx+yy)&1)]); } }
   const onGrass=(x,y)=>y>=0&&y<bh-3&&Math.abs(y-road(x))>10;
   // --- grass detail: blade tufts, clover, flower clusters, pebbles
-  for(let i=0;i<1800;i++){ const x=rnd()*w|0, y=rnd()*bh|0; if(!onGrass(x,y)) continue;
-    const dark=GRASS[Math.max(0,Math.floor(n1(x,y)*4))], lite=GRASS[Math.min(7,4+Math.floor(n1(x,y)*4))];
+  for(let i=0;i<800;i++){ const x=rnd()*w|0, y=rnd()*bh|0; if(!onGrass(x,y)) continue;
+    const dark=GRASS[2+Math.floor(n1(x,y)*2)], lite=GRASS[Math.min(6,4+Math.floor(n1(x,y)*3))];
     put(x,y,dark); put(x,y-1,dark); if(rnd()<.5){ put(x-1,y-1,lite); put(x+1,y-2,lite,.7); } }
   for(let i=0;i<40;i++){ const cx=rnd()*w|0, cy=rnd()*bh|0; if(!onGrass(cx,cy)) continue;   // clover
     for(const [dx,dy] of [[0,0],[1,0],[0,1],[1,1],[-1,1],[2,0]]) put(cx+dx,cy+dy,GRASS[2+(rnd()*2|0)]); }
@@ -2486,7 +2487,7 @@ function exprOf(o){
   if(o.psn) return 'sick'; if(o.cheer) return 'happy'; if(o.hp!==undefined&&o.hp<.25) return 'hurt'; return null;
 }
 function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose weapon and cape replace the lead's
-  const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=rig.k>1;   // k>1: a hand-made picture cut into pieces at k x detail
+  const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=!!rig.art;   // layers are k x detail: crisp for pixel sprites, smooth for hand-made pictures
   let order=rig.layers.map((g,i)=>i);
   if(R.front&&rig.piv.weapon){   // weapon held in front of the body: blade, then the hand gripping it, go just under the head
     const mv=order.filter(i=>rig.layers[i]==='weapon'||rig.layers[i]==='armR').sort((x,y)=>(rig.layers[x]==='armR')-(rig.layers[y]==='armR'));
@@ -2523,9 +2524,12 @@ function drawUnit(type,star,px,py,o={}){
   const b=U[type], sp=SPR[type], col=colorOf(type), rig=!back&&sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.scale||1, oy=-54*(sc-1);
   ctx.save(); ctx.globalAlpha=P.alpha;
   const sh=Math.max(.3,1-P.lift/30)*sc;
-  ctx.fillStyle=o.team===1?'rgba(255,80,80,.45)':'rgba(90,169,255,.45)';
-  ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,20*sh,7*sh,0,0,Math.PI*2); ctx.fill();
-  if(o.sel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+  ctx.save(); ctx.translate(px+P.dx,py+22); ctx.scale(1,.36);   // soft ground shadow
+  const gsh=ctx.createRadialGradient(0,0,0,0,0,22*sh); gsh.addColorStop(0,'rgba(12,18,10,.5)'); gsh.addColorStop(.65,'rgba(12,18,10,.28)'); gsh.addColorStop(1,'rgba(12,18,10,0)');
+  ctx.fillStyle=gsh; ctx.beginPath(); ctx.arc(0,0,22*sh,0,Math.PI*2); ctx.fill(); ctx.restore();
+  ctx.strokeStyle=o.team===1?'rgba(255,96,86,.8)':'rgba(110,184,255,.8)'; ctx.lineWidth=1.5;   // thin team ring at the feet
+  ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,17*sh,6*sh,0,0,Math.PI*2); ctx.stroke();
+  if(o.sel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,20*sh,7*sh,0,0,Math.PI*2); ctx.stroke(); }
   if(o.fuse&&!o.ghost&&o.die===undefined){   // fused: a soft glow of both class colours behind the hero
     const k=.22+.08*Math.sin(ANIM*2.6+(o.ph||0)), cy=py+2;
     for(const [cc,dx] of [[col,-4],[colorOf(o.fuse),4]]){ const g=ctx.createRadialGradient(px+P.dx+dx,cy,3,px+P.dx+dx,cy,30);
@@ -2551,7 +2555,9 @@ function drawUnit(type,star,px,py,o={}){
     const fuseTint=o.fuse?[[colorOf(o.fuse),.1+.08*Math.sin(ANIM*2.2+(o.ph||0))]]:[];   // a soft shimmer in the partner's class colour
     if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
-    ctx.imageSmoothingEnabled=!rig&&im.naturalHeight>100; draw();   // big hand-made pictures scale smoothly; pixel sprites stay crisp
+    const art=!!sp.art||(!rig&&im.naturalHeight>130);   // hand-made pictures (and big custom images) scale smoothly; pixel sprites stay crisp
+    ctx.imageSmoothingEnabled=art;
+    ctx.filter=(art?'saturate(1.2) contrast(1.06) ':'')+'drop-shadow(0 0 1px rgba(28,16,10,.9))'; draw(); ctx.filter='none';   // a thin dark outline so every hero reads against the grass
     if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
     if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.45,o.cast>0?.12+.08*Math.sin(ANIM*30):0); draw(); }   // soft, so the face still reads
   } else {
@@ -2847,10 +2853,10 @@ function renderBossHelp(){
 $('#howto').addEventListener('toggle',()=>{ if($('#howto').open) renderBossHelp(); });
 function thumbSrc(id){ const sp=SPR[id], rig=sp&&sp.rig; if(!sp) return null; if(sp.thumb) return sp.thumb;
   const st=U[id]&&animOf(id,U[id]); if(!rig||!rig.img.naturalWidth||!['slash','spear','gun'].includes(st)) return sp.img.src;
-  buildRig(rig,rigPose({ph:-ANIM},id,U[id]),[],null); const c=document.createElement('canvas'); c.width=56; c.height=54; const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
-  g.drawImage(RIG,56*RES,54*RES,56*RES,54*RES,0,0,56,54); return sp.thumb=c.toDataURL(); }
+  buildRig(rig,rigPose({ph:-ANIM},id,U[id]),[],null); const c=document.createElement('canvas'); c.width=112; c.height=108; const g=c.getContext('2d'); g.imageSmoothingEnabled=true;   // 2x, to keep HD detail
+  g.drawImage(RIG,56*RES,54*RES,56*RES,54*RES,0,0,112,108); return sp.thumb=c.toDataURL(); }
 function thumbHTML(id,size){
-  const sp=SPR[id]; if(sp) return `<img src="${thumbSrc(id)}" alt=""${sp.img.naturalHeight>100?' style="image-rendering:auto"':''}>`;
+  const sp=SPR[id]; if(sp) return `<img src="${thumbSrc(id)}" alt=""${sp.img.naturalHeight>60?' style="image-rendering:auto"':''}>`;
   return `<div class="dot" style="background:${colorOf(id)};width:${size}px;height:${size}px"></div>`;
 }
 // live = a fighter in the current battle: shows its real HP, attack, mana and statuses

@@ -27,7 +27,7 @@ import hookers  # noqa: E402
 import gunslingers  # noqa: E402
 import monkeys  # noqa: E402
 import mimics  # noqa: E402
-from pixel import W, H  # noqa: E402
+from pixel import W, H, PW, PH, R  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets')
 CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **crusaders.CRUSADERS, **occultists.OCCULTISTS, **samurai.SAMURAI, **frostkin.FROSTKIN, **gamblers.GAMBLERS, **newclasses.NEWCLASSES, **newclasses2.NEWCLASSES2, **hookers.HOOKERS, **gunslingers.GUNSLINGERS, **monkeys.MONKEYS, **mimics.MIMICS, **summoners.SUMMONERS,
@@ -35,7 +35,7 @@ CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **crusad
 
 
 def preview(sprites, scale=4, cols=6):
-    cw, ch = W * scale + 16, H * scale + 30
+    cw, ch = W * scale + 16, H * scale + 30   # preview cells stay on the design grid
     rows = (len(sprites) + cols - 1) // cols
     sheet = Image.new('RGBA', (cw * cols, ch * rows), (52, 68, 44, 255))
     d = ImageDraw.Draw(sheet)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         s = fn()
         layers = s.layers()
         frames = [im for _, im in layers]
-        meta = {'layers': [g for g, _ in layers], 'piv': {'head': (28, 27), 'body': (28, 44), 'cape': (28, 28), **s.piv}}
+        meta = {'layers': [g for g, _ in layers], 'piv': {'head': (28, 27), 'body': (28, 44), 'cape': (28, 28), **s.piv}, 'k': R}   # layers are R x the design grid
         if 'weapon' in meta['layers']:
             meta['piv']['weapon'] = s.hands['armR']   # the wrist
         if s.face_layer is not None:   # heroes: one extra copy of the face layer per expression, appended after the pieces
@@ -78,9 +78,9 @@ if __name__ == '__main__':
                 meta['expr'][e] = len(frames)
                 frames.append(fn().layers()[s.face_layer][1])
             kit.EXPR = None
-        strip = Image.new('RGBA', (W * len(frames), H), (0, 0, 0, 0))
+        strip = Image.new('RGBA', (PW * len(frames), PH), (0, 0, 0, 0))
         for i, im in enumerate(frames):
-            strip.paste(im, (i * W, 0))
+            strip.paste(im, (i * PW, 0))
         strip.save(os.path.join(OUT, 'rig', cid + '.png'), optimize=True)
         with open(os.path.join(OUT, 'rig', cid + '.json'), 'w') as f:
             json.dump(meta, f)
