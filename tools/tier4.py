@@ -13,40 +13,42 @@ def star(s, rp, cx, cy, r, ri=None):
 
 
 def starwarden():
-    # crimson-and-gold paladin of the stars: flowing silver hair, long cape, a pale greatsword held out at the side
+    # obsidian star knight: black-and-silver plate etched with glowing star runes, a full visored helm
+    # with a plume of starlight, a midnight cape scattered with stars, a huge glowing greatsword
     s = Spr()
-    plate, dark, gold = ramp('#b02a34', 1.2, 1.1), ramp('#6a1622', 1.2), P['gold']
-    hair, blade = ramp('#e4e8f4', .9), ramp('#e6f0ff', 1.3)
-    back_hair(s, hair, 38, 12)
-    cape(s, dark, 1.5, 53)
+    plate, dark, silver = ramp('#2a2e3e', 1.3), ramp('#14161e', 1.2), ramp('#c8d0e0', 1.3)
+    rune, blade, cape_c = ramp('#7fd4ff', 1.3, 1.3), ramp('#e6f0ff', 1.3), ramp('#1e2a5a', 1.2)
+    cape(s, cape_c, 1.6, 53)
     with s.grp('cape'):
-        s.part(gold, [('poly', [(12, 51.5), (44, 51.5), (44.5, 52.8), (28, 54), (11.5, 52.8)])], soft=.4, gloss=1)
-    legs(s, plate, ramp('#4a141c', 1.2))
+        for x, y in ((14, 46), (20, 42), (37, 44), (43, 48), (28, 50)):
+            star(s, ramp('#fff3a0', 1.1), x, y, 1.4)
+    legs(s, plate, ramp('#0e1016', 1.2))
     torso(s, plate, hem=45)
     with s.grp('body'):
-        s.part(gold, [('poly', [(21, 29), (35, 29), (34, 33), (28, 35.5), (22, 33)])], soft=1, gloss=1)   # gorget
-        s.part(dark, [('poly', [(22, 40), (34, 40), (35.5, 47), (28, 48), (20.5, 47)])], soft=1)   # skirt plates
-        s.part(gold, [('poly', [(22, 46), (34, 46), (35.5, 47), (28, 48.5), (20.5, 47)])], soft=.4, gloss=1, line=False)
-        star(s, ramp('#fff3a0', 1.1), 28, 37, 3.2)
-    belt(s, gold, 40, ramp('#7fd4ff', 1.2))
-    sword(s, blade, gold, x0=42.5, y0=44, x1=48, y1=5, w=2.3, guard=5.6)
+        s.part(silver, [('poly', [(21, 29), (35, 29), (34, 33), (28, 35.5), (22, 33)])], soft=1, gloss=1.2)   # silver gorget
+        s.part(dark, [('poly', [(22, 40), (34, 40), (35.5, 47), (28, 48), (20.5, 47)])], soft=1)
+        s.part(silver, [('poly', [(22, 46), (34, 46), (35.5, 47), (28, 48.5), (20.5, 47)])], soft=.4, gloss=1, line=False)
+        star(s, rune, 28, 37.5, 3.6)
+        s.part(rune, [('cap', 22.5, 41.5, 33.5, 41.5, .35)], soft=.2, line=False, flat=True, bias=.3)
+    belt(s, silver, 40, rune)
+    sword(s, blade, silver, x0=42.5, y0=44, x1=49, y1=3, w=2.8, guard=6)
     with s.grp('weapon'):
-        s.part(ramp('#9fdcff', 1.2), [('cap', 42.8, 39, 47.4, 9, .5)], soft=.3, line=False, flat=True, bias=.25)   # fuller glow
-    arm(s, plate, plate, (35, 30), (39, 36), (42.5, 42), r=2.9, glove=gold)
-    s.part(gold, [('chord', 36, 31.5, 6, 5.2, 180, 360)], soft=1.2, gloss=1, cast=1)
-    s.part(plate, [('chord', 36, 33, 5, 3.4, 180, 360)], soft=1, gloss=.8, line=False)
-    arm(s, plate, plate, (21, 30), (18.5, 35), (18, 40), r=2.9, glove=gold)
-    s.part(gold, [('chord', 20, 31.5, 6, 5.2, 180, 360)], soft=1.2, gloss=1, cast=1)
-    s.part(plate, [('chord', 20, 33, 5, 3.4, 180, 360)], soft=1, gloss=.8, line=False)
+        s.part(rune, [('cap', 42.8, 39, 48.2, 7, .6)], soft=.3, line=False, flat=True, bias=.3)   # glowing fuller
+    arm(s, plate, plate, (35, 30), (39, 36), (42.5, 42), r=3, glove=silver)
+    s.part(silver, [('chord', 36, 31.5, 6.5, 5.6, 180, 360)], soft=1.2, gloss=1.2, cast=1)
+    s.part(rune, [('ell', 36, 29, 1.2, 1.2)], soft=.3, line=False, flat=True, bias=.3)
+    arm(s, plate, plate, (21, 30), (18.5, 35), (18, 40), r=3, glove=silver)
+    s.part(silver, [('chord', 20, 31.5, 6.5, 5.6, 180, 360)], soft=1.2, gloss=1.2, cast=1)
+    s.part(rune, [('ell', 20, 29, 1.2, 1.2)], soft=.3, line=False, flat=True, bias=.3)
     head(s)
-    bangs(s, hair, 'spiky', shine=10)
-    s.part(gold, [('rect', 17, 11.5, 39.5, 13)], soft=.4, gloss=1, cast=1)   # circlet
-    star(s, ramp('#7fd4ff', 1.2), 28, 11.5, 2.6)
-    face(s, '#3a7ae0')
-    for x, y in ((51, 10), (53, 24), (6, 26), (8, 44)):
-        sparkle(s, x, y, (255, 230, 170))
+    s.part(plate, [('ell', 28, 17.5, 10.5, 10), ('rect', 18, 17, 38, 27)], soft=2, gloss=1, cast=2)   # full helm
+    s.part(silver, [('poly', [(26.5, 7.5), (29.5, 7.5), (29, 27), (27, 27)])], soft=.4, gloss=1.2)   # centre ridge
+    s.part(dark, [('rect', 19.5, 18, 36.5, 21)], soft=.3)   # visor slit
+    s.part(rune, [('rect', 20.5, 19, 35.5, 20.2)], soft=.2, line=False, flat=True, bias=.35)   # glowing eyes in the visor
+    s.part(ramp('#bfe8ff', 1.1), [('poly', [(28, 8), (34, 1), (42, 2), (37, 6), (44, 8), (35, 10)])], soft=.6, gloss=.8)   # plume of starlight
+    for x, y in ((52, 10), (54, 26), (6, 24), (9, 40)):
+        sparkle(s, x, y, (170, 230, 255))
     return s
-
 
 def stormranger():
     s = Spr()

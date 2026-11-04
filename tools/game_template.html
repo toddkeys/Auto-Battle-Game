@@ -361,6 +361,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Flank attacks</b>: hitting a hero or monster from the <b>side</b> (above or below it) deals 10% more damage (yellow numbers), from <b>behind</b> (the side it isn't facing) 20% more (orange numbers). Assassins who leap behind the enemy and Grapplers who drag enemies past them make good use of it.</li>
         <li><b>Right-click an item</b> to <b>🎲 reroll</b> it into another random item of the same rarity, keeping its enchant level (30 gold), or to sell it. <b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
+        <li><b>🔫 Gunslingers</b>: the 2💰 Gunslinger fans 4 quick shots that can each crit; the 4💰 Deadshot snipes the farthest enemy with a piercing bullet. Their class bonus makes the whole team's critical hits hit harder. The 4💰 <b>Gearmaster</b> is the top Engineer: it builds two turrets at once and overclocks them.</li>
         <li><b>🪝 Grapplers</b> hook the enemy's back line and drag it in: the 2💰 Harpooner hooks the farthest enemy, the 4💰 Anchor Brute hooks the two farthest. Hooked enemies are stunned for 1s, and with the class bonus they take more damage for 3s. Bosses can't be dragged.</li>
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
@@ -439,6 +440,7 @@ const CLASSES = {
   monk:{name:'Monk',color:'#ffcc66', desc:['Monks dodge 20% of attacks; each hit stacks +4% attack speed (max 10)','Monks dodge 35% of attacks; each hit stacks +6% attack speed (max 10)']},
   chrono:{name:'Teleporter',color:'#7fe0e0', desc:['Team gains 15% more mana from attacks','Team gains 30% more mana from attacks']},
   ninja:{name:'Ninja',color:'#e04a5a', desc:['After a skill, ninjas dodge 25% of attacks for 2s','Ninja skills deal 25% more damage; after a skill ninjas dodge 40% of attacks for 2s']},
+  gunner:{name:'Gunslinger',color:'#d8a05a', desc:['Team critical hits deal 2.4x damage (from 2x)','Team critical hits deal 2.8x damage (from 2x)']},
   grapple:{name:'Grappler',color:'#c8b48a', desc:['Hooked enemies take 15% more damage for 3s','Hooked enemies take 30% more damage for 3s']},
   gravity:{name:'Gravity',color:'#8a6aff', desc:['Enemies pulled by a gravity skill take 15% more damage for 3s','Pulled enemies take 30% more damage for 3s']},
   druid:{name:'Druid',color:'#6ac04a', desc:['Roots last 1s longer','Roots last 1s longer and rooted enemies take 15% more damage']},
@@ -512,6 +514,7 @@ const UNITS = [
   {id:'bonelord',    name:'Bone Lord',    cls:'necro',org:'ironvow',      cost:4,hp:1250,atk:110,range:3,as:1.0, ms:1.4},
   // engineers: each builds a turret when battle starts
   {id:'tinkerer',    name:'Tinkerer',     cls:'engineer',org:'ironvow',   cost:1,hp:520, atk:40, range:3,as:1.0, ms:1.4},
+  {id:'gearmaster',  name:'Gearmaster',   cls:'engineer',org:'ironvow',   cost:4,hp:1500,atk:125,range:3,as:.9,  ms:1.3,turBoost:1.6},
   {id:'mechanist',   name:'Mechanist',    cls:'engineer',org:'gilded',    cost:3,hp:950, atk:78, range:4,as:1.0, ms:1.4},
   // monks: dodge, and every hit makes them faster (combo)
   {id:'brawler',     name:'Brawler',      cls:'monk',org:'wildheart',     cost:1,hp:620, atk:46, range:1,as:.7, ms:2.0},
@@ -522,6 +525,9 @@ const UNITS = [
   // ninjas: dashing damage dealers
   {id:'phantomblade',name:'Phantom Blade',cls:'ninja',org:'gilded',       cost:2,hp:680, atk:88, range:1,as:.65,ms:2.4},
   {id:'shadowstep',  name:'Shadowstep',   cls:'ninja',org:'moonblood',    cost:4,hp:1300,atk:175,range:1,as:.6, ms:2.5},
+  // gunslingers: quick revolver shots and long-range sniping
+  {id:'gunslinger',  name:'Gunslinger',   cls:'gunner',org:'gilded',      cost:2,hp:620, atk:58, range:3,as:.8,  ms:1.5},
+  {id:'deadshot',    name:'Deadshot',     cls:'gunner',org:'starborn',    cost:4,hp:1150,atk:185,range:6,as:1.1, ms:1.3},
   // grapplers: hook the enemy back line and drag it in
   {id:'harpooner',   name:'Harpooner',    cls:'grapple',org:'ironvow',    cost:2,hp:720, atk:62, range:2,as:1.0, ms:1.5},
   {id:'anchorbrute', name:'Anchor Brute', cls:'grapple',org:'wildheart',  cost:4,hp:2500,atk:170,range:1,as:1.0, ms:1.4,scale:1.12},
@@ -566,6 +572,7 @@ const CLASS_STAR={
   monk:[['Dodge +8%',{fx:x=>{ x.dodge=(x.dodge||0)+.08; }}],['Dodge +15%; each combo stack gives 2% more attack speed',{fx:x=>{ x.dodge=(x.dodge||0)+.15; x.comboStep=(x.comboStep||.03)+.02; }}]],
   chrono:[['Skill costs 15% less mana',{mana:.85}],['Skill costs 30% less mana; skill damage +20%',{mana:.7,skPow:1.2}]],
   ninja:[['Skill damage +25%',{skPow:1.25}],['Skill damage +50%; dodges 30% of attacks for 2s after a skill',{skPow:1.5,fx:x=>{ x.nDodge=Math.max(x.nDodge||0,.3); }}]],
+  gunner:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   grapple:[['Hook damage +20%',{skPow:1.2}],['Hook damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   gravity:[['Pulled enemies take 10% more damage',{fx:x=>{ x.gAmp+=.1; }}],['Pulled enemies take 20% more damage; skill costs 20% less mana',{mana:.8,fx:x=>{ x.gAmp+=.2; }}]],
   druid:[['Roots last 0.5s longer',{fx:x=>{ x.rootPlus+=.5; }}],['Roots last 1s longer; rooted enemies take 10% more damage',{fx:x=>{ x.rootPlus+=1; x.rootAmp+=.1; }}]],
@@ -690,7 +697,7 @@ function raise(a,n,pct){
   return gs.length;
 }
 // Engineers: build turrets (they copy the builder's team bonuses like any summon)
-function build(a,max){ const m=summon(a,'turret',max); if(m){ m.max*=a.turBoost||1; m.hp=m.hpLag=m.max; m.atk*=a.turBoost||1; } return m; }
+function build(a,max){ const m=summon(a,'turret',max), k=(a.turBoost||1)*(U[a.type].turBoost||1); if(m){ m.max*=k; m.hp=m.hpLag=m.max; m.atk*=k; } return m; }   // the Gearmaster's own turrets are 60% tougher
 // Ninja Flicker Strike: hop from enemy to enemy, then come home
 function blink(a,list,m){ a.blinkQ={list,i:0,t:0,home:{x:a.x,y:a.y},m:m*(a.nSkill||1)}; a.ghost=9; FX('smoke',a.x,a.y-.1,{s:1,add:false,m:.4}); }
 const segDist=(px,py,x0,y0,x1,y1)=>{ const dx=x1-x0, dy=y1-y0, l=dx*dx+dy*dy||1, q=Math.max(0,Math.min(1,((px-x0)*dx+(py-y0)*dy)/l)); return Math.hypot(px-x0-dx*q,py-y0-dy*q); };
@@ -843,6 +850,9 @@ const SKILLS = {
   tinkerer:{name:'Overclock', mp:60, desc:'Your turrets fire 60% faster for 5s and repair 30% of their max HP. With no turret standing, builds a new one.',
     cast(a){ const ts=friends(a).filter(x=>x.type==='turret'&&x.owner&&x.owner.team===a.team); if(!ts.length) build(a,1);
       for(const x of ts){ x.overT=5; heal(x,x.max*.3,a); FX('spark',x.x,x.y-.3,{s:.6,tint:'#ffd27a',m:.4}); } }},
+  gearmaster:{name:'Factory Mode', mp:65, desc:'Builds up to 2 new turrets (3 at most), then overclocks every turret: they fire 60% faster for 5s and repair 30% of their HP.',
+    cast(a){ build(a,3); build(a,3); for(const x of friends(a).filter(x=>x.type==='turret'&&x.owner&&x.owner.team===a.team)){ x.overT=5; heal(x,x.max*.3,a); FX('spark',x.x,x.y-.3,{s:.6,tint:'#7ff0ff',m:.4}); }
+      V({k:'ring',x:a.x,y:a.y+.3,r:1.2,c:'#7ff0ff',m:.5}); }},
   mechanist:{name:'Minefield', mp:85, desc:'Plants mines under three enemies; 0.6s later each explodes for 180% damage to enemies within 1 cell, and the first blast stuns for 1s.',
     cast(a){ foes(a).sort(()=>Math.random()-.5).slice(0,3).forEach((e,i)=>{ const x=e.x, y=e.y; V({k:'reticle',x,y,c:'#ffb040',m:.6});
       later(.6,()=>{ FX('boom',x,y-.2,{s:.9,m:.5}); addTrauma(.15); for(const o of foes(a)) if(Math.hypot(o.x-x,o.y-y)<=1){ hit(a,o,1.8); if(i===0) stun(o); } }); }); }},
@@ -866,6 +876,12 @@ const SKILLS = {
       const x=t.x, y=t.y;
       later(.12,()=>{ V({k:'ring',x,y,r:1.6,c:'#7fe0e0',m:.6}); V({k:'flash',x:0,y:0,c:'#bff6ff',m:.2}); FX('sigil',x,y-.1,{s:1,tint:'#7fe0e0',m:.6}); hitStop(.06);
         for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.6){ hit(a,e,1.2); stun(e); } }); }},
+  gunslinger:{name:'Fan the Hammer', mp:60, desc:'Fires 4 quick shots at the target, 70% damage each. Every shot can crit.',
+    cast(a,t){ for(let i=0;i<4;i++) later(i*.1,()=>{ if(a.hp<=0||t.hp<=0) return; V({k:'beam',x:a.x,y:a.y-.3,x2:t.x,y2:t.y-.3,c:'#ffd27a',m:.12}); hit(a,t,.7,true); }); SND.play('shoot'); }},
+  deadshot:{name:'Long Shot', mp:70, desc:'Takes aim and shoots the farthest enemy for 350% damage; the bullet pierces, hitting every enemy on the way for 150%.',
+    cast(a){ const t=foes(a).sort((p,q)=>dist(a,q)-dist(a,p))[0]; if(!t) return; V({k:'reticle',x:t.x,y:t.y,c:'#ff5a4a',m:.45});
+      later(.4,()=>{ if(a.hp<=0) return; V({k:'beam',x:a.x,y:a.y-.3,x2:t.x,y2:t.y-.3,c:'#ffe0a0',m:.3}); SND.play('snipe'); hitStop(.06);
+        for(const e of foes(a)) if(e!==t&&segDist(e.x,e.y,a.x,a.y,t.x,t.y)<=.6) hit(a,e,1.5); if(t.hp>0) hit(a,t,3.5,true); }); }},
   harpooner:{name:'Harpoon Hook', mp:70, desc:'Hooks the farthest enemy within 6 cells and drags it next to the Harpooner: 160% damage and a 1s stun. Bosses are too heavy to drag but still take the hit.',
     cast(a){ const [e]=farthestFoes(a,1,6); if(e) hook(a,e,1.6); }},
   anchorbrute:{name:'Anchor Haul', mp:65, desc:'Hurls its anchor at the 2 farthest enemies within 6 cells, one after the other, and drags both in: 250% damage and a 1s stun each. Bosses are too heavy to drag but still take the hit.',
@@ -1702,7 +1718,7 @@ function applySynergy(f){
       if(U[x.type].cls==='monk'){ x.dodge=[0,.2,.35][lv.monk]; x.comboStep=[.03,.04,.06][lv.monk]; }
       x.manaMul=(x.manaMul||1)*[1,1.15,1.3][lv.chrono];
       if(U[x.type].cls==='ninja'){ x.nDodge=[0,.25,.4][lv.ninja]; x.nSkill=lv.ninja>=2?1.25:1; }
-      x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
+      x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.critX=[0,.4,.8][lv.gunner]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
       if(U[x.type].cls==='berserker'){ x.cleave=[0,.3,.6][lv.berserker]; if(lv.berserker>=2) x.leech+=.1; } }
     if(team===0) S.alchGold=[0,1,2][lv.alchemist];
     if(team===0) S.goldBonus=[[0,0],[1,0],[2,1]][olv.gilded];   // [on win, on loss]
@@ -1947,7 +1963,7 @@ function flankOf(a,t){ if(t.face===undefined) return 0;
   const fx=(a.x-t.x)*t.face, fy=Math.abs(a.y-t.y); if(Math.hypot(fx,fy)<.05) return 0;
   const ang=Math.atan2(fy,fx)*180/Math.PI; return ang>120?2:ang>60?1:0; }
 function hit(a,t,mult=1,canCrit=mult===1){
-  let dmg=a.atk*a.dmgM*mult*(CASTER===a?a.skPow||1:1)*(1+(a.bannerAmp||0)); const crit=canCrit&&(Math.random()<a.crit||a.firstCrit); if(canCrit) a.firstCrit=false; if(crit) dmg*=2;
+  let dmg=a.atk*a.dmgM*mult*(CASTER===a?a.skPow||1:1)*(1+(a.bannerAmp||0)); const crit=canCrit&&(Math.random()<a.crit||a.firstCrit); if(canCrit) a.firstCrit=false; if(crit) dmg*=2+(a.critX||0);
   if(a.bushido&&a.hp<a.max*.5) dmg*=1+a.bushido;            // Samurai bonus
   if(a.furyT>0) dmg*=1.25;                                   // Lucky Roll 4
   if(a.exec&&t.hp<t.max*.35) dmg*=1+a.exec;                 // Executioner's Axe
@@ -2237,7 +2253,7 @@ function pose(o,b,rigged){
 }
 // ====== rig: each sprite is split into pieces (legs, body, arms + weapons, head, cape...) that turn on their joints ======
 // attack style per unit: how the arms move on a basic attack
-const CLS_ANIM={grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
+const CLS_ANIM={gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
 const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)

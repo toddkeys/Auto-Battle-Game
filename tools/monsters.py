@@ -15,7 +15,7 @@ def blob_eyes(s, xs, y, iris=INK, h=3):
 
 def mossling():
     s = Spr()
-    moss, leaf = ramp('#6cc04a', 1.1, 1.1), ramp('#3f9a3a')
+    moss, leaf, thorn = ramp('#3f7a34', 1.2, 1.1), ramp('#2f6a2a', 1.2), ramp('#6a3a4a', 1.2)
     s.piv['head'] = (28, 37)
     with s.grp('head'):
         s.part(leaf, [('cap', 28, 37, 28.5, 30, .8)], soft=.5)
@@ -24,7 +24,9 @@ def mossling():
     s.group = 'body'
     s.part(moss, [('ell', 28, 45, 13.5, 9.5), ('rect', 14.5, 45, 41.5, 53.5)],
            sub=[('ell', 18, 54, 2.5, 1.2), ('ell', 28, 54.2, 2.5, 1.2), ('ell', 38, 54, 2.5, 1.2)], soft=2.5)
-    s.part(ramp('#4f9a3a'), [('ell', 35, 40, 2, 1.4), ('ell', 19, 47, 1.6, 1.2), ('ell', 37, 49, 1.4, 1)], soft=.5, line=False)
+    s.part(ramp('#2a5a24'), [('ell', 35, 40, 2, 1.4), ('ell', 19, 47, 1.6, 1.2), ('ell', 37, 49, 1.4, 1)], soft=.5, line=False)
+    for x, y, d in ((15, 42, -1), (41, 42, 1), (20, 37, -1), (36, 37, 1), (28, 35.5, 0)):   # thorns
+        s.part(thorn, [('poly', [(x - 1.2, y + 1), (x + d * 2.2, y - 3), (x + 1.2, y + 1)])], soft=.3)
     blob_eyes(s, (22, 30), 43)
     for x in (19, 20, 33, 34):
         s.mark(x, 47, BLUSH)
@@ -34,7 +36,7 @@ def mossling():
 
 def shroomkin():
     s = Spr()
-    stem, cap, spot = ramp('#f0dcb8', .9), ramp('#d64b3a', 1.1, 1.1), ramp('#fff4dc', .7)
+    stem, cap, spot = ramp('#d8ccb0', .9), ramp('#6a2a8a', 1.2, 1.1), ramp('#a8ff6a', 1.2, 1.2)
     s.piv.update(legL=(24, 47), legR=(32, 47), head=(28, 40))
     with s.grp('legL'):
         s.part(stem, [('ell', 24, 51.5, 3.2, 2)], soft=.8)
@@ -46,9 +48,11 @@ def shroomkin():
     s.group = 'head'
     s.part(cap, [('chord', 28, 34, 15.5, 12, 180, 360), ('ell', 28, 34, 15.5, 3.2)], soft=2.5, cast=2)
     s.part(spot, [('ell', 21, 28, 2.4, 1.7), ('ell', 30, 25.5, 2.8, 2), ('ell', 37, 31, 1.8, 1.3), ('ell', 16.5, 33, 1.4, 1)],
-           soft=.6, line=False)
+           soft=.6, line=False, gloss=1)
     s.group = 'body'
-    blob_eyes(s, (24, 30), 41)
+    blob_eyes(s, (24, 30), 41, iris=(60, 20, 80))
+    for x, y, a in ((14, 26, 170), (42, 24, 150), (22, 20, 130)):
+        s.glow(x, y, (170, 255, 120), a)
     s.mark(27, 46, INK); s.mark(28, 46, INK)
     for x in (22, 33):
         s.mark(x, 44, BLUSH)
@@ -57,13 +61,16 @@ def shroomkin():
 
 def emberbat():
     s = Spr()
-    body, wing, ember = ramp('#4a3466', 1.1), ramp('#5f3d82', 1.1), ramp('#ff8a3a', 1.2, 1.2)
+    body, wing, ember = ramp('#2a1a22', 1.2), ramp('#c84a1a', 1.2, 1.1), ramp('#ffb03a', 1.3, 1.3)
     left = [(22, 28), (8, 19), (10, 25), (5, 29), (12, 30), (9, 36), (21, 34)]
     s.piv.update(wingL=(22, 29), wingR=(34, 29))
+    inner = [(22, 29), (11, 22), (12, 26), (9, 29), (14, 30), (12, 34), (21, 32.5)]
     with s.grp('wingL'):
         s.part(wing, [('poly', left)], soft=1.2)
+        s.part(ember, [('poly', inner)], soft=.8, line=False)   # fire inside the wing
     with s.grp('wingR'):
         s.part(wing, [('poly', [(56 - x, y) for x, y in left])], soft=1.2)
+        s.part(ember, [('poly', [(56 - x, y) for x, y in inner])], soft=.8, line=False)
     s.group = 'body'
     s.part(body, [('poly', [(23, 26), (21.5, 17.5), (26.5, 23)]), ('poly', [(33, 26), (34.5, 17.5), (29.5, 23)])], soft=.8)
     s.part(body, [('ell', 28, 30, 7.5, 8)], soft=2)
@@ -78,7 +85,8 @@ def emberbat():
 
 def golem():
     s = Spr()
-    rock, moss, core = ramp('#8a8478', 1.25), ramp('#5f9a44'), ramp('#ff8a2a', 1.3, 1.2)
+    rock, moss, core = ramp('#3e3a40', 1.3), ramp('#ff6a2a', 1.3, 1.2), ramp('#ff8a2a', 1.3, 1.2)
+    crystal = ramp('#ff9a4a', 1.3, 1.2)
     s.part(rock, [('poly', [(17, 42), (25, 42), (25.5, 53), (16, 53)]), ('poly', [(31, 42), (39, 42), (40, 53), (30.5, 53)])], soft=1.5)
     s.piv.update(armL=(13, 27), armR=(43, 27), head=(28, 25))
     s.group = 'body'
@@ -93,8 +101,9 @@ def golem():
     for g, x in (('armL', 13), ('armR', 43)):
         with s.grp(g):
             s.part(rock, [('ell', x, 27, 7.5, 6)], soft=2, cast=1)
-            s.part(moss, [('chord', x, 25, 7, 4, 180, 360)], soft=1)
-    s.part(moss, [('ell', 22, 42, 2.5, 1.2)], soft=1)
+            for dx, h in ((-4, 7), (0, 10), (4, 6)):   # glowing crystal shards
+                s.part(crystal, [('poly', [(x + dx - 1.6, 24), (x + dx, 24 - h), (x + dx + 1.6, 24)])], soft=.4, gloss=1.3)
+    s.part(moss, [('line', [(18, 30), (21, 34), (19, 39)], .45), ('line', [(39, 31), (36, 36), (38, 40)], .45)], soft=.2, line=False, flat=True, bias=.3)   # magma veins
     with s.grp('head'):
         s.part(rock, [('ell', 28, 19, 8.5, 7)], soft=2.5, cast=1)
     for x in (24, 25, 30, 31):  # eyes: marks attach to the head part just drawn
