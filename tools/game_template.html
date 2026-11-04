@@ -360,7 +360,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Chrono</b> heroes mark enemies so their damage replays, and stop time.</li>
         <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ <b>Poison</b>: damage once per second, <b>stacks up to 5</b>, lasts at least 5s and cuts healing on the target by 30% (good vs healers) · 🔥 <b>Burn</b>: fire skills, damage twice per second, refreshes instead of stacking, <b>deals double damage to shields</b> and <b>jumps to a nearby enemy</b> when the target dies (good vs shields and groups). Fire melts Frozen; freezing puts out fire. A hero can be poisoned and burning at once · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
-        <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. Each shop Upgrade improves the odds; a fully upgraded shop late in the run rolls 1💰 heroes only 10% of the time, and each slot has a 15% extra chance to show a hero you already own (not yet ★★★). "Lock" keeps the shop for next round.</li>
+        <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. Each shop Upgrade improves the odds; a fully upgraded shop late in the run rolls 1💰 heroes only 10% of the time, and each slot has a 5% extra chance to show a hero you already own (not yet ★★★). "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
         <li><b>Gold</b>: 5 per round, +1 every 5 rounds (9 from round 20) + 1 interest per 10 saved (max 5) + a streak bonus for 2/4/6 wins or losses in a row (+1/+2/+3). Losing costs HP; at 0 the run ends.</li>
       </ol></details>
@@ -1428,7 +1428,7 @@ function randUnit(r,favor){ const o=odds(r); let x=Math.random(), t=0; while(t<o
   if(favor&&Math.random()<OWNED_BONUS){ const mine=favor.filter(id=>U[id].cost===t+1); if(mine.length) return mine[Math.floor(Math.random()*mine.length)]; }
   const pool=UNITS.filter(u=>u.cost===t+1); return pool[Math.floor(Math.random()*pool.length)].id; }
 // a fully upgraded shop leans a little toward heroes you already own (not yet 3★), to help finish upgrades
-const OWNED_BONUS=.15, shopMaxed=()=>S.extra>=CAP_COSTS.length;
+const OWNED_BONUS=.05, shopMaxed=()=>S.extra>=CAP_COSTS.length;
 const ownedForShop=()=>[...new Set(S.units.filter(u=>u.star<3&&U[u.type].cost<5).map(u=>u.type))];
 // every shop Upgrade (S.extra) also pushes the odds toward pricier heroes
 const shopRound=()=>S.round+Math.round(S.extra*1.5);
