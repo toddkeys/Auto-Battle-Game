@@ -520,7 +520,7 @@ const UNITS = [
   {id:'bonelord',    name:'Bone Lord',    cls:'necro',org:'ironvow',      cost:4,hp:1250,atk:110,range:3,as:1.0, ms:1.4},
   // engineers: each builds a turret when battle starts
   {id:'tinkerer',    name:'Tinkerer',     cls:'engineer',org:'ironvow',   cost:1,hp:520, atk:40, range:3,as:1.0, ms:1.4},
-  {id:'gearmaster',  name:'Gearmaster',   cls:'engineer',org:'ironvow',   cost:4,hp:1800,atk:140,range:3,as:.85, ms:1.3,turBoost:1.6,tower:'arctower'},
+  {id:'gearmaster',  name:'Gearmaster',   cls:'engineer',org:'ironvow',   cost:4,hp:1650,atk:135,range:3,as:.9,  ms:1.3,turBoost:1.4,tower:'arctower'},
   {id:'mechanist',   name:'Mechanist',    cls:'engineer',org:'gilded',    cost:3,hp:950, atk:78, range:4,as:1.0, ms:1.4},
   // monks: dodge, and every hit makes them faster (combo)
   {id:'brawler',     name:'Brawler',      cls:'monk',org:'wildheart',     cost:1,hp:620, atk:46, range:1,as:.7, ms:2.0},
@@ -865,10 +865,10 @@ const SKILLS = {
   tinkerer:{name:'Overclock', mp:60, desc:'Your turrets fire 60% faster for 5s and repair 30% of their max HP. With no turret standing, builds a new one.',
     cast(a){ const ts=friends(a).filter(x=>TOWERS[x.type]&&x.owner&&x.owner.team===a.team); if(!ts.length) build(a,1);
       for(const x of ts){ x.overT=5; heal(x,x.max*.3,a); FX('spark',x.x,x.y-.3,{s:.6,tint:'#ffd27a',m:.4}); } }},
-  gearmaster:{name:'Storm Foundry', mp:60, desc:'Builds up to 2 Arc Towers (4 at most), then supercharges every tower for 6s: they fire 80% faster, repair 40% of their HP, and each one blasts a lightning nova for 120% damage around itself. The Gearmaster starts every battle with an Arc Tower already built.',
-    cast(a){ build(a,4); build(a,4);
-      for(const x of friends(a).filter(x=>TOWERS[x.type]&&x.owner&&x.owner.team===a.team)){ x.overT=6; x.overK=1.8; heal(x,x.max*.4,a); FX('spark',x.x,x.y-.3,{s:.7,tint:'#9ff6ff',m:.5});
-        V({k:'ring',x:x.x,y:x.y+.2,r:1.6,c:'#9ff6ff',m:.5}); for(const e of foes(a)) if(dist(e,x)<=1.6){ hit(x,e,1.2); inflict(e,'shock'); } }
+  gearmaster:{name:'Storm Foundry', mp:75, desc:'Builds up to 2 Arc Towers (3 at most), then supercharges every tower for 5s: they fire 60% faster, repair 30% of their HP, and each one blasts a lightning nova for 90% damage around itself. The Gearmaster starts every battle with an Arc Tower already built.',
+    cast(a){ build(a,3); build(a,3);
+      for(const x of friends(a).filter(x=>TOWERS[x.type]&&x.owner&&x.owner.team===a.team)){ x.overT=5; x.overK=1.6; heal(x,x.max*.3,a); FX('spark',x.x,x.y-.3,{s:.7,tint:'#9ff6ff',m:.5});
+        V({k:'ring',x:x.x,y:x.y+.2,r:1.6,c:'#9ff6ff',m:.5}); for(const e of foes(a)) if(dist(e,x)<=1.6){ hit(x,e,.9); inflict(e,'shock'); } }
       V({k:'ring',x:a.x,y:a.y+.3,r:1.2,c:'#9ff6ff',m:.5}); SND.play('zap'); }},
   mechanist:{name:'Minefield', mp:85, desc:'Plants mines under three enemies; 0.6s later each explodes for 180% damage to enemies within 1 cell, and the first blast stuns for 1s.',
     cast(a){ foes(a).sort(()=>Math.random()-.5).slice(0,3).forEach((e,i)=>{ const x=e.x, y=e.y; V({k:'reticle',x,y,c:'#ffb040',m:.6});
