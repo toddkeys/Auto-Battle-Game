@@ -358,6 +358,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Occultists</b> curse enemies: armor break (+25% damage taken), mana drain, slows, and Dispel strips shields and buffs.</li>
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
+        <li><b>🪝 Grapplers</b> hook the enemy's back line and drag it in: the 2💰 Harpooner hooks the farthest enemy, the 4💰 Anchor Brute hooks the two farthest. Hooked enemies are stunned for 1s, and with the class bonus they take more damage for 3s. Bosses can't be dragged.</li>
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
@@ -435,6 +436,7 @@ const CLASSES = {
   monk:{name:'Monk',color:'#ffcc66', desc:['Monks dodge 20% of attacks; each hit stacks +4% attack speed (max 10)','Monks dodge 35% of attacks; each hit stacks +6% attack speed (max 10)']},
   chrono:{name:'Teleporter',color:'#7fe0e0', desc:['Team gains 15% more mana from attacks','Team gains 30% more mana from attacks']},
   ninja:{name:'Ninja',color:'#e04a5a', desc:['After a skill, ninjas dodge 25% of attacks for 2s','Ninja skills deal 25% more damage; after a skill ninjas dodge 40% of attacks for 2s']},
+  grapple:{name:'Grappler',color:'#c8b48a', desc:['Hooked enemies take 15% more damage for 3s','Hooked enemies take 30% more damage for 3s']},
   gravity:{name:'Gravity',color:'#8a6aff', desc:['Enemies pulled by a gravity skill take 15% more damage for 3s','Pulled enemies take 30% more damage for 3s']},
   druid:{name:'Druid',color:'#6ac04a', desc:['Roots last 1s longer','Roots last 1s longer and rooted enemies take 15% more damage']},
   berserker:{name:'Berserker',color:'#d8643a', desc:['Berserker attacks cleave: 30% damage to enemies next to the target','Cleave 60%, and berserkers heal for 10% of the damage they deal']},
@@ -517,6 +519,9 @@ const UNITS = [
   // ninjas: dashing damage dealers
   {id:'phantomblade',name:'Phantom Blade',cls:'ninja',org:'gilded',       cost:2,hp:680, atk:88, range:1,as:.65,ms:2.4},
   {id:'shadowstep',  name:'Shadowstep',   cls:'ninja',org:'moonblood',    cost:4,hp:1300,atk:175,range:1,as:.6, ms:2.5},
+  // grapplers: hook the enemy back line and drag it in
+  {id:'harpooner',   name:'Harpooner',    cls:'grapple',org:'ironvow',    cost:2,hp:720, atk:62, range:2,as:1.0, ms:1.5},
+  {id:'anchorbrute', name:'Anchor Brute', cls:'grapple',org:'wildheart',  cost:4,hp:2500,atk:170,range:1,as:1.0, ms:1.4,scale:1.12},
   // gravity: pull enemies together
   {id:'riftcaller',  name:'Riftcaller',   cls:'gravity',org:'ironvow',    cost:2,hp:650, atk:52, range:3,as:1.1, ms:1.4},
   {id:'eclipsewitch',name:'Eclipse Witch',cls:'gravity',org:'starborn',   cost:4,hp:1150,atk:100,range:4,as:1.1, ms:1.3},
@@ -558,6 +563,7 @@ const CLASS_STAR={
   monk:[['Dodge +8%',{fx:x=>{ x.dodge=(x.dodge||0)+.08; }}],['Dodge +15%; each combo stack gives 2% more attack speed',{fx:x=>{ x.dodge=(x.dodge||0)+.15; x.comboStep=(x.comboStep||.03)+.02; }}]],
   chrono:[['Skill costs 15% less mana',{mana:.85}],['Skill costs 30% less mana; skill damage +20%',{mana:.7,skPow:1.2}]],
   ninja:[['Skill damage +25%',{skPow:1.25}],['Skill damage +50%; dodges 30% of attacks for 2s after a skill',{skPow:1.5,fx:x=>{ x.nDodge=Math.max(x.nDodge||0,.3); }}]],
+  grapple:[['Hook damage +20%',{skPow:1.2}],['Hook damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   gravity:[['Pulled enemies take 10% more damage',{fx:x=>{ x.gAmp+=.1; }}],['Pulled enemies take 20% more damage; skill costs 20% less mana',{mana:.8,fx:x=>{ x.gAmp+=.2; }}]],
   druid:[['Roots last 0.5s longer',{fx:x=>{ x.rootPlus+=.5; }}],['Roots last 1s longer; rooted enemies take 10% more damage',{fx:x=>{ x.rootPlus+=1; x.rootAmp+=.1; }}]],
   berserker:[['Cleave +20%',{fx:x=>{ x.cleave=(x.cleave||0)+.2; }}],['Cleave +40%; heals for 10% of the damage it deals',{fx:x=>{ x.cleave=(x.cleave||0)+.4; x.leech+=.1; }}]],
@@ -683,6 +689,14 @@ function build(a,max){ const m=summon(a,'turret',max); if(m){ m.max*=a.turBoost|
 function blink(a,list,m){ a.blinkQ={list,i:0,t:0,home:{x:a.x,y:a.y},m:m*(a.nSkill||1)}; a.ghost=9; FX('smoke',a.x,a.y-.1,{s:1,add:false,m:.4}); }
 const segDist=(px,py,x0,y0,x1,y1)=>{ const dx=x1-x0, dy=y1-y0, l=dx*dx+dy*dy||1, q=Math.max(0,Math.min(1,((px-x0)*dx+(py-y0)*dy)/l)); return Math.hypot(px-x0-dx*q,py-y0-dy*q); };
 // Gravity: drag a unit to a point (bosses are too heavy)
+// grapplers: a chain shoots out, then the enemy is dragged in (bosses are too heavy to move but still take the hit)
+function hook(a,e,mult,delay=0){
+  later(delay,()=>{ if(a.hp<=0||e.hp<=0) return;
+    V({k:'beam',x:a.x,y:a.y-.3,x2:e.x,y2:e.y-.3,c:'#b8c0d0',m:.35}); burst(e.x,e.y-.3,'#d8dce8',8,2,2,0); SND.play('trap');
+    pull(e,a.x+(e.x<a.x?-.8:.8),a.y,null); hit(a,e,mult); stun(e);
+    if(a.hAmp){ e.gAmp=Math.max(e.gAmp||0,a.hAmp); e.gT=3; } });
+}
+const farthestFoes=(a,n,range)=>foes(a).filter(e=>dist(a,e)<=range).sort((p,q)=>dist(a,q)-dist(a,p)).slice(0,n);
 function pull(e,x,y,src){ if(e.hp<=0) return; if(!U[e.type].boss) e.pullTo={x:x+(Math.random()-.5)*.5,y:y+(Math.random()-.5)*.5,t:.3};
   if(src&&src.gAmp){ e.gAmp=src.gAmp; e.gT=3; } }
 // Druid roots: no walking, no moving skills; attacks only what is already in range
@@ -846,6 +860,10 @@ const SKILLS = {
       const x=t.x, y=t.y;
       later(.12,()=>{ V({k:'ring',x,y,r:1.6,c:'#7fe0e0',m:.6}); V({k:'flash',x:0,y:0,c:'#bff6ff',m:.2}); FX('sigil',x,y-.1,{s:1,tint:'#7fe0e0',m:.6}); hitStop(.06);
         for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.6){ hit(a,e,1.2); stun(e); } }); }},
+  harpooner:{name:'Harpoon Hook', mp:70, desc:'Hooks the farthest enemy within 6 cells and drags it next to the Harpooner: 160% damage and a 1s stun. Bosses are too heavy to drag but still take the hit.',
+    cast(a){ const [e]=farthestFoes(a,1,6); if(e) hook(a,e,1.6); }},
+  anchorbrute:{name:'Anchor Haul', mp:65, desc:'Hurls its anchor at the 2 farthest enemies within 6 cells, one after the other, and drags both in: 250% damage and a 1s stun each. Bosses are too heavy to drag but still take the hit.',
+    cast(a){ farthestFoes(a,2,6).forEach((e,i)=>hook(a,e,2.5,i*.25)); V({k:'ring',x:a.x,y:a.y+.3,r:1,c:'#c8b48a',m:.5}); }},
   shadowstep:{name:'Flicker Strike', mp:75, desc:'Vanishes and strikes the target and up to 4 enemies within 3 cells of it, 140% damage each, then returns. Untargetable while striking. Can\'t be cast while rooted.',
     cast(a,t){ const list=[t,...foes(a).filter(e=>e!==t&&dist(e,t)<=3).sort(()=>Math.random()-.5).slice(0,4)]; blink(a,list,1.4); }},
   phantomblade:{name:'Rift Step', mp:65, desc:'Dashes straight through the target to the far side, 150% damage to every enemy along the path. 1.2s later each of them is struck again for 70% and slowed. Can\'t be cast while rooted.',
@@ -1660,7 +1678,7 @@ function applySynergy(f){
       if(U[x.type].cls==='monk'){ x.dodge=[0,.2,.35][lv.monk]; x.comboStep=[.03,.04,.06][lv.monk]; }
       x.manaMul=(x.manaMul||1)*[1,1.15,1.3][lv.chrono];
       if(U[x.type].cls==='ninja'){ x.nDodge=[0,.25,.4][lv.ninja]; x.nSkill=lv.ninja>=2?1.25:1; }
-      x.gAmp=[0,.15,.3][lv.gravity]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
+      x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
       if(U[x.type].cls==='berserker'){ x.cleave=[0,.3,.6][lv.berserker]; if(lv.berserker>=2) x.leech+=.1; } }
     if(team===0) S.alchGold=[0,1,2][lv.alchemist];
     if(team===0) S.goldBonus=[[0,0],[1,0],[2,1]][olv.gilded];   // [on win, on loss]
@@ -2178,7 +2196,7 @@ function pose(o,b,rigged){
 }
 // ====== rig: each sprite is split into pieces (legs, body, arms + weapons, head, cape...) that turn on their joints ======
 // attack style per unit: how the arms move on a basic attack
-const CLS_ANIM={ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
+const CLS_ANIM={grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
 const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
