@@ -41,7 +41,7 @@ def preview(sprites, scale=4, cols=6):
     for i, (cid, im) in enumerate(sprites.items()):
         x, y = (i % cols) * cw, (i // cols) * ch
         d.rectangle([x + 2, y + 2, x + cw - 3, y + ch - 3], fill=(70, 120, 60, 255) if i % 2 else (84, 136, 70, 255))
-        sheet.alpha_composite(im.resize((W * scale, H * scale), Image.NEAREST), (x + 8, y + 4))
+        sheet.alpha_composite(im.resize((W * scale, H * scale), Image.NEAREST if im.size == (W, H) else Image.LANCZOS), (x + 8, y + 4))
         d.text((x + 10, y + ch - 22), cid, fill=(255, 255, 255, 255))
     sheet.save(os.path.join(OUT, 'preview.png'))
 
@@ -51,6 +51,14 @@ if __name__ == '__main__':
     os.makedirs(os.path.join(OUT, 'rig'), exist_ok=True)
     ims = {}
     for cid, fn in CHARS.items():
+        art = os.path.join(OUT, 'art', cid + '.png')
+        if os.path.exists(art):   # a hand-made picture replaces the drawn sprite (no limb rig: it moves as one piece)
+            ims[cid] = Image.open(art).convert('RGBA')
+            ims[cid].save(os.path.join(OUT, 'units', cid + '.png'))
+            for ext in ('.png', '.json'):
+                if os.path.exists(os.path.join(OUT, 'rig', cid + ext)):
+                    os.remove(os.path.join(OUT, 'rig', cid + ext))
+            continue
         ims[cid] = fn().render()
         ims[cid].save(os.path.join(OUT, 'units', cid + '.png'))
         s = fn()

@@ -2543,7 +2543,7 @@ function drawUnit(type,star,px,py,o={}){
     const fuseTint=o.fuse?[[colorOf(o.fuse),.1+.08*Math.sin(ANIM*2.2+(o.ph||0))]]:[];   // a soft shimmer in the partner's class colour
     if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
-    ctx.imageSmoothingEnabled=false; draw();
+    ctx.imageSmoothingEnabled=!rig&&im.naturalHeight>100; draw();   // big hand-made pictures scale smoothly; pixel sprites stay crisp
     if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
     if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.45,o.cast>0?.12+.08*Math.sin(ANIM*30):0); draw(); }   // soft, so the face still reads
   } else {
@@ -2842,7 +2842,7 @@ function thumbSrc(id){ const sp=SPR[id], rig=sp&&sp.rig; if(!sp) return null; if
   buildRig(rig,rigPose({ph:-ANIM},id,U[id]),[],null); const c=document.createElement('canvas'); c.width=56; c.height=54; const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
   g.drawImage(RIG,56*RES,54*RES,56*RES,54*RES,0,0,56,54); return sp.thumb=c.toDataURL(); }
 function thumbHTML(id,size){
-  const sp=SPR[id]; if(sp) return `<img src="${thumbSrc(id)}" alt="">`;
+  const sp=SPR[id]; if(sp) return `<img src="${thumbSrc(id)}" alt=""${sp.img.naturalHeight>100?' style="image-rendering:auto"':''}>`;
   return `<div class="dot" style="background:${colorOf(id)};width:${size}px;height:${size}px"></div>`;
 }
 // live = a fighter in the current battle: shows its real HP, attack, mana and statuses
