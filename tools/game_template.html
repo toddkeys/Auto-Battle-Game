@@ -138,6 +138,14 @@ button.go:disabled{animation:none}
 .evunits button{width:86px;padding:6px 4px;border:2px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.3);color:var(--text);font:inherit;font-size:12px;cursor:pointer}
 .evunits button:hover{border-color:var(--gold)}.evunits img{width:56px;height:54px;image-rendering:pixelated;display:block;margin:0 auto}
 .codexbox{width:min(980px,96vw);max-height:92vh;display:flex;flex-direction:column}
+.cxpre{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;margin:-4px 0 12px;font-size:13px;color:var(--muted)}
+.cxpre .pre{display:inline-flex;align-items:center;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.28);overflow:hidden}
+.cxpre .pre.on{border-color:var(--gold);box-shadow:0 0 8px rgba(255,210,90,.45)}
+.cxpre .pre button{background:none;border:0;color:var(--text);font:inherit;cursor:pointer;padding:5px 9px}
+.cxpre .pre.on .pl{color:#ffe27a}
+.cxpre .pre .pd{padding:5px 7px;color:var(--muted);border-left:1px solid #5a4024}
+.cxpre .pre .pd:hover{color:#ff9a80}
+.cxpre input{width:130px;padding:5px 8px;font:inherit;color:var(--text);background:rgba(0,0,0,.35);border:1px solid #5a4024;border-radius:6px}
 .codexgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;overflow:auto;padding:4px;margin-bottom:12px;text-align:left}
 .cx{display:flex;gap:6px;padding:6px;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.28);font-size:12px;line-height:1.25}
 .cx img{width:48px;height:46px;image-rendering:pixelated;flex:none}.cx b{font-size:13px}.cx.locked img{filter:grayscale(1) brightness(.35)}.cx.locked{opacity:.6}
@@ -341,7 +349,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 <div id="summary" hidden></div>
 <div id="modes" class="overlay" hidden><div class="sumbox wide" id="modesbox"></div></div>
 <div id="event" class="overlay" hidden><div class="sumbox wide" id="eventbox"></div></div>
-<div id="codex" class="overlay" hidden><div class="sumbox codexbox"><h2>Hero Codex</h2><p id="codexCount"></p><div class="codexgrid" id="codexGrid"></div><button class="b go" id="codexClose">Close</button></div></div>
+<div id="codex" class="overlay" hidden><div class="sumbox codexbox"><h2>Hero Codex</h2><p id="codexCount"></p><div id="codexPresets" class="cxpre"></div><div class="codexgrid" id="codexGrid"></div><button class="b go" id="codexClose">Close</button></div></div>
 <div id="cards" hidden><div class="cardsbox"><h2>Choose a blessing</h2><p>The boss is down! Pick one blessing for the rest of the run.</p><div class="cardrow" id="cardrow"></div></div></div>
 <input type="file" id="file" accept="image/*" hidden>
 <div id="cropModal" hidden>
@@ -1130,8 +1138,41 @@ function openCodex(note){
   $('#codexGrid').innerHTML=heroes.map(u=>{ const k=c[u.id], cl=CLASSES[u.cls], o=ORIGINS[u.org], sk=SKILLS[u.id], m=marks.includes(u.id);
     return `<div class="cx ${k?'':'locked'} ${m?'marked':''}" title="${sk.name}: ${sk.desc.replace(/"/g,'&quot;')}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
       <span class="cs">HP ${u.hp} · ATK ${u.atk} · R ${u.range}<br>${k?`Fielded ${k}×`:'Not fielded yet'}</span></div><button class="mk" data-mark="${u.id}" title="${m?'Unmark':'Mark: glow in the shop'}">${m?'★':'☆'}</button></div>`; }).join('');
+  renderPresets();
   $('#codex').hidden=false;
 }
+// mark presets: save the current marks under a name and switch between sets with one click
+const MAX_PRESETS=6;
+function readPresets(){ try{ return JSON.parse(localStorage.getItem('ab_mark_presets')||'[]'); }catch(e){ return []; } }
+function savePresets(p){ try{ localStorage.setItem('ab_mark_presets',JSON.stringify(p)); }catch(e){} }
+const sameSet=(a,b)=>a.length===b.length&&a.every(x=>b.includes(x));
+let presetNaming=false;
+function renderPresets(){
+  const ps=readPresets(), marks=readMarks();
+  const chips=ps.map((p,i)=>`<span class="pre ${sameSet(p.ids,marks)?'on':''}"><button class="pl" data-load="${i}" title="Mark these ${p.ids.length} heroes">${esc(p.name)} (${p.ids.length})</button><button class="pd" data-del="${i}" title="Delete this preset">✕</button></span>`).join('');
+  const add=presetNaming?`<input id="presetName" maxlength="20" placeholder="Preset name" value="Preset ${ps.length+1}"><button class="b mkreset" data-psave>Save</button><button class="b mkreset" data-pcancel>Cancel</button>`
+    :ps.length>=MAX_PRESETS?`<span>Max ${MAX_PRESETS} presets — delete one to save another</span>`
+    :marks.length?`<button class="b mkreset" data-pnew>＋ Save marks as preset</button>`:'<span>Mark some heroes, then save them as a preset</span>';
+  $('#codexPresets').innerHTML=`<span>Presets:</span>${chips||''}${add}`;
+  if(presetNaming){ const inp=$('#presetName'); inp.focus(); inp.select();
+    inp.addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') $('#codexPresets [data-psave]').click(); if(e.key==='Escape') $('#codexPresets [data-pcancel]').click(); }); }
+}
+$('#codexPresets').addEventListener('click',e=>{
+  const sc=$('#codexGrid').scrollTop, ps=readPresets(), q=s=>e.target.closest(s);
+  if(q('[data-pnew]')){ presetNaming=true; renderPresets(); return; }
+  if(q('[data-pcancel]')){ presetNaming=false; renderPresets(); return; }
+  if(q('[data-psave]')){
+    const name=($('#presetName').value.trim()||`Preset ${ps.length+1}`).slice(0,20), same=ps.findIndex(p=>p.name===name);
+    if(same>=0) ps[same].ids=readMarks(); else ps.push({name,ids:readMarks()});   // same name overwrites
+    savePresets(ps.slice(0,MAX_PRESETS)); presetNaming=false; openCodex(`Saved preset “${esc(name)}”`);
+  } else if(q('[data-load]')){
+    const p=ps[+q('[data-load]').dataset.load]; undoMarks=readMarks(); saveMarks(p.ids.filter(id=>U[id]).slice(0,MAX_MARKS));
+    openCodex(`Loaded “${esc(p.name)}” <button class="b mkreset" data-undo>Undo</button>`);
+  } else if(q('[data-del]')){
+    const i=+q('[data-del]').dataset.del, gone=ps.splice(i,1)[0]; savePresets(ps); openCodex(`Deleted preset “${esc(gone.name)}”`);
+  } else return;
+  $('#codexGrid').scrollTop=sc; renderUI();
+});
 $('#codexGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-mark]'); if(!b) return; const id=b.dataset.mark, m=readMarks(), sc=$('#codexGrid').scrollTop;
   if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS){ openCodex(`You can mark up to ${MAX_MARKS} heroes — unmark one first`); $('#codexGrid').scrollTop=sc; return; } else m.push(id);
   saveMarks(m); openCodex(); $('#codexGrid').scrollTop=sc; renderUI(); });
@@ -1142,7 +1183,7 @@ $('#codexCount').addEventListener('click',e=>{ const sc=$('#codexGrid').scrollTo
   else if(e.target.closest('[data-undo]')&&undoMarks){ saveMarks(undoMarks); undoMarks=null; openCodex(); }
   else return;
   $('#codexGrid').scrollTop=sc; renderUI(); });
-$('#codexClose').onclick=()=>{ $('#codex').hidden=true; };
+$('#codexClose').onclick=()=>{ $('#codex').hidden=true; presetNaming=false; };
 
 // ====== events between rounds (every 4th round) ======
 const isEventRound=r=>r>=4&&r%4===0;
