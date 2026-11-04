@@ -167,56 +167,71 @@ def axe(s, haft, head_rp, x0, y0, x1, y1, big=1.0):
 
 
 def axebrute():
+    # Shieldmaiden: a viking warrior woman with long braided copper hair, a nose-guard steel cap,
+    # a fur-trimmed blue tunic over mail, a painted round shield on her back and a bearded war-axe
     s = Spr()
-    fur, paint, skin = ramp('#8a6a4a', 1.1), ramp('#c03030'), ramp('#e0a880', .9)
+    tunic, mail, fur, hair, skin = ramp('#2f5a8a', 1.2), ramp('#9aa4b4', 1.3), ramp('#8a6a4a', 1.1), ramp('#c8542a', 1.2, 1.1), ramp('#f2c8a0', .85)
+    shield, rim = ramp('#c83a2a', 1.2), P['steel']
+    with s.grp('cape'):   # round painted shield slung on her back
+        s.part(rim, [('ell', 37, 33, 9, 9)], soft=1.5, gloss=1)
+        s.part(shield, [('ell', 37, 33, 7.4, 7.4)], soft=1.4)
+        s.part(ramp('#f2e2b0', .8), [('poly', [(37, 26), (38.4, 33), (37, 40), (35.6, 33)]), ('poly', [(30, 33), (37, 31.6), (44, 33), (37, 34.4)])], soft=.3, line=False)
+        s.part(rim, [('ell', 37, 33, 1.6, 1.6)], soft=.4, gloss=1.4)
+        s.part(hair, [('line', [(33, 22), (35, 32), (33, 40)], 1.6), ('line', [(23, 22), (21, 32), (23, 40)], 1.6)], soft=.8)   # long braids
     legs(s, ramp('#4a3a2a'), ramp('#3a2a1a'))
-    torso(s, skin, hem=44)
+    torso(s, mail, hem=44)
     with s.grp('body'):
-        s.part(skin, [('poly', [(18.5, 29), (37.5, 29), (37, 41), (19, 41)])], soft=2, cast=1)   # broad bare chest
-        s.part(paint, [('cap', 23, 32, 26, 37, .7), ('cap', 33, 32, 30, 37, .7)], soft=.3, line=False)   # war paint
-        s.part(fur, [('poly', [(19, 40), (37, 40), (38, 47), (28, 48.5), (18, 47)])], soft=1.4)   # fur kilt
-    belt(s, ramp('#3a2a1a'), 40, P['steel'])
-    axe(s, P['wood'], P['steel'], 42, 41, 45, 13)
-    arm(s, skin, skin, (36, 30), (40, 36), (42.5, 40.5), r=3.4, glove=ramp('#5a3a2a'), hand_r=2.5)
-    s.part(fur, [('chord', 36.5, 31, 6, 5, 180, 360)], soft=1.6, cast=1)
-    arm(s, skin, skin, (20, 30), (16.5, 35), (16, 40), r=3.4, glove=ramp('#5a3a2a'), hand_r=2.5)
-    s.part(fur, [('chord', 19.5, 31, 6, 5, 180, 360)], soft=1.6, cast=1)
-    head(s)
-    bangs(s, ramp('#a04a2a', 1.0), 'spiky', shine=9)
-    s.part(P['steel'], [('chord', 28, 14, 12, 7, 180, 360), ('rect', 15.5, 12, 40.5, 14.5)], soft=1, gloss=1, cast=2)   # helmet
-    s.part(ramp('#f0e8d0', .7), [('poly', [(16, 11), (9, 3), (8, 8), (14, 14)]), ('poly', [(40, 11), (47, 3), (48, 8), (42, 14)])], soft=.6, gloss=.8)   # horns
-    face(s, '#3a7ab0')
+        s.part(tunic, [('poly', [(21, 31), (35, 31), (36.5, 46), (28, 47.5), (19.5, 46)])], soft=1.2)   # tunic over the mail
+        s.part(fur, [('ell', 28, 29.5, 9, 3)], soft=1, cast=1)   # fur collar
+        s.part(ramp('#d8b860', 1.2), [('cap', 21, 44, 35, 44, .5)], soft=.3, line=False)
+    belt(s, ramp('#4a3020'), 40, P['gold'])
+    axe(s, ramp('#5a3a20', 1.1), ramp('#d8dce8', 1.3), 42, 42, 45, 14, 1.0)
+    arm(s, mail, skin, (35, 30), (38.5, 36), (42, 41), r=2.6, glove=fur)
+    arm(s, mail, skin, (21, 30), (18.5, 35), (18, 39.5), r=2.6, glove=fur)
+    head(s, skin)
+    bangs(s, hair, 'long', shine=10)
+    s.part(P['steel'], [('chord', 28, 15.5, 11.5, 9, 180, 360), ('rect', 16.5, 13.5, 39.5, 15.5)], soft=1.6, gloss=1.3, cast=2)   # steel cap
+    s.part(P['steel'], [('rect', 27, 14, 29, 22)], soft=.3, gloss=1.2)   # nose guard
+    s.part(ramp('#d8b860', 1.2), [('rect', 16.5, 14.5, 39.5, 15.5)], soft=.2, line=False)
+    face(s, '#3a8ad0', mouth='smile')
+    s.part(ramp('#3a6ab8', 1.2), [('cap', 21, 23.5, 22.5, 23.5, .35), ('cap', 33.5, 23.5, 35, 23.5, .35)], soft=.1, line=False)   # war paint
     return s
 
 
 def chieftain():
+    # Jarl: a giant viking chieftain, horned helm, a long braided red beard, a bear-fur cloak,
+    # runes glowing on his arms and a two-handed great axe with a runed blade
     s = Spr()
-    pelt, gold, skin, paint = ramp('#5a4a3a', 1.2), P['gold'], ramp('#c88a60', .9), ramp('#3a7ad0', 1.1)
-    cape(s, ramp('#6a6a72', 1.2), 1.5, 53)   # wolf pelt
+    pelt, gold, skin, beard, rune = ramp('#4a3a2a', 1.25), P['gold'], ramp('#d09a70', .9), ramp('#b84a24', 1.2), ramp('#6ad8ff', 1.3, 1.3)
+    cape(s, ramp('#3a2e26', 1.25), 1.6, 53)   # bear-fur cloak
+    with s.grp('cape'):
+        s.part(pelt, [('poly', [(14, 30), (20, 26), (36, 26), (42, 30), (40, 34), (16, 34)])], soft=1.2)   # fur mantle
     legs(s, ramp('#3a2a20'), ramp('#2a1a10'))
     torso(s, skin, hem=44)
     with s.grp('body'):
         s.part(skin, [('poly', [(18, 29), (38, 29), (37.5, 41), (18.5, 41)])], soft=2, cast=1)
-        s.part(paint, [('poly', [(22, 31), (34, 31), (28, 37)])], soft=.4, line=False)
-        s.part(pelt, [('poly', [(18.5, 40), (37.5, 40), (39, 48), (28, 49.5), (17, 48)])], soft=1.4)
-        for i in range(6):   # bone necklace
-            s.part(ramp('#f0e8d0', .7), [('ell', 22 + i * 2.4, 30 + abs(i - 2.5) * -.5 + 1.5, .9, 1.3)], soft=.3, line=False)
+        s.part(ramp('#5a4030', 1.2), [('poly', [(19, 31), (24, 29), (35, 40), (32, 41.5)])], soft=.6)   # leather strap
+        s.part(pelt, [('poly', [(18.5, 40), (37.5, 40), (39, 48), (28, 49.5), (17, 48)])], soft=1.4)   # fur kilt
+        s.part(gold, [('ell', 23.5, 33, 1.6, 1.6)], soft=.4, gloss=1.3)
     belt(s, gold, 40, ramp('#d03030'))
-    axe(s, ramp('#4a3020', 1.1), ramp('#d8dce8', 1.3), 42, 42, 45, 9, 1.25)
-    arm(s, skin, skin, (36.5, 30), (40.5, 36), (42.5, 41), r=3.6, glove=gold, hand_r=2.6)
-    s.part(pelt, [('chord', 37, 31, 6.5, 5.5, 180, 360)], soft=1.6, cast=1)
-    arm(s, skin, skin, (19.5, 30), (16, 35), (15.5, 40), r=3.6, glove=gold, hand_r=2.6)
-    s.part(pelt, [('chord', 19, 31, 6.5, 5.5, 180, 360)], soft=1.6, cast=1)
+    axe(s, ramp('#3a2a1a', 1.2), ramp('#c8ccd8', 1.35), 42, 42, 46, 7, 1.35)
+    with s.grp('weapon'):
+        s.part(rune, [('cap', 37.5, 10, 40.5, 14, .4)], soft=.2, line=False, flat=True, bias=.35)   # rune on the blade
+    arm(s, skin, skin, (36.5, 30), (40.5, 36), (42.5, 41), r=3.7, glove=pelt, hand_r=2.6)
+    arm(s, skin, skin, (19.5, 30), (16, 35), (15.5, 40), r=3.7, glove=pelt, hand_r=2.6)
+    s.part(rune, [('cap', 15.5, 33, 17.5, 37, .35), ('cap', 40, 33, 41.5, 36.5, .35)], soft=.2, line=False, flat=True, bias=.35)   # glowing arm runes
     head(s)
-    bangs(s, ramp('#e8e0d0', .8), 'spiky', shine=10)
-    s.part(ramp('#e8e0d0', .8), [('poly', [(21, 25), (35, 25), (33, 33), (30, 37), (28, 34), (26, 37), (23, 33)])], soft=1)   # braided beard
-    s.part(gold, [('ell', 26, 34.5, .9, .9), ('ell', 30, 34.5, .9, .9)], soft=.2, line=False)
-    s.part(paint, [('rect', 19, 17.5, 37, 18.6)], soft=.2, line=False)
-    face(s, '#3a7ad0')
-    for x, y in ((6, 22), (51, 30)):
-        sparkle(s, x, y, (255, 210, 150))
+    bangs(s, beard, 'spiky', shine=10)
+    s.part(beard, [('poly', [(20, 24), (36, 24), (34, 33), (31, 39), (28, 35), (25, 39), (22, 33)])], soft=1)   # braided beard
+    s.part(gold, [('ell', 25, 36.5, 1, 1), ('ell', 31, 36.5, 1, 1)], soft=.2, line=False)
+    s.part(P['steel'], [('chord', 28, 15, 12, 9.5, 180, 360), ('rect', 16, 13, 40, 15.5)], soft=1.6, gloss=1.3, cast=2)   # helm
+    s.part(gold, [('rect', 16, 13.5, 40, 15.2), ('rect', 27, 6, 29, 15)], soft=.3, gloss=1.2)
+    horn = ramp('#f0e6d0', .8)
+    s.part(horn, [('poly', [(16.5, 12), (9, 9), (5, 2), (10, 6), (17, 9.5)]), ('poly', [(39.5, 12), (47, 9), (51, 2), (46, 6), (39, 9.5)])], soft=.6, gloss=1)   # horns
+    face(s, '#3a7ad0', mouth=None, blush=False)
+    for x, y in ((6, 24), (52, 30)):
+        sparkle(s, x, y, (150, 230, 255))
     return s
-
 
 NEWCLASSES2 = dict(shadowstep=shadowstep, phantomblade=phantomblade, riftcaller=riftcaller, eclipsewitch=eclipsewitch,
                    thornweaver=thornweaver, galecaller=galecaller, axebrute=axebrute, chieftain=chieftain)

@@ -436,7 +436,7 @@ const CLASSES = {
   samurai:{name:'Samurai',color:'#ff7a5a', desc:['Bushido: samurai deal +25% damage below half HP','Bushido: samurai deal +50% damage below half HP and their first strike each battle crits']},
   frost:{name:'Frost Healer',color:'#8ae0ff', desc:['Your heals-over-time are 30% stronger','Your heals-over-time are 60% stronger and Ice Ward lasts 1s longer']},
   occultist:{name:'Occultist',color:'#9ac040', desc:['Enemies take 10% more damage','Enemies take 20% more damage and gain 25% less mana']},
-  crusader:{name:'Crusader',color:'#e0b080', desc:['Allies in the back two rows take 15% less damage','Allies in the back two rows take 30% less damage; crusaders start with a 20% max HP shield']},
+  crusader:{name:'Crusader',color:'#e0b080', desc:['Allies in the back two rows take 20% less damage; crusaders take 10% less damage','Allies in the back two rows take 35% less damage; crusaders take 20% less damage and start with a 25% max HP shield']},
   summoner:{name:'Summoner',color:'#3fd0b0', desc:['Summons have +25% HP and damage','Summons have +50% HP and damage; summoners call one when battle starts']},
   bard:{name:'Bard',color:'#ffb050', desc:['Songs reach 3 cells (from 2)','Songs reach 3 cells and are 50% stronger']},
   alchemist:{name:'Alchemist',color:'#7ad66a', desc:['+1 gold after every battle, win or lose','+2 gold after every battle; every alchemist skill also poisons']},
@@ -500,9 +500,9 @@ const UNITS = [
   {id:'bogwitch',    name:'Bog Witch',    cls:'occultist',org:'starborn', cost:2,hp:650, atk:55, range:3,as:1.1, ms:1.4},
   {id:'doomherald',  name:'Doom Herald',  cls:'occultist',org:'gilded',   cost:3,hp:1000,atk:85, range:3,as:1.1, ms:1.4},
   // crusaders: each links to the nearest back-line ally when battle starts and takes part of its damage (guard)
-  {id:'bulwark',     name:'Bulwark',      cls:'crusader',org:'gilded',   cost:2,hp:1100,atk:60, range:1,as:1.1, ms:1.6,guard:.3},
-  {id:'templar',     name:'Templar',      cls:'crusader',org:'moonblood',cost:3,hp:1500,atk:95, range:1,as:1.0, ms:1.8,guard:.3},
-  {id:'aegispaladin',name:'Aegis Paladin',cls:'crusader',org:'ironvow',  cost:4,hp:2200,atk:120,range:1,as:1.0, ms:1.6,guard:.4},
+  {id:'bulwark',     name:'Guardian',     cls:'crusader',org:'gilded',   cost:2,hp:1250,atk:70, range:1,as:1.0, ms:1.6,guard:.3},
+  {id:'templar',     name:'Templar',      cls:'crusader',org:'moonblood',cost:3,hp:1650,atk:108,range:1,as:.95, ms:1.8,guard:.3},
+  {id:'aegispaladin',name:'Aegis Paladin',cls:'crusader',org:'ironvow',  cost:4,hp:2400,atk:135,range:1,as:.95, ms:1.6,guard:.4},
   // summoners: their skill calls a summon (see SUMMONS); summons fight until the battle ends
   {id:'spiritcaller',name:'Spirit Caller',cls:'summoner',org:'moonblood',cost:1,hp:430, atk:32, range:3,as:1.1, ms:1.4,calls:'wisp'},
   {id:'beastmaster', name:'Beastmaster',  cls:'summoner',org:'wildheart',cost:2,hp:720, atk:58, range:1,as:1.0, ms:1.7,calls:'wolf'},
@@ -547,8 +547,8 @@ const UNITS = [
   {id:'thornweaver', name:'Thornweaver',  cls:'druid',org:'wildheart',    cost:2,hp:640, atk:50, range:3,as:1.0, ms:1.4},
   {id:'galecaller',  name:'Galecaller',   cls:'druid',org:'starborn',     cost:3,hp:880, atk:70, range:3,as:1.0, ms:1.5},
   // berserkers: giants that spin huge axes
-  {id:'axebrute',    name:'Axe Brute',    cls:'berserker',org:'ironvow',  cost:2,hp:1100,atk:78, range:1,as:1.0, ms:1.6,scale:1.12},
-  {id:'chieftain',   name:'Giant Chieftain',cls:'berserker',org:'wildheart',cost:4,hp:2100,atk:145,range:1,as:1.0,ms:1.6,scale:1.2},
+  {id:'axebrute',    name:'Shieldmaiden',    cls:'berserker',org:'ironvow',  cost:2,hp:1100,atk:78, range:1,as:1.0, ms:1.6,scale:1.12},
+  {id:'chieftain',   name:'Viking Jarl',cls:'berserker',org:'wildheart',cost:4,hp:2100,atk:145,range:1,as:1.0,ms:1.6,scale:1.2},
 ];
 // called by summoners (or bosses); not in the shop
 const SUMMONS = [
@@ -932,10 +932,10 @@ const SKILLS = {
     cast(a){ const w=friends(a).filter(b=>b!==a&&!(b.root>0)).sort(byHurt)[0];
       if(w){ const spot=safest(a); w.leap={x0:w.x,y0:w.y,x1:spot.x,y1:spot.y,t:0,T:.45}; w.shield+=w.max*.2; FX('smoke',w.x,w.y-.1,{s:1,add:false,m:.5}); }
       for(const b of friends(a)) if(b!==w){ b.windT=3; burst(b.x,b.y+.2,'#dff6ff',6,2,2,-2); } V({k:'ring',x:a.x,y:a.y,r:3,c:'#bfefff',m:.6}); }},
-  axebrute:{name:'Whirlwind', mp:70, desc:'Spins for 1.5s, moving toward the target: enemies within 1.4 cells are hit 5 times for 60% damage. Can\'t be cast while rooted.',
-    cast(a){ a.spin={t:1.5,T:1.5,r:1.4,m:.6,every:.3,acc:0}; }},
-  chieftain:{name:'Cyclone of Ruin', mp:100, desc:'Spins for 2.4s, chasing the target: enemies within 1.7 cells are hit 8 times for 70% damage, then a ground slam deals 120% and stuns them for 1s. Can\'t be cast while rooted.',
-    cast(a){ a.spin={t:2.4,T:2.4,r:1.7,m:.7,every:.3,acc:0,slam:1}; addTrauma(.2); }},
+  axebrute:{name:'Whirlwind', mp:70, desc:'Spins for 1.5s, moving toward the target: enemies within 1.4 cells are hit 5 times for 60% damage. While spinning it takes 40% less damage and is immune to debuffs. Can\'t be cast while rooted.',
+    cast(a){ spinStart(a); a.spin={t:1.5,T:1.5,r:1.4,m:.6,every:.3,acc:0}; }},
+  chieftain:{name:'Cyclone of Ruin', mp:100, desc:'Spins for 2.4s, chasing the target: enemies within 1.7 cells are hit 8 times for 70% damage, then a ground slam deals 120% and stuns them for 1s. While spinning it takes 40% less damage and is immune to debuffs. Can\'t be cast while rooted.',
+    cast(a){ spinStart(a); a.spin={t:2.4,T:2.4,r:1.7,m:.7,every:.3,acc:0,slam:1}; addTrauma(.2); }},
   arctower:{name:'Overload', mp:80, desc:'Discharges: 150% damage to every enemy within 2 cells, Shocking them.',
     cast(a){ for(const e of foes(a)) if(dist(e,a)<=2){ hit(a,e,1.5); inflict(e,'shock'); V({k:'bolt',x:a.x,y:a.y-.8,x2:e.x,y2:e.y-.3,c:'#9ff6ff',m:.3}); } V({k:'ring',x:a.x,y:a.y,r:2,c:'#9ff6ff',m:.5}); }},
   turret:{name:'Volley', mp:70, desc:'Fires three quick shots at the target for 60% damage each.',
@@ -965,17 +965,19 @@ const SKILLS = {
   doomherald:{name:'Unmake', mp:85, desc:'Dispels every enemy within 2 cells of the target (removes shields and buffs), deals 150% damage and breaks their armor for 5s (+25% damage taken).',
     cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=2){ dispel(e); hit(a,e,1.5); inflict(e,'shred',5); FX('strike',e.x,e.y+.3,{s:.55,tint:'#b040ff',m:.5}); }
       V({k:'flash',x:0,y:0,c:'#6020a0',m:.25}); V({k:'rays',x:t.x,y:t.y+.3,c:'#9040d0',r:2,m:.7}); hitStop(.06); }},
-  bulwark:{name:'Bastion', mp:70, desc:'Gains a physical shield worth 25% of its max HP and shields its linked ally and allies within 2 cells for 12% of its max HP. Guardian Link: takes 30% of the damage its linked back-line ally would take.',
-    cast(a){ a.shield+=a.max*.25; V({k:'dome',x:a.x,y:a.y,c:'#ffe0a0',r:.75,m:.8}); FX('nova',a.x,a.y-.3,{s:1.2,tint:'#ffd890',m:.55}); addTrauma(.2);
-      for(const b of friends(a)) if(b!==a&&(b.guard===a||dist(a,b)<=2)){ b.shield+=a.max*.12; V({k:'dome',x:b.x,y:b.y,c:'#ffe0a0',r:.6,m:.7}); } }},
+  bulwark:{name:'Bastion', mp:65, desc:'Gains a physical shield worth 30% of its max HP and shields its linked ally and allies within 2 cells for 15% of its max HP. Guardian Link: takes 30% of the damage its linked back-line ally would take.',
+    cast(a){ a.shield+=a.max*.3; V({k:'dome',x:a.x,y:a.y,c:'#ffe0a0',r:.75,m:.8}); FX('nova',a.x,a.y-.3,{s:1.2,tint:'#ffd890',m:.55}); addTrauma(.2);
+      for(const b of friends(a)) if(b!==a&&(b.guard===a||dist(a,b)<=2)){ b.shield+=a.max*.15; V({k:'dome',x:b.x,y:b.y,c:'#ffe0a0',r:.6,m:.7}); } }},
   templar:{name:'Holy Charge', mp:80, desc:'Charges the enemy closest to your back line: 220% damage, a 1s stun, and enemies within 1.5 cells must attack it. Guardian Link: takes 30% of its linked ally\'s damage.',
     cast(a){ const back=friends(a).filter(b=>b.back), t=foes(a).sort((p,q)=>Math.min(...back.map(b=>dist(b,p)),99)-Math.min(...back.map(b=>dist(b,q)),99))[0]; if(!t) return;
       V({k:'burst',x:a.x,y:a.y,r:.7,c:'#ffe0a0'}); a.x=Math.min(COLS-.5,Math.max(.5,t.x+(a.x<t.x?-.7:.7))); a.y=t.y; a.tgt=t; a.face=t.x<a.x?-1:1;
       hit(a,t,2.2,true); stun(t); for(const e of foes(a)) if(dist(e,a)<=1.5) e.tgt=a; FX('slash',t.x,t.y-.25,{s:.9,tint:'#ffe0a0',flip:a.face<0});
       V({k:'arc',x:t.x,y:t.y,c:'#ffe0a0',r:1.2,dir:a.face,m:.35}); V({k:'cross',x:a.x,y:a.y,c:'#ffe0a0',m:.6}); hitStop(.06); }},
-  aegispaladin:{name:'Sacred Aegis', mp:100, desc:'Every ally in the back rows gains a physical shield worth 20% of its max HP and enemies near them are knocked back for 100% damage; heals itself for 20% max HP. Guardian Link: takes 40% of its linked ally\'s damage.',
-    cast(a){ V({k:'flash',x:0,y:0,c:'#fff0c0',m:.3}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe0a0',r:1.6,m:.8}); heal(a,a.max*.2,a); FX('geyser',a.x,a.y+.3,{s:1.2,tint:'#fff0c0',m:.7});
-      for(const b of friends(a)) if(b.back){ b.shield+=a.max*.2; V({k:'dome',x:b.x,y:b.y,c:'#fff0c0',r:.7,m:.9}); FX('strike',b.x,b.y+.3,{s:.55,tint:'#fff0c0',m:.55});
+  aegispaladin:{name:'Sacred Aegis', mp:85, desc:'Slams a holy nova: 160% damage and a 1s stun to enemies within 1.6 cells. Every ally gains a physical shield worth 12% of its max HP (25% in the back rows) and enemies near back-row allies are knocked back for 100% damage; heals itself for 25% max HP. Guardian Link: takes 40% of its linked ally\'s damage.',
+    cast(a){ V({k:'flash',x:0,y:0,c:'#fff0c0',m:.3}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe0a0',r:1.6,m:.8}); heal(a,a.max*.25,a); FX('geyser',a.x,a.y+.3,{s:1.2,tint:'#fff0c0',m:.7});
+      for(const e of foes(a)) if(dist(e,a)<=1.6){ hit(a,e,1.6); stun(e); } V({k:'ring',x:a.x,y:a.y+.3,r:1.6,c:'#fff0c0',m:.5});
+      for(const b of friends(a)) if(!b.back&&b!==a) b.shield+=b.max*.12;
+      for(const b of friends(a)) if(b.back){ b.shield+=b.max*.25; V({k:'dome',x:b.x,y:b.y,c:'#fff0c0',r:.7,m:.9}); FX('strike',b.x,b.y+.3,{s:.55,tint:'#fff0c0',m:.55});
         for(const e of foes(a)) if(dist(e,b)<=1.5){ hit(a,e,1); const d=dist(e,b)||1; e.x=Math.min(COLS-.5,Math.max(.5,e.x+(e.x-b.x)/d*1.2)); e.y=Math.min(ROWS-.5,Math.max(.5,e.y+(e.y-b.y)/d*1.2)); } } }},
   spiritcaller:{name:'Wisp Pact', mp:60, desc:'Summons a Wisp that shoots magic bolts (up to 2). With 2 already out, they are healed to full instead.',
     cast(a){ if(!summon(a,'wisp',2)) for(const w of friends(a)) if(w.owner===a) heal(w,w.max,a); }},
@@ -1740,7 +1742,8 @@ function applySynergy(f){
     for(const x of fs){ x.red=[0,.2,.4][lv.warrior]; x.asM=[1,1.25,1.5][lv.archer]; x.regen=[0,.01,.02][lv.holy]; x.crit=[0,.2,.4][lv.rogue]; x.dmgM=[1,1.3,1.6][lv.magic];
       x.killAS=[0,.08,.15][olv.wildheart]; x.leech=[0,.15,.3][olv.moonblood];
       x.mp=x.mpMax*[0,.3,.6][olv.starborn]; x.shield=x.max*[0,.15,.3][olv.ironvow];
-      x.back=team===0?x.y>6:x.y<2; x.backRed=x.back?[0,.15,.3][lv.crusader]:0; if(U[x.type].cls==='crusader'&&lv.crusader>=2) x.shield+=x.max*.2;
+      x.back=team===0?x.y>6:x.y<2; x.backRed=x.back?[0,.2,.35][lv.crusader]:0;
+      if(U[x.type].cls==='crusader'){ x.red=Math.min(.7,(x.red||0)+[0,.1,.2][lv.crusader]); if(lv.crusader>=2) x.shield+=x.max*.25; }
       x.lucky=lv.gambler>=1; x.lucky2=lv.gambler>=2;
       if(U[x.type].cls==='samurai'){ x.bushido=[0,.25,.5][lv.samurai]; x.firstCrit=lv.samurai>=2; }
       x.hotBoost=[1,1.3,1.6][lv.frost]; x.wardPlus=lv.frost>=2?1:0;
@@ -1903,7 +1906,9 @@ function ward(u,secs,src){ if(u.hp<=0) return; secs+=(src&&src.wardPlus)||0; u.w
   pop(u,'Ice Ward','#dff8ff',true); SND.play('freeze'); FX('nova',u.x,u.y-.3,{s:1,tint:'#cff6ff',m:.5}); }
 // strip an enemy's buffs: shields, Quicksilver charges, Spellblade charges
 function dispel(u){ if(u.hp<=0) return; u.haste=0; u.hotT=0; u.furyT=0; if(u.mshield>1){ u.mshield=0; pop(u,'Dispelled','#d0a0ff'); } if(u.shield>1||u.cloak>0||u.sb>0){ pop(u,'Dispelled','#d0a0ff'); burst(u.x,u.y-.3,'#d0a0ff',10,3,3,-1); } u.shield=0; u.cloak=0; u.sb=0; }   // can still move and cast, but not attack   // can't act at all, but any direct damage shatters it
-function inflict(u,k,s){ if(u.hp<=0) return; s=STATUS[k].dur||s;
+// a Berserker starting to spin throws off its debuffs (it is immune until the spin ends)
+function spinStart(a){ for(const k of ['stun','sil','blind','slow','dis','shred','drain','wnd','shock','root','frz','taunt']) if(a[k]>0) a[k]=0; a.psn=null; a.brn=null; a.tauntBy=null; }
+function inflict(u,k,s){ if(u.hp<=0||u.spin) return;   // spinning Berserkers shrug off every debuff s=STATUS[k].dur||s;
   if(u.cloak>0){ u.cloak--; pop(u,'Blocked','#e8e8ff'); burst(u.x,u.y-.3,'#e8e8ff',8,2,3,-1); return; }   // Quicksilver Cloak
   if(!(u[k]>0)){ pop(u,STATUS[k].label,STATUS[k].c); V({k:'ring',x:u.x,y:u.y,r:.6,c:STATUS[k].c,m:.35}); burst(u.x,u.y-.3,STATUS[k].c,8,2,3,-1); }
   if(k==='frz') SND.play('freeze');
@@ -1925,7 +1930,7 @@ function freeze(u,chance,s){ if(u.hp<=0||U[u.type].boss||Math.random()>=chance) 
   if(u.frz>0&&u.brn){ u.brn=null; pop(u,'Doused','#bff2ff'); }   // ice puts out fire
   return !had; }
 // damage over time: poison ticks once per second, burn ticks twice per second (half the damage each tick)
-function burn(u,dps,s,src){ if(u.hp<=0) return;
+function burn(u,dps,s,src){ if(u.hp<=0||u.spin) return;
   if(u.frz>0){ u.frz=0; pop(u,'Thawed','#ffd0a0'); }   // fire melts ice
   if(!u.brn){ pop(u,'Burning','#ff9a40'); burst(u.x,u.y-.3,'#ff9a40',8,2,3,-1.5); }
   u.brn={dps:Math.max(dps,u.brn?u.brn.dps:0),t:s,T:s,src,acc:0}; }
@@ -1937,7 +1942,7 @@ function burnTick(a,d,dmg){ let left=dmg;
 function dotTick(a,d,dmg,c){ a.hp-=dmg; a.dtk+=dmg; if(d.src) d.src.dd+=dmg; pop(a,Math.round(dmg),c); }
 // poison stacks: each hit adds a stack (max 5) and refreshes it to at least 5s; every stack deals 60% of the hit's damage per second
 const PSN_MAX=5;
-function poison(u,dps,s,src,lbl='Poisoned',c='#8be06a'){ if(u.hp<=0) return;
+function poison(u,dps,s,src,lbl='Poisoned',c='#8be06a'){ if(u.hp<=0||u.spin) return;
   const per=dps*.6, dur=Math.max(s,5), p=u.psn;
   if(!p){ pop(u,lbl,c); burst(u.x,u.y-.3,c,8,2,3,-1); u.psn={dps:per,n:1,t:dur,T:dur,src,acc:0}; return; }
   p.n=Math.min(PSN_MAX,p.n+1); p.dps=Math.max(p.dps,per); p.t=p.T=Math.max(p.t,dur); p.src=src||p.src; pop(u,`Poison ×${p.n}`,c); }
@@ -1969,7 +1974,7 @@ function shoot(a,t,mult=1,c,big,onHit){
 function deal(t,dmg,crit,src){
   if(t.ghost>0&&src) return;   // ninja mid-strike: untouchable
   if(src&&(t.dodge||t.zen>0||t.nDodgeT>0)&&Math.random()<(t.dodge||0)+(t.zen>0?.5:0)+(t.nDodgeT>0?t.nDodge:0)){ pop(t,'Dodge','#fff3c0'); return; }   // Monks, Ninjas
-  dmg*=(1-t.red)*(1-(t.sRed||0))*(0.9+Math.random()*.2);
+  dmg*=(1-t.red)*(1-(t.sRed||0))*(t.spin?.6:1)*(0.9+Math.random()*.2);   // spinning Berserkers take 40% less damage
   if(U[t.type].armor&&t.hp>t.max*.5) dmg*=1-U[t.type].armor;   // boss stoneskin while above half HP
   if(t.ward>0){ if(!isMagic(src)){ if(src) pop(t,'Immune','#dff8ff'); return; } dmg*=1.2; }   // Ice Ward: physical can't touch it, magic hurts more
   if(t.backRed) dmg*=1-t.backRed;   // Crusader bonus
