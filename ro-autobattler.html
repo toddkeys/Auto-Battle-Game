@@ -90,6 +90,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
   box-shadow:inset 0 0 0 3px var(--brass),inset 0 0 0 5px var(--ink),0 10px 30px #000;transition:transform .15s,box-shadow .15s;animation:rise .4s both}
 .bless:nth-child(2){animation-delay:.08s}.bless:nth-child(3){animation-delay:.16s}
 .bless:hover{transform:translateY(-10px) scale(1.03);box-shadow:inset 0 0 0 3px var(--brass-hi),inset 0 0 0 5px var(--ink),0 0 30px rgba(255,210,100,.5),0 16px 30px #000}
+.bless.maxed{opacity:.45;filter:grayscale(.7);cursor:not-allowed}.bless .bs .mx{color:#ff9a80}
 .bless .bs{margin-top:12px;padding-top:10px;border-top:1px dashed rgba(255,226,122,.35);font-size:13px;color:var(--muted)}.bless .bs b{color:#9dffb0}
 .bless .bi{font-size:64px;margin:10px 0 16px}.bless .bn{font:400 32px var(--pixel);color:var(--gold)}.bless .bd{margin-top:10px;font-size:15px;color:var(--text)}
 details summary{margin-top:-2px}
@@ -331,12 +332,13 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <div class="actions">
         <button class="b blue" id="bReroll">Reroll · 2</button>
         <button class="b" id="bSell">Sell</button>
+        <button class="b" id="bBig" data-tip="Big Shop: the shop shows 10 heroes instead of 5 for the rest of this run">🛒 10 heroes (200💰)</button>
         <button class="b" id="bCap" data-tip="Upgrade the shop: +1 hero slot on the field and better odds for 2-4 gold heroes">Upgrade</button>
       </div>
       <button class="b go" id="bFight">⚔ Start battle</button>
     </div>
     <div class="card"><h3>Hero</h3><div id="info"></div></div>
-    <div class="card"><h3>Items <span class="hint">drag onto a hero</span></h3><div id="items" class="items"></div></div>
+    <div class="card"><h3 class="shophead">Items <span class="hint">drag onto a hero</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="items" class="items"></div></div>
     <div class="card">
       <details id="howto"><summary>How to play</summary>
       <ol class="help">
@@ -366,7 +368,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
-        <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper replays the current song (Encore); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
+        <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper speeds up one ally (Rousing Note); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
         <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ <b>Poison</b>: damage once per second, <b>stacks up to 5</b>, lasts at least 5s and cuts healing on the target by 30% (good vs healers) · 🔥 <b>Burn</b>: fire skills, damage twice per second, refreshes instead of stacking, <b>deals double damage to shields</b> and <b>jumps to a nearby enemy</b> when the target dies (good vs shields and groups). Fire melts Frozen; freezing puts out fire. A hero can be poisoned and burning at once · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. Each shop Upgrade improves the odds; a fully upgraded shop late in the run rolls 1💰 heroes only 10% of the time, and each slot has a 5% extra chance to show a hero you already own (not yet ★★★). "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
@@ -654,11 +656,14 @@ const BLESSINGS={
   merc:{name:'Mercenary',icon:'🎖️',desc:'A random 4-gold hero joins your bench now',total:n=>`${n} hero${n>1?'es':''} recruited`,now:()=>{ const i=freeBench(); if(i<0){ S.gold+=8; return msg('Bench full: took 8 gold instead'); }
     S.units.push({uid:S.uid++,type:pick(UNITS.filter(u=>u.cost===4)).id,star:1,items:[],bought:-1,loc:{w:'bench',i}}); merge(); }},
 };
+const BLESS_MAX=3;   // a blessing stacks up to x3
+const blessOwned=k=>S.buffs.filter(x=>x===k).length;
 function offerBlessings(){
-  const keys=Object.keys(BLESSINGS).sort(()=>Math.random()-.5).slice(0,3), owned=k=>S.buffs.filter(x=>x===k).length;
-  $('#cardrow').innerHTML=keys.map(k=>{ const b=BLESSINGS[k], n=owned(k);
-    return `<button class="bless" data-k="${k}"><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>
-      <div class="bs">${n?`<b>Stacks!</b> You have ×${n} → ×${n+1}:<br>${b.total(n+1)}`:'Stacks if you pick it again later'}</div></button>`; }).join('');
+  let keys=Object.keys(BLESSINGS).sort(()=>Math.random()-.5).slice(0,3);
+  if(keys.every(k=>blessOwned(k)>=BLESS_MAX)){ const open=Object.keys(BLESSINGS).filter(k=>blessOwned(k)<BLESS_MAX); if(open.length) keys[0]=open[Math.floor(Math.random()*open.length)]; }   // always at least one you can take
+  $('#cardrow').innerHTML=keys.map(k=>{ const b=BLESSINGS[k], n=blessOwned(k), maxed=n>=BLESS_MAX;
+    return `<button class="bless ${maxed?'maxed':''}" data-k="${k}" ${maxed?'disabled':''}><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>
+      <div class="bs">${maxed?`<b class="mx">MAXED ×${BLESS_MAX}</b><br>${b.total(n)}`:n?`<b>Stacks!</b> You have ×${n} → ×${n+1}:<br>${b.total(n+1)}`:`Stacks up to ×${BLESS_MAX}`}</div></button>`; }).join('');
   $('#cards').hidden=false;
 }
 
@@ -815,9 +820,9 @@ const SKILLS = {
   winterqueen:{name:'Absolute Zero', mp:100, desc:'Wards the two most endangered allies in ice for 2.5s, gives every ally 120% of its heal over 5s, and enemies next to the warded allies have a 40% chance to Freeze for 2s.',
     cast(a){ V({k:'flash',x:0,y:0,c:'#dff8ff',m:.3}); for(const w of friends(a).sort(byHurt).slice(0,2)){ ward(w,2.5,a); for(const e of foes(a)) if(dist(e,w)<=1.5) freeze(e,.4,2); }
       for(const b of friends(a)) hot(b,a.heal*1.2,5,a); FX('strike',a.x,a.y+.3,{s:.9,tint:'#cff6ff',m:.6}); }},
-  piper:{name:'Encore', mp:60, desc:'Replays the song that is playing right now at double strength for 3s for allies within 2 cells (Haste: +40% attack speed · Guard: 30% less damage taken · Spirit: +8 mana per second).',
-    cast(a){ const s=S.fight.song||0; for(const b of friends(a)) if(dist(a,b)<=2){ b.enc={t:3,song:s}; FX('spark',b.x,b.y-.5,{s:.45,tint:SONGS[s].c,m:.5}); }
-      V({k:'ring',x:a.x,y:a.y,r:2,c:SONGS[s].c,m:.6}); notes(a,3); }},
+  piper:{name:'Rousing Note', mp:70, desc:'Plays a quick note for the strongest-hitting ally within 3 cells: it attacks 30% faster for 4s.',
+    cast(a){ const b=friends(a).filter(x=>x!==a&&dist(a,x)<=3).sort((p,q)=>q.atk*q.dmgM-p.atk*p.dmgM)[0]||a;
+      b.haste=Math.max(b.haste||0,4); FX('spark',b.x,b.y-.5,{s:.5,tint:'#ffb050',m:.5}); V({k:'ring',x:b.x,y:b.y,r:.7,c:'#ffb050',m:.5}); notes(a,2); }},
   minstrel:{name:'Crescendo', mp:90, desc:'Plays all three songs at once at double strength for 4s for allies within 3 cells: +40% attack speed, 30% less damage taken and +8 mana per second.',
     cast(a){ for(const b of friends(a)) if(dist(a,b)<=3){ b.cresc=4; FX('spark',b.x,b.y-.5,{s:.5,tint:'#ffd27a',m:.5}); } V({k:'ring',x:a.x,y:a.y,r:3,c:'#ffb050',m:.7}); notes(a,6); }},
   dancer:{name:'Blade Waltz', mp:60, desc:'Spins through the enemies around it: 160% damage to every enemy within 1.5 cells, and allies within 2 cells gain haste (+30% attack speed) for 4s.',
@@ -1261,7 +1266,7 @@ const MODIFIERS={
 const HARD_UNLOCK=15;
 const bestKey=m=>m==='hard'?'ab_best_hard':m==='daily'?'ab_daily_'+today():'ab_best';
 function openModes(first){
-  const nb=readBest('normal'), hb=readBest('hard'), db=readBest('daily'), open=nb&&nb.round>=HARD_UNLOCK;
+  const nb=readBest('normal'), hb=readBest('hard'), db=readBest('daily'), open=true;   // Hard mode is open to everyone
   $('#modesbox').innerHTML=`<h2>New run</h2><div class="modegrid">
     <button class="mode" data-m="normal"><div class="mi">⚔</div><div class="mn">Normal</div><div class="md">The classic run.</div><div class="mb">🏆 Best ${nb?'round '+nb.round:'–'}</div></button>
     <button class="mode" data-m="daily"><div class="mi">📅</div><div class="mn">Daily Challenge</div><div class="md">Everyone gets the same shops, enemies and events today (${today()}). Compare with friends!</div><div class="mb">🏆 Today ${db?'round '+db.round:'–'}</div></button>
@@ -1581,7 +1586,12 @@ const OWNED_BONUS=.05, shopMaxed=()=>S.extra>=CAP_COSTS.length;
 const ownedForShop=()=>[...new Set(S.units.filter(u=>u.star<3&&U[u.type].cost<5).map(u=>u.type))];
 // every shop Upgrade (S.extra) also pushes the odds toward pricier heroes
 const shopRound=()=>S.round+Math.round(S.extra*1.5);
-function rollShop(){ const fav=shopMaxed()?ownedForShop():null; S.shop=seeded('shop'+S.round+':'+(S.rollN++),()=>Array.from({length:5},()=>randUnit(shopRound(),fav))); }
+function rollShop(){ const fav=shopMaxed()?ownedForShop():null; S.shop=seeded('shop'+S.round+':'+(S.rollN++),()=>Array.from({length:shopSize()},()=>randUnit(shopRound(),fav))); }
+const BIG_SHOP_COST=200, shopSize=()=>S.bigShop?10:5;
+function buyBigShop(){ if(S.bigShop||S.phase!=='prep') return; if(S.gold<BIG_SHOP_COST) return msg(`The Big Shop costs ${BIG_SHOP_COST} gold`);
+  S.gold-=BIG_SHOP_COST; S.bigShop=true; const fav=shopMaxed()?ownedForShop():null;
+  S.shop.push(...seeded('big'+S.round+':'+(S.rollN++),()=>Array.from({length:5},()=>randUnit(shopRound(),fav))));
+  SND.play('slot'); msg('🛒 Big Shop: 10 heroes every roll for the rest of this run'); render(); renderUI(); }
 
 function freeBench(){ for(let i=0;i<BENCH;i++) if(!S.units.some(u=>u.loc.w==='bench'&&u.loc.i===i)) return i; return -1; }
 function buy(k){
@@ -1704,9 +1714,13 @@ function askItem(e,i){ const k=S.inv[i], c=$('#confirm'), can=!IT(k).use;
     (can?`<div style="font-size:12px;margin-top:6px;max-width:300px">Reroll turns it into another random ${IT(k).rare?'rare ':''}item and keeps its enchant level.</div>`:'');
   c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
   c.onclick=ev=>{ if(ev.target.closest('[data-reroll]')) rerollItem(i); if(ev.target.closest('[data-sell]')) sellItem(i); if(ev.target.closest('button')) c.hidden=true; }; }
+// buy an Unbinding Scroll (takes a hero's item off) for 50 gold
+const SCROLL_COST=50;
+$('#bScroll').onclick=()=>{ if(S.gold<SCROLL_COST) return msg(`An Unbinding Scroll costs ${SCROLL_COST} gold`);
+  S.gold-=SCROLL_COST; S.inv.push('scroll'); SND.play('buy'); msg('Bought 📜 Unbinding Scroll — drag it onto a hero to take its item off'); renderUI(); };
 $('#items').addEventListener('contextmenu',e=>{ const b=e.target.closest('.it'); if(!b) return; e.preventDefault(); askItem(e,+b.dataset.i); });
-document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#confirm')) $('#confirm').hidden=true; },true);
-addEventListener('keydown',e=>{ if(e.key==='Escape') $('#confirm').hidden=true; });
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#confirm')&&!(S&&S.fight&&S.fight.paused)) $('#confirm').hidden=true; },true);
+addEventListener('keydown',e=>{ if(e.key==='Escape'&&!(S&&S.fight&&S.fight.paused)) $('#confirm').hidden=true; });
 cv.addEventListener('pointermove',e=>{
   if(!dragU) return;
   if(!dragU.moved&&Math.hypot(e.clientX-dragU.x0,e.clientY-dragU.y0)>6){ dragU.moved=true; msg(`Drop on the shop to sell for ${sellValue(dragU.u)} gold`); }
@@ -1862,7 +1876,7 @@ let ANIM=0;
 const PACE=.8;   // battle time per real second at Speed x1 (x2, x3 scale it)
 function frame(now){
   const dt=Math.min((now-last)/1000,.05); last=now; ANIM+=dt;
-  if(S&&S.fight){ if(S.phase!=='fight') tickFx(dt*speed*PACE); else if(S.fight.stop>0) S.fight.stop-=dt; else step(dt*speed*PACE); }
+  if(S&&S.fight){ if(S.phase!=='fight') tickFx(dt*speed*PACE); else if(S.fight.paused){} else if(S.fight.stop>0) S.fight.stop-=dt; else step(dt*speed*PACE); }
   trauma=Math.max(0,trauma-dt*1.4); SND.update(dt);
   if(S&&S.fight){ const F=S.fight, want=F.f.some(x=>x.hp>0&&x.castT>0&&bigCaster(x))?1:0; F.dim=(F.dim||0)+(want-(F.dim||0))*Math.min(1,dt*10); }
   if(S&&S.inspect&&S.fight&&(ANIM*5|0)!==((ANIM-dt)*5|0)) renderInfo();   // live stats, 5x a second
@@ -2205,7 +2219,8 @@ function step(dt){
   });
   tickFx(dt);
   const a0=F.f.some(x=>x.team===0&&x.hp>0), a1=F.f.some(x=>x.team===1&&x.hp>0);
-  if(!a0||!a1||F.t>60) endFight(a0&&!a1);
+  if(a0&&a1&&F.t>(F.limit||60)&&F.kind==='boss'&&!F.paused){ F.paused=true; askBossTimeout(); return; }   // boss fights: the player decides
+  if(!a0||!a1||F.t>(F.limit||60)) endFight(a0&&!a1);
 }
 // effects keep animating after the last blow (death fades, particles, floating numbers)
 function tickFx(dt){
@@ -2232,6 +2247,14 @@ function tickFx(dt){
   F.parts=F.parts.filter(p=>p.life>0);
   for(const f of F.fx) f.t-=dt; F.fx=F.fx.filter(f=>f.t>0);
   for(const v of F.vfx) v.t-=dt; F.vfx=F.vfx.filter(v=>v.t>0);
+}
+function askBossTimeout(){
+  const F=S.fight, b=F.f.find(x=>U[x.type].boss&&x.hp>0), c=$('#confirm');
+  c.innerHTML=`<div>⏰ <b>Time's up!</b> ${b?`${U[b.type].name} has ${Math.round(b.hp/b.max*100)}% HP left.`:''}</div>
+    <div class="row"><button class="b" data-keep>⚔ Keep fighting (+30s)</button> <button class="b" data-yes>Give up</button></div>`;
+  c.hidden=false; c.style.left=Math.max(8,(innerWidth-c.offsetWidth)/2)+'px'; c.style.top=Math.max(8,innerHeight*.35)+'px';
+  c.onclick=ev=>{ if(ev.target.closest('[data-keep]')){ F.limit=(F.limit||60)+30; F.paused=false; c.hidden=true; msg('Keep fighting: 30 more seconds'); }
+    else if(ev.target.closest('[data-yes]')){ F.paused=false; c.hidden=true; endFight(false); } };
 }
 function endFight(win){
   S.phase='result';
@@ -2783,6 +2806,8 @@ function renderInfo(){
 function renderUI(){
   SND.music(S.phase==='fight'||S.phase==='result'?'battle':'prep');
   if($('#sGold').textContent!==String(S.gold)){ const c=$('#coins'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
+  $('#bScroll').disabled=S.gold<SCROLL_COST;
+  $('#bBig').hidden=!!S.bigShop; $('#bBig').disabled=S.phase!=='prep'||S.gold<BIG_SHOP_COST;
   $('#sRound').textContent=S.round; $('#sHp').textContent=S.hp; $('#sGold').textContent=S.gold; $('#hpFill').style.width=Math.max(0,S.hp)+'%';
   const best=readBest(); $('#sBest').textContent=best?'round '+best.round:'–';
   $('#sCap').textContent=`${onBoard().length} / ${cap()}`; $('#sInt').textContent=`+${Math.min(5,Math.floor(S.gold/10))}`;
@@ -2843,8 +2868,9 @@ $('#shop').addEventListener('pointercancel',()=>{ if(shopDrag&&shopDrag.ghost) s
 $('#shop').addEventListener('mouseover',e=>{ const b=e.target.closest('.su'); const id=b?b.dataset.id:null; if(id!==hoverId){ hoverId=id; renderInfo(); } });
 $('#shop').addEventListener('mouseleave',()=>{ hoverId=null; renderInfo(); });
 // pick a blessing card
-$('#cardrow').addEventListener('click',e=>{ const c=e.target.closest('.bless'); if(!c) return; const b=BLESSINGS[c.dataset.k];
+$('#cardrow').addEventListener('click',e=>{ const c=e.target.closest('.bless'); if(!c||c.disabled||blessOwned(c.dataset.k)>=BLESS_MAX) return; const b=BLESSINGS[c.dataset.k];
   S.buffs.push(c.dataset.k); if(b.now) b.now(); $('#cards').hidden=true; SND.play('star'); msg(`${b.icon} ${b.name}: ${b.desc}`); render(); renderUI(); });
+$('#bBig').onclick=buyBigShop;
 $('#bLock').onclick=()=>{ S.locked=!S.locked; msg(S.locked?'Shop locked for the next round (lock again after that to keep it)':'Shop unlocked'); renderUI(); };
 // items: drag one onto a hero (equip / enchant) or onto the same item (combine)
 let itemDrag=null;
