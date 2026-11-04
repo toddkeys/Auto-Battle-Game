@@ -357,6 +357,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Samurai</b> hit harder below half HP (Bushido). <b>Frost Healers</b> heal over time and can wrap an ally in <b>Ice Ward</b>: it can't act, heals, ignores physical damage but takes 20% more magic damage.</li>
         <li><b>Occultists</b> curse enemies: armor break (+25% damage taken), mana drain, slows, and Dispel strips shields and buffs.</li>
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
+        <li><b>Back attacks</b>: hitting a hero or monster from behind (the side it isn't facing) deals 30% more damage — shown in orange. Assassins who leap behind the enemy and Grapplers who drag enemies past them make good use of it.</li>
         <li><b>Right-click an item</b> to <b>🎲 reroll</b> it into another random item of the same rarity, keeping its enchant level (30 gold), or to sell it. <b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
         <li><b>🪝 Grapplers</b> hook the enemy's back line and drag it in: the 2💰 Harpooner hooks the farthest enemy, the 4💰 Anchor Brute hooks the two farthest. Hooked enemies are stunned for 1s, and with the class bonus they take more damage for 3s. Bosses can't be dragged.</li>
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
@@ -2004,15 +2005,20 @@ function deal(t,dmg,crit,src){
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
   burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.play(crit?'crit':'hit');
-  if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else pop(t,Math.round(dmg),'#fff',false);
+  if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else pop(t,Math.round(dmg),BACKHIT?'#ffb050':'#fff',false);
+  if(BACKHIT&&Math.random()<.35) pop({x:t.x,y:t.y-.7},'Back!','#ffb050');
 }
+// back attacks: the attacker stands on the side the target is not facing
+const BACK_BONUS=.3; let BACKHIT=false;
+const isBehind=(a,t)=>t.face!==undefined&&(a.x-t.x)*t.face<-.25&&Math.abs(a.y-t.y)<1.5;
 function hit(a,t,mult=1,canCrit=mult===1){
   let dmg=a.atk*a.dmgM*mult*(CASTER===a?a.skPow||1:1)*(1+(a.bannerAmp||0)); const crit=canCrit&&(Math.random()<a.crit||a.firstCrit); if(canCrit) a.firstCrit=false; if(crit) dmg*=2;
   if(a.bushido&&a.hp<a.max*.5) dmg*=1+a.bushido;            // Samurai bonus
   if(a.furyT>0) dmg*=1.25;                                   // Lucky Roll 4
   if(a.exec&&t.hp<t.max*.35) dmg*=1+a.exec;                 // Executioner's Axe
   if(mult===1&&a.sb>0){ dmg*=1.6; a.sb--; }                 // Spellblade charges
-  deal(t,dmg,crit,a);
+  const back=isBehind(a,t); if(back) dmg*=1+BACK_BONUS;      // hitting a target from behind
+  BACKHIT=back; deal(t,dmg,crit,a); BACKHIT=false;
   if(mult===1) combo(a);
   if(mult===1&&a.cleave) for(const o of S.fight.f) if(o!==t&&o.team!==a.team&&o.hp>0&&dist(o,t)<=1.1) deal(o,dmg*a.cleave,false,a);   // Berserker cleave
   if(mult===1&&a.summon&&!a.raised&&SUMMON_HIT[a.type]&&t.hp>0) SUMMON_HIT[a.type](a,t);
