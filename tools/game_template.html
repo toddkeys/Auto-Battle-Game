@@ -50,6 +50,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 .blesslist .none{color:var(--muted)}
 #confirm{position:fixed;z-index:40;padding:10px 12px;border:2px solid var(--ink);border-radius:8px;background:linear-gradient(180deg,var(--oak),var(--oak3));box-shadow:inset 0 0 0 2px var(--brass-lo),0 10px 24px #000a;font-size:14px}
 #confirm[hidden]{display:none}#confirm .row{margin-top:8px}#confirm button.b{font-size:18px;padding:5px 12px 6px}
+#confirm .fuselead{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:14px}
+#confirm .fl{display:flex;align-items:center;gap:4px;font-size:14px!important;padding:3px 8px!important;opacity:.6}
+#confirm .fl.on{opacity:1;outline:2px solid var(--gold)}#confirm .fl .th img{max-height:30px;image-rendering:pixelated}
 #confirm [data-yes]{background:linear-gradient(180deg,#e06050,#a02a20)}
 #summary{position:fixed;inset:0;z-index:55;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(30,18,8,.78),rgba(0,0,0,.9))}
 #summary[hidden]{display:none}
@@ -1462,19 +1465,25 @@ const FUSE_COST=100, FUSE_ROUND=15;
 const typesOf=u=>u.fuse?[u.type,u.fuse]:[u.type];   // what a hero counts as for class/origin bonuses
 const canTryFuse=(a,b)=>a&&b&&a!==b&&a.star===3&&b.star===3&&!a.fuse&&!b.fuse&&U[a.type].cls!==U[b.type].cls&&U[a.type].cost<5&&U[b.type].cost<5;
 function fuseError(){ if(S.round<FUSE_ROUND) return `Fusion unlocks at round ${FUSE_ROUND}`; if(S.gold<FUSE_COST) return `Fusion costs ${FUSE_COST} gold`; return null; }
-function fuse(a,b){   // a is dragged onto b; the pricier hero (or b on a tie) leads: its picture, range and basic attack
-  const [lead,other]=U[a.type].cost>U[b.type].cost?[a,b]:[b,a], items=[...b.items,...a.items];
-  b.type=lead.type; b.fuse=other.type; b.star=3; b.items=items.slice(0,MAX_ITEMS); S.inv.push(...items.slice(MAX_ITEMS));
+const defaultLead=(a,b)=>U[a.type].cost>U[b.type].cost?a:b;   // the pricier hero, or the one dropped onto on a tie
+function fuse(a,b,leadUnit=defaultLead(a,b)){   // a is dragged onto b; the lead gives the body, range, basic attack and first skill
+  const lead=leadUnit, other=lead===a?b:a, items=[...b.items,...a.items];
+  const lt=lead.type, ot=other.type; b.type=lt; b.fuse=ot;   // read both types before b changes b.star=3; b.items=items.slice(0,MAX_ITEMS); S.inv.push(...items.slice(MAX_ITEMS));
   S.units=S.units.filter(v=>v!==a); S.gold-=FUSE_COST; S.sel=b.uid;
   S.ufx.push({k:'star',uid:b.uid,t:1.1,m:1.1}); SND.play('star'); msg(`⚭ Fused ${U[b.type].name} + ${U[b.fuse].name}: both classes, both origins, both skills`);
 }
 function askFuse(e,a,b){
-  const err=fuseError(), c=$('#confirm');
-  c.innerHTML=`<div>⚭ Fuse <b>${U[a.type].name} ★★★</b> + <b>${U[b.type].name} ★★★</b>${err?'':` for <b>${FUSE_COST} gold</b>`}?</div>
-    <div style="font-size:13px;margin-top:4px;max-width:300px">${err?`<span style="color:#ff9a80">${err}</span>`:'One hero that counts as both classes and both origins, uses the best stats of the two (+10%) and alternates both skills.'}</div>
-    <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`;
-  c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
-  c.onclick=ev=>{ if(ev.target.closest('[data-yes]')&&!fuseError()&&S.units.includes(a)&&S.units.includes(b)){ fuse(a,b); render(); renderUI(); } if(ev.target.closest('button')) c.hidden=true; };
+  const err=fuseError(), c=$('#confirm'); let lead=defaultLead(a,b);
+  const leadBtn=u=>`<button class="b fl ${u===lead?'on':''}" data-lead="${u===a?'a':'b'}"><span class="th">${thumbHTML(u.type,30)}</span>${U[u.type].name}</button>`;
+  const draw=()=>{ const other=lead===a?b:a;
+    c.innerHTML=`<div>⚭ Fuse <b>${U[a.type].name} ★★★</b> + <b>${U[b.type].name} ★★★</b>${err?'':` for <b>${FUSE_COST} gold</b>`}?</div>
+    ${err?`<div style="font-size:13px;margin-top:4px;max-width:320px;color:#ff9a80">${err}</div>`:
+      `<div class="fuselead">Lead: ${leadBtn(a)}${leadBtn(b)}</div>
+       <div style="font-size:12px;margin-top:4px;max-width:330px">Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), skills alternate.</div>`}
+    <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`; };
+  draw(); c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
+  c.onclick=ev=>{ const l=ev.target.closest('[data-lead]'); if(l){ lead=l.dataset.lead==='a'?a:b; draw(); return; }
+    if(ev.target.closest('[data-yes]')&&!fuseError()&&S.units.includes(a)&&S.units.includes(b)){ fuse(a,b,lead); render(); renderUI(); } if(ev.target.closest('button')) c.hidden=true; };
 }
 // a fused fighter: the better of each stat from both heroes, +10%; skills alternate (see releaseCast)
 function fuseFighter(x,fuseType,mult=1){
@@ -2340,13 +2349,23 @@ function exprOf(o){
   if(o.cast>0||o.rel>0) return 'angry'; if(o.sil>0) return 'sil'; if(o.blind>0) return 'blind'; if(o.dis>0||o.ref&&(o.ref.shred>0||o.ref.wnd>0)) return 'hurt'; if(o.ref&&o.ref.drain>0) return 'sick';
   if(o.psn) return 'sick'; if(o.cheer) return 'happy'; if(o.hp!==undefined&&o.hp<.25) return 'hurt'; return null;
 }
-function buildRig(rig,R,tints,expr){
+function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose weapon and cape replace the lead's
   const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=false;
   let order=rig.layers.map((g,i)=>i);
   if(R.front&&rig.piv.weapon){   // weapon held in front of the body: blade, then the hand gripping it, go just under the head
     const mv=order.filter(i=>rig.layers[i]==='weapon'||rig.layers[i]==='armR').sort((x,y)=>(rig.layers[x]==='armR')-(rig.layers[y]==='armR'));
     order=order.filter(i=>!mv.includes(i)); let h=order.length; while(h>0&&rig.layers[order[h-1]]!=='head') h--; order.splice(h?h-1:order.length,0,...mv); }   // before the last head layer (back hair is a head layer too)
+  const mixW=mix&&mix.img.naturalWidth&&mix.piv.weapon?mix.layers.map((g,i)=>g==='weapon'?i:-1).filter(i=>i>=0):[];
+  const mixC=mix&&mix.img.naturalWidth?mix.layers.map((g,i)=>g==='cape'?i:-1).filter(i=>i>=0):[];
+  if(mixC.length){ const j=R.cape||b, p=rig.piv.cape||rig.piv.body, pm=mix.piv.cape||mix.piv.body;   // partner's cape goes behind everything
+    for(const i of mixC){ rg.save(); rg.translate(56+p[0]+j.x+b.x,54+p[1]+j.y+b.y); if(j.r) rg.rotate(j.r); rg.drawImage(mix.img,i*56,0,56,54,-pm[0],-pm[1],56,54); rg.restore(); } }
+  let mixDone=false;
   order.forEach(i=>{ const g=rig.layers[i];
+    if(g==='weapon'&&mixW.length){ if(mixDone) return; mixDone=true;   // the partner's weapon in the lead's hand
+      const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon, pm=mix.piv.weapon;
+      for(const k of mixW){ rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
+        rg.drawImage(mix.img,k*56,0,56,54,-pm[0],-pm[1],56,54); rg.restore(); }
+      return; }
     if(g==='weapon'&&rig.piv.weapon){   // shoulder -> arm turn -> wrist -> weapon turn
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon;
       rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
@@ -2387,7 +2406,9 @@ function drawUnit(type,star,px,py,o={}){
     const im=sp.img, s=Math.min(54/im.naturalHeight,60/im.naturalWidth,3)*sc, w=im.naturalWidth*s, h=im.naturalHeight*s;
     const flip=o.face!==undefined&&((o.face<0)!==!!sp.faceLeft);
     ctx.translate(px+P.dx,py+26+P.dy-P.lift); ctx.rotate(P.rot); ctx.scale(flip?-P.sx:P.sx,P.sy);
-    if(rig) buildRig(rig,rigPose(o,type,b),statusTints(o),exprOf(o));
+    if(o.fuse) ctx.scale(1.08,1.08);   // fused heroes stand a little taller
+    const fuseTint=o.fuse?[[colorOf(o.fuse),.1+.08*Math.sin(ANIM*2.2+(o.ph||0))]]:[];   // a soft shimmer in the partner's class colour
+    if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
     ctx.imageSmoothingEnabled=false; draw();
     if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
