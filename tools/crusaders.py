@@ -92,49 +92,61 @@ def templar():
 
 
 def aegispaladin():
-    # the Aegis Paladin as a wandering shield hero: messy dark hair, serious emerald eyes, a hooded
-    # forest-green travel mantle over chainmail and a dark leather vest, one steel pauldron, a big
-    # emerald-gem kite shield on the left arm, a plain steel longsword held forward like the other swordsmen
+    # the Aegis Paladin as a holy-war maiden: long violet hair streaming in the wind, great layered gold pauldrons
+    # over a blue tunic, a long split overcoat with cross bands, a pale lavender cape, silver gauntlets and greaves,
+    # a long sword held forward and a tall gold-trimmed kite shield
     s = Spr()
-    green, mantle, mail, leather = ramp('#2f6a3a', 1.25), ramp('#3c5a34', 1.2), ramp('#9aa4b4', 1.2), ramp('#4a3424', 1.2)
-    steel, gem, hair, trim = ramp('#c8d2e0', 1.35), ramp('#3ae08a', 1.3, 1.2), ramp('#2a2430', 1.3), ramp('#d8c070', 1.1)
-    cape(s, mantle, 1.35, 52)
-    legs(s, ramp('#3a3440', 1.2), leather)
-    torso(s, mail, hem=45)
+    hair, blue, coat, inner = ramp('#5a4aa8', 1.25), ramp('#3a5ab8', 1.2), ramp('#6a4a2e', 1.2), ramp('#d8b878', 1.05)
+    gold, steel, lav, dark = ramp('#e8b840', 1.25, 1.15), ramp('#d0d8e6', 1.35), ramp('#cfc2ea', .85), ramp('#2a2030', 1.2)
+    back_hair(s, hair, 47, 12.5)   # long hair down the back
+    with s.grp('cape'):   # pale cape, and hair streaming out to the side in the wind
+        s.part(lav, [('poly', [(18, 27), (38, 27), (49, 51), (44, 48), (40, 53), (16, 53), (11, 49), (7, 51)])], soft=2.4)
+        s.part(ramp('#c8b8e8', .9), [('poly', [(38, 30), (47, 49), (43, 47)])], soft=.8, line=False)
+        s.part(hair, [('poly', [(37, 15), (46, 20), (53, 30), (49, 29), (52, 37), (45, 30), (40, 26)])], soft=1.4)
+    legs(s, steel, steel)   # silver greaves
+    with s.grp('legL'):
+        s.part(steel, [('poly', [(19, 50), (15.5, 53.5), (21, 53)])], soft=.4, gloss=1)   # pointed sabatons
+    with s.grp('legR'):
+        s.part(steel, [('poly', [(35, 50), (39.5, 53.5), (34, 53)])], soft=.4, gloss=1)
+    torso(s, blue, hem=40)
     with s.grp('body'):
-        for y in (31, 34, 37, 40, 43):   # chainmail rings
-            for x in range(21, 36, 2):
-                s.mark(x, y, (110, 118, 132))
-        s.part(leather, [('poly', [(22, 29.5), (34, 29.5), (34.5, 40), (28, 41), (21.5, 40)])], soft=1, gloss=.6)   # leather vest
-        s.part(trim, [('cap', 28, 30, 28, 40, .35)], soft=.2, line=False)   # lacing
-        s.part(mantle, [('poly', [(19.5, 27.5), (36.5, 27.5), (35, 32), (28, 34), (21, 32)])], soft=1.2, cast=1)   # hood down around the shoulders
-        s.part(trim, [('ell', 28, 31.5, 1.3, 1.3)], soft=.3, gloss=1.4)   # cloak clasp
-    belt(s, leather, 40, trim)
-    sword(s, steel, ramp('#3a3440', 1.2), x0=42, y0=43, x1=49, y1=11, w=1.9, guard=4.6)   # held forward, like the other swordsmen
-    with s.grp('weapon'):
-        s.part(gem, [('ell', 41.8, 47.4, 1.2, 1.2)], soft=.2, gloss=1.6, line=False)   # emerald pommel
-    arm(s, mail, SKIN, (35, 30), (38.5, 36), (42, 41), r=2.8, glove=leather)
-    s.part(steel, [('chord', 36, 31, 5.6, 5, 180, 360)], soft=1.2, gloss=1.4, cast=1)   # one steel pauldron
-    arm(s, mail, SKIN, (21, 30), (18.5, 35), (17.5, 39.5), r=2.8, glove=leather)
-    # emerald-gem kite shield: silver frame, green face, a large glowing gem set in leaf-like prongs
-    s.part(steel, [('poly', [(4, 27), (23, 27), (23.5, 40), (13.5, 54), (3.5, 40)])], soft=1.6, gloss=1.4)
-    s.part(green, [('poly', [(6, 29), (21, 29), (21.5, 39.5), (13.5, 51.5), (5.5, 39.5)])], soft=1.6, gloss=1)
-    for dx, dy in ((0, -6), (5, -1), (-5, -1), (0, 5)):   # leaf prongs around the gem
-        s.part(trim, [('poly', [(13.5, 37), (13.5 + dx * .5 + dy * .15, 37 + dy * .5 - dx * .1), (13.5 + dx, 37 + dy)])], soft=.4, gloss=1.2)
-    s.part(gem, [('ell', 13.5, 37, 3.4, 3.8)], soft=.6, gloss=1.8)
-    s.part(ramp('#d8ffe8', .5), [('ell', 12.4, 35.6, 1, 1)], soft=.1, line=False, flat=True, bias=.5)
+        s.part(inner, [('poly', [(21, 38), (35, 38), (37.5, 52), (18.5, 52)])], soft=1.2)   # tan under-skirt
+        for side in (-1, 1):   # long split overcoat panels with cross bands and a lavender saw-tooth hem
+            x0 = 28 + side * 1.6
+            pts = [(x0, 38), (28 + side * 9.5, 38), (28 + side * 13, 53), (x0 + side * 1.5, 53)]
+            s.part(coat, [('poly', pts)], soft=1.2, gloss=.4)
+            s.part(ramp('#4a3220', 1.2), [('cap', x0 + side * 3, 39, x0 + side * 4.5, 52, .5), ('cap', x0 + side * 6.5, 39, x0 + side * 8.8, 52, .5)], soft=.2, line=False)
+            for k in range(4):
+                xx = x0 + side * (1.5 + k * 3)
+                s.part(lav, [('poly', [(xx, 51.6), (xx + side * 3, 51.6), (xx + side * 1.5, 53.6)])], soft=.2, line=False)
+        s.part(gold, [('poly', [(22, 28), (34, 28), (33, 31.5), (28, 33), (23, 31.5)])], soft=.8, gloss=1.2)   # gold gorget
+        s.part(gold, [('rect', 27.3, 32.5, 28.7, 37.5), ('rect', 25.8, 34, 30.2, 35.3)], soft=.2, gloss=1, line=False)   # cross on the chest
+    belt(s, ramp('#2a3a7a', 1.2), 38.5, gold)
+    with s.grp('body'):
+        s.part(ramp('#c03030'), [('rect', 30, 38.3, 33.5, 40.5)], soft=.2, line=False)   # small red-and-white sash
+        s.part(ramp('#f4f0e8', .7), [('rect', 31, 38.3, 32.2, 40.5)], soft=.1, line=False)
+    sword(s, steel, gold, x0=42, y0=43, x1=48, y1=6, w=1.5, guard=4.8)   # long, slender blade, held forward
+    arm(s, blue, SKIN, (35, 30), (38.5, 36), (42, 41), r=2.7, glove=steel)
+    arm(s, blue, SKIN, (21, 30), (18, 35), (17, 39.5), r=2.7, glove=steel)
+    # tall kite shield: gold rim, dark bronze face, a gold winged cross
+    s.part(gold, [('poly', [(3, 25), (21, 25), (22, 40), (12.5, 54), (3, 40)])], soft=1.5, gloss=1.4)
+    s.part(ramp('#5a3e22', 1.2), [('poly', [(5, 27), (19.5, 27), (20, 39.5), (12.5, 51.5), (5, 39.5)])], soft=1.4, gloss=.8)
+    s.part(gold, [('rect', 11.6, 29, 13.4, 47), ('rect', 7, 33.5, 18, 35.3)], soft=.3, gloss=1.2)   # gold cross
+    s.part(ramp('#4a8aff', 1.2, 1.2), [('ell', 12.5, 34.4, 1.7, 1.7)], soft=.3, gloss=1.6)   # blue gem at its heart
+    for side in (-1, 1):   # great layered gold pauldrons
+        x = 28 + side * 8.5
+        s.part(gold, [('chord', x + side * .5, 30.5, 7.6, 6.4, 180, 360)], soft=1.2, gloss=1.5, cast=1)
+        s.part(gold, [('chord', x + side * 1.4, 33.4, 6.2, 4, 180, 360)], soft=1, gloss=1.2, cast=1)
+        s.part(ramp('#a07020', 1.1), [('cap', x - 4.5, 30.6, x + 4.5, 30.6, .35)], soft=.1, line=False)
     head(s)
-    with s.grp('head'):   # messy back hair
-        s.part(hair, [('poly', [(17, 19), (14, 25), (19, 23)]), ('poly', [(39, 19), (42, 25), (37, 23)])], soft=1)
-    bangs(s, hair, 'spiky', shine=8)
-    face(s, '#2aa060', mouth=None, blush=False)
+    bangs(s, hair, 'long', shine=10)
+    with s.grp('head'):   # side locks framing the face
+        s.part(hair, [('poly', [(16.5, 17), (14.5, 33), (18.5, 29), (19.5, 20)]), ('poly', [(39.5, 17), (41.5, 33), (37.5, 29), (36.5, 20)])], soft=1)
+        s.part(gold, [('rect', 18, 11.6, 23, 13), ('ell', 20.5, 12.3, 1.2, 1.2)], soft=.3, gloss=1.2)   # small gold hair clasp
+    face(s, '#8a6ad8', mouth=None, blush=False)
     if not kit_expr():
-        for x in (20, 21, 22, 27, 28, 29):   # serious, narrowed eyes
-            s.mark(x, 18, (34, 24, 30))
-        for x in (20, 21, 22, 27, 28, 29):
-            s.mark(x, 22, (236, 196, 170))
-        s.mark(24, 25, (150, 80, 80)); s.mark(25, 25, (150, 80, 80))
-    sparkle(s, 3, 22, (170, 255, 210)); sparkle(s, 52, 8, (220, 235, 255))
+        s.mark(24, 25, (180, 110, 110)); s.mark(25, 25, (180, 110, 110))   # calm, serious mouth
+    sparkle(s, 2, 20, (255, 236, 160)); sparkle(s, 53, 10, (230, 220, 255))
     return s
 
 
