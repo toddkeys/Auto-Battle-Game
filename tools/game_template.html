@@ -63,6 +63,9 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 .sumgrid b{font:400 26px var(--pixel);letter-spacing:.03em}
 .sumbox p{color:var(--muted);margin:0 0 14px}
 .sumbox .go{width:100%}
+#bossHelp .bh{display:grid;grid-template-columns:48px 1fr;gap:8px;align-items:start;margin:8px 0;padding:6px 8px;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.22)}
+#bossHelp .bh .th{display:flex;align-items:flex-end;justify-content:center;height:52px}#bossHelp .bh img{max-width:48px;max-height:52px;image-rendering:pixelated}
+#bossHelp .bh b{color:var(--gold)}#bossHelp .tip{color:#9dffb0}
 .lb{margin:0 0 14px;text-align:left}
 .lb h3{margin:0 0 8px;font:400 22px var(--pixel);color:var(--gold);text-align:center}
 .lb .hint{font-size:12px;color:var(--muted)}
@@ -335,7 +338,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
     <div class="card"><h3>Hero</h3><div id="info"></div></div>
     <div class="card"><h3>Items <span class="hint">drag onto a hero</span></h3><div id="items" class="items"></div></div>
     <div class="card">
-      <details><summary>How to play</summary>
+      <details id="howto"><summary>How to play</summary>
       <ol class="help">
         <li><b>Buy</b> heroes in the shop. They wait on the bench (the wooden deck).</li>
         <li><b>Drag</b> a hero to move it (drop on another hero to swap). Click selects; click empty ground to cancel. <b>Right-click</b> a hero or drop it on the shop to sell.</li>
@@ -347,6 +350,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Selling</b> returns half the gold — or all of it if you bought the hero this round.</li>
         <li><b>Summoners</b> call allies (wisps, wolves, a stone guardian, a star drake) that fight until the battle ends.</li>
         <li>Every 5th round is a <b>monster round</b>; from round 15 a <b>boss</b> joins — six bosses, in a different order each run (the top bar names the next one). Bosses alternate two skills, enrage at half HP and always drop a rare item, even if you lose the fight.</li>
+        <li id="bossHelp"></li>
         <li><b>Items</b>: drag onto a hero (1 each). Drop the <i>same</i> item on it, or two of the same on each other, to <b>enchant</b> it (+1, +2). 📜 Unbinding Scroll takes a hero's item off.</li>
         <li><b>Shields</b>: gold shields stop physical damage, violet (🔮) magic shields stop magic damage.</li>
         <li><b>Gamblers</b> roll dice and draw cards: random, sometimes huge, outcomes. <b>Ice Wall</b> (Glacier Warden) stops enemy projectiles until it breaks.</li>
@@ -2589,6 +2593,19 @@ function render(){
 
 // ====== side panel ======
 // shop / codex picture: units that hold a weapon in front get their picture from the rig in that stance
+// "How to play" boss guide, built from the boss data so it always matches the game
+const BOSS_TIPS={golem:'Spread out against Quake Slam, and save burst damage for its second half when its armor is gone.',
+  lich:'Spread out against Blizzard; fire melts Frozen heroes and Holy healers cleanse them.',
+  wyrm:'Do not bunch up in front of it; freezing puts out its burn and healers keep you up through the meteors.',
+  thornmother:'Poison cuts her healing by 30%; Holy healers cleanse her roots and poison.',
+  stormdjinn:'Spread heroes apart so Chain Storm jumps less, and keep fragile heroes out of Cyclone range.',
+  colossus:'Burn deals double damage to its shields; keep fragile heroes off its beam line.'};
+function renderBossHelp(){
+  $('#bossHelp').innerHTML='<b>Boss guide</b> (stats shown at round 15; they grow every boss round, and from round 30 two bosses come at once):'+BOSSES.map(id=>{ const u=U[id], sk=SKILLS[id];
+    return `<div class="bh"><div class="th">${thumbHTML(id,30)}</div><div><b>${u.name}</b> · ❤ ${u.hp*2} · ⚔ ${u.atk*2} · 🎯 ${u.range}${u.armor?` · 🛡 takes ${u.armor*100}% less damage above half HP`:''}<br>
+      <b>${sk.names?sk.names.join(' / '):sk.name}</b>: ${sk.desc}<br>Brings: ${[...new Set(BOSS_MINIONS[id])].map(m=>U[m].name).join(', ')}<br><span class="tip">Tip: ${BOSS_TIPS[id]}</span></div></div>`; }).join('');
+}
+$('#howto').addEventListener('toggle',()=>{ if($('#howto').open) renderBossHelp(); });
 function thumbSrc(id){ const sp=SPR[id], rig=sp&&sp.rig; if(!sp) return null; if(sp.thumb) return sp.thumb;
   const st=U[id]&&animOf(id,U[id]); if(!rig||!rig.img.naturalWidth||!['slash','spear','gun'].includes(st)) return sp.img.src;
   buildRig(rig,rigPose({ph:-ANIM},id,U[id]),[],null); const c=document.createElement('canvas'); c.width=56; c.height=54; const g=c.getContext('2d'); g.imageSmoothingEnabled=false;
