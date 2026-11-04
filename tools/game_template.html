@@ -221,17 +221,17 @@ button.go{display:block;width:100%;margin-top:10px}
 .card.sellzone h3::after{content:'Drop to sell';font:400 18px var(--pixel);color:#8a1a10}
 /* unit info */
 #info{min-height:150px;color:var(--muted);font-size:14px}
-#info .ih,#tip .ih{display:flex;gap:12px;align-items:center;margin-bottom:8px;color:var(--text)}
-#info .ih .th,#tip .ih .th{width:70px;height:70px;flex:none;display:flex;align-items:flex-end;justify-content:center;border:2px solid var(--ink);border-radius:8px;
+#info .ih,#tip .ih,#heroCard .ih{display:flex;gap:12px;align-items:center;margin-bottom:8px;color:var(--text)}
+#info .ih .th,#tip .ih .th,#heroCard .ih .th{width:70px;height:70px;flex:none;display:flex;align-items:flex-end;justify-content:center;border:2px solid var(--ink);border-radius:8px;
   background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--cc) 45%,transparent),#140c07 75%);box-shadow:inset 0 0 0 2px var(--brass-lo)}
-#info .ih img,#tip .ih img{max-width:62px;max-height:62px;image-rendering:pixelated}
+#info .ih img,#tip .ih img,#heroCard .ih img{max-width:62px;max-height:62px;image-rendering:pixelated}
 .ih .un{font:400 26px/1 var(--pixel);letter-spacing:.03em}.ih .stars{color:var(--gold)}
 .ih .tags{font-size:13px;margin-top:3px}
 .chips{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 8px}
 .chips span{padding:2px 8px;border:1px solid #4a3420;border-radius:20px;background:rgba(0,0,0,.3);font-size:13px;color:var(--text)}
-#info .sk,#tip .sk{padding:8px 10px;border:1px solid #5a4024;border-radius:6px;background:linear-gradient(180deg,rgba(255,220,150,.08),rgba(0,0,0,.25));color:var(--text);font-size:14px}
-#info .sk b,#tip .sk b{font:400 20px/1 var(--pixel);letter-spacing:.03em;color:#9fd8ff}
-#info .mp,#tip .mp{color:var(--muted);font-size:12px}
+#info .sk,#tip .sk,#heroCard .sk{padding:8px 10px;border:1px solid #5a4024;border-radius:6px;background:linear-gradient(180deg,rgba(255,220,150,.08),rgba(0,0,0,.25));color:var(--text);font-size:14px}
+#info .sk b,#tip .sk b,#heroCard .sk b{font:400 20px/1 var(--pixel);letter-spacing:.03em;color:#9fd8ff}
+#info .mp,#tip .mp,#heroCard .mp{color:var(--muted);font-size:12px}
 .held{margin-top:7px;font-size:13px}
 /* items: slots, rare ones shimmer */
 .items{display:flex;flex-wrap:wrap;gap:7px;color:var(--muted);font-size:14px}
@@ -273,6 +273,16 @@ details summary::before{content:'▸ ';color:var(--brass)}details[open] summary:
 #tip{position:fixed;z-index:15;width:min(330px,calc(100vw - 16px));padding:10px;border:2px solid var(--ink);border-radius:8px;background:linear-gradient(180deg,var(--oak),var(--oak3));
   box-shadow:inset 0 0 0 2px var(--brass-lo),0 8px 22px #000a;font-size:13px;color:var(--muted);pointer-events:none}
 #tip[hidden]{display:none}
+#heroCard{position:fixed;z-index:70;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,94vw);max-height:88vh;overflow:auto;padding:14px 14px 12px;
+  border:3px solid var(--ink);border-radius:12px;background:linear-gradient(180deg,#3a2614,#1e1309);box-shadow:inset 0 0 0 2px var(--brass),0 18px 50px rgba(0,0,0,.75);color:var(--text);font-size:14px;animation:hcIn .14s ease-out}
+@keyframes hcIn{from{opacity:0;transform:translate(-50%,-46%) scale(.96)}}
+#heroCard[hidden]{display:none}
+#heroCard .hcx{position:absolute;top:6px;right:8px;width:30px;height:30px;border:0;border-radius:6px;background:rgba(0,0,0,.35);color:var(--muted);font-size:18px;cursor:pointer}
+#heroCard .hcx:hover{color:#ff9a80;background:rgba(0,0,0,.55)}
+#heroCard .ih .th{width:96px;height:96px}#heroCard .ih img{max-width:88px;max-height:88px}
+#heroCard .bon{margin-top:8px;font-size:12.5px;line-height:1.35;color:var(--muted)}#heroCard .bon b{color:var(--text)}
+#heroCard .hca{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--muted)}#heroCard .hca .b{font-size:14px}
+.cx,.pt,.pc{cursor:pointer}
 #bubble{position:fixed;z-index:30;max-width:260px;padding:8px 11px;border:2px solid var(--ink);border-radius:8px;pointer-events:none;
   background:linear-gradient(180deg,#fbe9bd,#e6c47c);color:#2a1607;font:500 13px/1.35 var(--body);box-shadow:0 4px 0 var(--ink),0 10px 24px rgba(0,0,0,.5)}
 #bubble[hidden]{display:none}
@@ -371,7 +381,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
-        <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop.</li>
+        <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop. <b>Click any hero</b> in the Codex or the Team Plan to see its full details.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper speeds up one ally (Rousing Note); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
@@ -386,6 +396,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 
 <div id="tip" hidden></div>
 <div id="bubble" hidden></div>
+<div id="heroCard" hidden></div>
 <div id="confirm" hidden></div>
 <div id="summary" hidden></div>
 <aside id="planner" hidden>
@@ -394,7 +405,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
   <div id="planNote" class="plnote"></div>
   <div id="planSlots" class="plslots"></div>
   <div class="plpick" id="planPickBox">
-    <div class="plfilter"><input id="planSearch" placeholder="Search name, class, origin or skill…"><div id="planCls"></div></div>
+    <div class="plfilter"><input id="planSearch" placeholder="Search name, class, origin or skill… (click a hero for details, drag to plan)"><div id="planCls"></div></div>
     <div id="planPick" class="plgrid"></div>
   </div>
 </aside>
@@ -1263,10 +1274,29 @@ function openCodex(note){
   $('#codexCount').innerHTML=`${heroes.filter(u=>c[u.id]).length} / ${heroes.length} heroes discovered — field a hero in battle to add it<br>
     <b style="color:#ffe27a">★ Marked ${marks.length} / ${MAX_MARKS}</b> — click ☆ on a hero to mark it; marked heroes glow in the shop${marks.length?' <button class="b mkreset" data-reset>Reset marks</button>':''}${note?` · <span style="color:#ff9a80">${note}</span>`:''}`;
   $('#codexGrid').innerHTML=heroes.map(u=>{ const k=c[u.id], cl=CLASSES[u.cls], o=ORIGINS[u.org], sk=SKILLS[u.id], m=marks.includes(u.id);
-    return `<div class="cx ${k?'':'locked'} ${m?'marked':''}" title="${sk.name}: ${sk.desc.replace(/"/g,'&quot;')}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
+    return `<div class="cx ${k?'':'locked'} ${m?'marked':''}" data-hc="${u.id}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
       <span class="cs">HP ${u.hp} · ATK ${u.atk} · R ${u.range}<br>${k?`Fielded ${k}×`:'Not fielded yet'}</span></div><button class="mk" data-mark="${u.id}" title="${m?'Unmark':'Mark: glow in the shop'}">${m?'★':'☆'}</button></div>`; }).join('');
   $('#codex').hidden=false;
 }
+// ====== Hero detail card: click a hero in the Codex or the Team Plan ======
+// closes on a click anywhere outside it, on its ✕, or on Escape
+let heroCardFor=null;
+function openHeroCard(id){ const u=U[id]; if(!u) return; const cl=CLASSES[u.cls], o=ORIGINS[u.org], n=readCodex()[id], m=readMarks().includes(id);
+  const tiers=d=>d.map((s,i)=>`<div>${['②','③'][i]||''} ${s}</div>`).join('');
+  $('#heroCard').innerHTML=`<button class="hcx" data-hcclose title="Close">✕</button>`+infoHTML(id,1)+
+    `<div class="chips"><span>👟 move ${u.ms}</span>${u.splash?'<span>💥 splash attacks</span>':''}${u.guard?`<span>🛡 Guardian Link ${Math.round(u.guard*100)}%</span>`:''}</div>`+
+    (cl?`<div class="bon"><b style="color:${cl.color}">${cl.name}</b> class bonus${tiers(cl.desc)}</div>`:'')+
+    (o?`<div class="bon"><b style="color:${o.color}">${o.icon} ${o.name}</b> origin bonus${tiers(o.desc)}</div>`:'')+
+    `<div class="hca"><button class="b" data-hcmark>${m?'★ Remove from plan':'☆ Add to plan'}</button><span>${n?`Fielded ${n}×`:'Not fielded yet'}</span></div>`;
+  $('#heroCard').hidden=false; heroCardFor=id; hideBubble(); }
+const closeHeroCard=()=>{ $('#heroCard').hidden=true; heroCardFor=null; };
+document.addEventListener('pointerdown',e=>{ if(heroCardFor&&!e.target.closest('#heroCard')) closeHeroCard(); },true);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&heroCardFor){ closeHeroCard(); e.stopPropagation(); } },true);
+$('#heroCard').addEventListener('click',e=>{
+  if(e.target.closest('[data-hcclose]')) return closeHeroCard();
+  if(e.target.closest('[data-hcmark]')){ const id=heroCardFor, m=readMarks();
+    if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS){ e.target.closest('[data-hcmark]').textContent=`Plan is full (${MAX_MARKS})`; return; } else m.push(id);
+    setMarks(m); openHeroCard(id); } });
 // ====== Team Plan side panel ======
 // The 10 plan slots are the marked heroes (they glow in the shop). Drag heroes from the list into a slot,
 // drag slots to reorder, drag a slot back to the list to remove it. Presets save and load whole plans.
@@ -1321,11 +1351,8 @@ $('#planner').addEventListener('click',e=>{
   if(q('#planClear')){ if(!m.length) return; planUndo=m; return setMarks([],`Plan cleared ${undoBtn}`); }
   if(q('[data-cls]')){ planCls=q('[data-cls]').dataset.cls; return renderPlanner(); }
   if(q('[data-rm]')){ m.splice(+q('[data-rm]').dataset.rm,1); return setMarks(m); }
-  const tile=q('.pt[data-hero]');
-  if(tile){ const id=tile.dataset.hero;   // click a hero: add it to the next free slot, or take it out
-    if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS) return renderPlanner('Plan is full — drag the hero onto a slot to replace it');
-    else m.push(id);
-    return setMarks(m); }
+  const tile=q('.pt[data-hero]')||q('.pc[data-hero]');
+  if(tile) return openHeroCard(tile.dataset.hero);   // click a hero: show its details (add or remove it there, or drag it)
   if(q('[data-pnew]')){ presetNaming=true; return renderPresets(); }
   if(q('[data-pcancel]')){ presetNaming=false; return renderPresets(); }
   if(q('[data-psave]')){
@@ -1357,7 +1384,7 @@ $('#planSearch').addEventListener('input',()=>renderPlanner());
 $('#planSearch').addEventListener('keydown',e=>e.stopPropagation());
 $('#bPlan').onclick=()=>{ $('#planner').hidden?openPlanner():($('#planner').hidden=true); };
 $('#codexPlan').onclick=()=>{ $('#codex').hidden=true; openPlanner(); };
-$('#codexGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-mark]'); if(!b) return; const id=b.dataset.mark, m=readMarks(), sc=$('#codexGrid').scrollTop;
+$('#codexGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-mark]'); if(!b){ const c=e.target.closest('[data-hc]'); if(c) openHeroCard(c.dataset.hc); return; } const id=b.dataset.mark, m=readMarks(), sc=$('#codexGrid').scrollTop;
   if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS){ openCodex(`You can mark up to ${MAX_MARKS} heroes — unmark one first`); $('#codexGrid').scrollTop=sc; return; } else m.push(id);
   saveMarks(m); openCodex(); $('#codexGrid').scrollTop=sc; renderUI(); renderPlanner(); });
 // reset every mark at once, with a one-click undo in case it was a slip
