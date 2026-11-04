@@ -87,6 +87,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
   box-shadow:inset 0 0 0 3px var(--brass),inset 0 0 0 5px var(--ink),0 10px 30px #000;transition:transform .15s,box-shadow .15s;animation:rise .4s both}
 .bless:nth-child(2){animation-delay:.08s}.bless:nth-child(3){animation-delay:.16s}
 .bless:hover{transform:translateY(-10px) scale(1.03);box-shadow:inset 0 0 0 3px var(--brass-hi),inset 0 0 0 5px var(--ink),0 0 30px rgba(255,210,100,.5),0 16px 30px #000}
+.bless .bs{margin-top:12px;padding-top:10px;border-top:1px dashed rgba(255,226,122,.35);font-size:13px;color:var(--muted)}.bless .bs b{color:#9dffb0}
 .bless .bi{font-size:64px;margin:10px 0 16px}.bless .bn{font:400 32px var(--pixel);color:var(--gold)}.bless .bd{margin-top:10px;font-size:15px;color:var(--text)}
 details summary{margin-top:-2px}
 .logo{text-align:center;padding:14px 10px 12px}
@@ -352,14 +353,14 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Occultists</b> curse enemies: armor break (+25% damage taken), mana drain, slows, and Dispel strips shields and buffs.</li>
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
-        <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run.</li>
+        <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
         <li><b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Chrono</b> heroes mark enemies so their damage replays, and stop time.</li>
         <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ Poison · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
-        <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. "Lock" keeps the shop for next round.</li>
+        <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. Each shop Upgrade improves the odds; a fully upgraded shop late in the run rolls 1💰 heroes only 10% of the time. "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
         <li><b>Gold</b>: 5 per round, +1 every 5 rounds (9 from round 20) + 1 interest per 10 saved (max 5) + a streak bonus for 2/4/6 wins or losses in a row (+1/+2/+3). Losing costs HP; at 0 the run ends.</li>
       </ol></details>
@@ -626,21 +627,23 @@ const easeOut=q=>1-(1-q)**3, easeInOut=q=>q<.5?4*q*q*q:1-(-2*q+2)**3/2;
 
 // ====== blessings: after every boss round you pick 1 of 3 (they stack) ======
 const BLESSINGS={
-  drums:{name:'War Drums',icon:'🥁',desc:'Your heroes attack 12% faster',hero:x=>{ x.asM*=1.12; }},
-  skin:{name:'Stone Skin',icon:'🪨',desc:'Your heroes take 8% less damage',hero:x=>{ x.red=Math.min(.7,x.red+.08); }},
-  focus:{name:'Arcane Focus',icon:'🔮',desc:'Your heroes start battle with +20% mana',hero:x=>{ x.mp=Math.min(x.mpMax*.99,x.mp+x.mpMax*.2); }},
-  vigor:{name:'Vigor',icon:'❤️',desc:'Your heroes have +15% max HP',hero:x=>{ x.max*=1.15; x.hp=x.hpLag=x.max; }},
-  edge:{name:'Keen Edge',icon:'⚔️',desc:'Your heroes deal 12% more damage',hero:x=>{ x.dmgM*=1.12; }},
-  runes:{name:'Warding Runes',icon:'🔯',desc:'Your heroes start battle with a magic shield worth 12% of max HP',hero:x=>{ x.mshield+=x.max*.12; }},
-  wind:{name:'Second Wind',icon:'🌬️',desc:'Once per battle, a hero that drops below 30% HP heals 25%',hero:x=>{ x.wind=(x.wind||0)+.25; }},
-  bounty:{name:'Bounty',icon:'💰',desc:'+2 gold every round',now:()=>{ S.bounty=(S.bounty||0)+2; }},
-  treasure:{name:'Treasure Map',icon:'🗺️',desc:'Get a rare item right now',now:()=>{ S.inv.push(pick(RARE)); }},
-  merc:{name:'Mercenary',icon:'🎖️',desc:'A random 4-gold hero joins your bench now',now:()=>{ const i=freeBench(); if(i<0){ S.gold+=8; return msg('Bench full: took 8 gold instead'); }
+  drums:{name:'War Drums',icon:'🥁',desc:'Your heroes attack 12% faster',total:n=>`+${Math.round((1.12**n-1)*100)}% attack speed`,hero:x=>{ x.asM*=1.12; }},
+  skin:{name:'Stone Skin',icon:'🪨',desc:'Your heroes take 8% less damage',total:n=>`${8*n}% less damage (all damage cuts together cap at 70%)`,hero:x=>{ x.red=Math.min(.7,x.red+.08); }},
+  focus:{name:'Arcane Focus',icon:'🔮',desc:'Your heroes start battle with +20% mana',total:n=>`start battle with +${Math.min(99,20*n)}% mana`,hero:x=>{ x.mp=Math.min(x.mpMax*.99,x.mp+x.mpMax*.2); }},
+  vigor:{name:'Vigor',icon:'❤️',desc:'Your heroes have +15% max HP',total:n=>`+${Math.round((1.15**n-1)*100)}% max HP`,hero:x=>{ x.max*=1.15; x.hp=x.hpLag=x.max; }},
+  edge:{name:'Keen Edge',icon:'⚔️',desc:'Your heroes deal 12% more damage',total:n=>`+${Math.round((1.12**n-1)*100)}% damage`,hero:x=>{ x.dmgM*=1.12; }},
+  runes:{name:'Warding Runes',icon:'🔯',desc:'Your heroes start battle with a magic shield worth 12% of max HP',total:n=>`magic shield worth ${12*n}% of max HP`,hero:x=>{ x.mshield+=x.max*.12; }},
+  wind:{name:'Second Wind',icon:'🌬️',desc:'Once per battle, a hero that drops below 30% HP heals 25%',total:n=>`below 30% HP, heal ${25*n}% once per battle`,hero:x=>{ x.wind=(x.wind||0)+.25; }},
+  bounty:{name:'Bounty',icon:'💰',desc:'+2 gold every round',total:n=>`+${2*n} gold every round`,now:()=>{ S.bounty=(S.bounty||0)+2; }},
+  treasure:{name:'Treasure Map',icon:'🗺️',desc:'Get a rare item right now',total:n=>`${n} rare item${n>1?'s':''} gained`,now:()=>{ S.inv.push(pick(RARE)); }},
+  merc:{name:'Mercenary',icon:'🎖️',desc:'A random 4-gold hero joins your bench now',total:n=>`${n} hero${n>1?'es':''} recruited`,now:()=>{ const i=freeBench(); if(i<0){ S.gold+=8; return msg('Bench full: took 8 gold instead'); }
     S.units.push({uid:S.uid++,type:pick(UNITS.filter(u=>u.cost===4)).id,star:1,items:[],bought:-1,loc:{w:'bench',i}}); merge(); }},
 };
 function offerBlessings(){
-  const keys=Object.keys(BLESSINGS).sort(()=>Math.random()-.5).slice(0,3);
-  $('#cardrow').innerHTML=keys.map(k=>{ const b=BLESSINGS[k]; return `<button class="bless" data-k="${k}"><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div></button>`; }).join('');
+  const keys=Object.keys(BLESSINGS).sort(()=>Math.random()-.5).slice(0,3), owned=k=>S.buffs.filter(x=>x===k).length;
+  $('#cardrow').innerHTML=keys.map(k=>{ const b=BLESSINGS[k], n=owned(k);
+    return `<button class="bless" data-k="${k}"><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>
+      <div class="bs">${n?`<b>Stacks!</b> You have ×${n} → ×${n+1}:<br>${b.total(n+1)}`:'Stacks if you pick it again later'}</div></button>`; }).join('');
   $('#cards').hidden=false;
 }
 
@@ -1498,7 +1501,7 @@ function combineItems(i,j){
   S.inv[j]=b.split(':')[0]+':'+(ILV(a)+ILV(b)); S.inv.splice(i,1); SND.play('star'); msg(`✨ Enchanted ${INAME(S.inv[j>i?j-1:j])}!`);
 }
 
-function odds(r){ if(r<4) return [1,0,0,0]; if(r<8) return [.7,.3,0,0]; if(r<12) return [.45,.4,.15,0]; if(r<16) return [.3,.38,.25,.07]; return [.22,.33,.3,.15]; }
+function odds(r){ if(r<4) return [1,0,0,0]; if(r<8) return [.7,.3,0,0]; if(r<12) return [.45,.4,.15,0]; if(r<16) return [.3,.38,.25,.07]; if(r<20) return [.22,.33,.3,.15]; return [.1,.28,.36,.26]; }
 function randUnit(r){ const o=odds(r); let x=Math.random(), t=0; while(t<o.length-1&&x>=o[t]){ x-=o[t]; t++; } const pool=UNITS.filter(u=>u.cost===t+1); return pool[Math.floor(Math.random()*pool.length)].id; }
 // every shop Upgrade (S.extra) also pushes the odds toward pricier heroes
 const shopRound=()=>S.round+Math.round(S.extra*1.5);
@@ -2649,7 +2652,7 @@ function renderUI(){
   const {cnt,lv,ocnt,olv}=synLevels(onBoard().map(u=>u.type));
   const pips=n=>[1,2,3].map(i=>`<i class="${i<=(n||0)?'on':''}"></i>`).join('');
   const row=(c,n,l,mark)=>`<div class="sy ${l?'on':''}" style="--sc:${c.color}"><span class="ic">${mark}</span><span class="nm">${c.name}</span><span class="pips">${pips(n)}</span><span class="ds">${l?c.desc[l-1]:'2: '+c.desc[0]}</span></div>`;
-  $('#bless').innerHTML=S.buffs.length?Object.entries(S.buffs.reduce((m,k)=>(m[k]=(m[k]||0)+1,m),{})).map(([k,n])=>`<span class="bl" data-tip="${BLESSINGS[k].desc}">${BLESSINGS[k].icon} ${BLESSINGS[k].name}${n>1?' ×'+n:''}</span>`).join('')
+  $('#bless').innerHTML=S.buffs.length?Object.entries(S.buffs.reduce((m,k)=>(m[k]=(m[k]||0)+1,m),{})).map(([k,n])=>`<span class="bl" data-tip="${BLESSINGS[k].desc}${n>1?`<br><b>×${n} stacked:</b> ${BLESSINGS[k].total(n)}`:''}">${BLESSINGS[k].icon} ${BLESSINGS[k].name}${n>1?' ×'+n:''}</span>`).join('')
     :'<span class="none">Beat a boss (round 15, 20, 25…) to choose a blessing.</span>';
   $('#syn').innerHTML='<div class="sh">Classes</div>'+Object.entries(CLASSES).map(([k,c])=>row(c,cnt[k],lv[k],`<b style="color:${c.color}">◆</b>`)).join('')
     +'<div class="sh">Origins</div>'+Object.entries(ORIGINS).map(([k,o])=>row(o,ocnt[k],olv[k],o.icon)).join('');
