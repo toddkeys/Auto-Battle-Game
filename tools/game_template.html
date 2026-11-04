@@ -2389,6 +2389,11 @@ function drawUnit(type,star,px,py,o={}){
   ctx.fillStyle=o.team===1?'rgba(255,80,80,.45)':'rgba(90,169,255,.45)';
   ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,20*sh,7*sh,0,0,Math.PI*2); ctx.fill();
   if(o.sel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.stroke(); }
+  if(o.fuse&&!o.ghost&&o.die===undefined){   // fused: a soft glow of both class colours behind the hero
+    const k=.22+.08*Math.sin(ANIM*2.6+(o.ph||0)), cy=py+2;
+    for(const [cc,dx] of [[col,-4],[colorOf(o.fuse),4]]){ const g=ctx.createRadialGradient(px+P.dx+dx,cy,3,px+P.dx+dx,cy,30);
+      g.addColorStop(0,cc); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.globalAlpha=P.alpha*k; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px+P.dx+dx,cy,30,0,Math.PI*2); ctx.fill(); }
+    ctx.globalAlpha=P.alpha; }
   if(o.fuse&&!o.ghost&&o.die===undefined){   // fused: two class colours circling under the hero
     const c2=colorOf(o.fuse), r=ANIM*2;
     ctx.lineWidth=2.5; for(const [cc,off] of [[col,0],[c2,Math.PI]]){ ctx.strokeStyle=cc; ctx.globalAlpha=P.alpha*.85;
@@ -2433,9 +2438,11 @@ function drawUnit(type,star,px,py,o={}){
   if(o.psn){ ctx.fillStyle='#8be06a'; for(let i=0;i<3;i++){ const t=(performance.now()/600+i/3)%1; ctx.globalAlpha=1-t; ctx.beginPath(); ctx.arc(px-10+i*10,py+10-t*24,2.5,0,Math.PI*2); ctx.fill(); } ctx.globalAlpha=1; }
   drawStatus(o,px,py);
   ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-  ctx.fillText('★'.repeat(star),px,py-24);
-  if(o.fuse){ ctx.font='bold 12px system-ui'; ctx.fillStyle=colorOf(o.fuse); ctx.textAlign='right'; ctx.fillText('⚭',px-star*5-2,py-23); ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; }
-  if(o.org&&ORIGINS[b.org]){ ctx.font='11px system-ui'; ctx.textAlign='left'; ctx.fillText(ORIGINS[b.org].icon,px+star*5+2,py-23); ctx.textAlign='center'; }   // origin badge
+  const sw=o.fuse?6:star*5;   // half-width of the star label
+  if(o.fuse){ ctx.font='bold 15px system-ui'; ctx.lineWidth=3; ctx.strokeStyle='#3a0808'; ctx.strokeText('★',px,py-23); ctx.fillStyle='#ff3a3a'; ctx.fillText('★',px,py-23);   // fused: one red star
+    ctx.font='bold 12px system-ui'; ctx.fillStyle=colorOf(o.fuse); ctx.textAlign='right'; ctx.fillText('⚭',px-sw-2,py-23); ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; }
+  else ctx.fillText('★'.repeat(star),px,py-24);
+  if(o.org&&ORIGINS[b.org]){ ctx.font='11px system-ui'; ctx.textAlign='left'; ctx.fillText(ORIGINS[b.org].icon,px+sw+2,py-23); ctx.textAlign='center'; }   // origin badge
   if(o.hp!==undefined){
     ctx.fillStyle='#000'; ctx.fillRect(px-22,py-36,44,8);
     ctx.fillStyle='#fff6d0'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hpLag),5);   // recent damage drains away
@@ -2715,7 +2722,7 @@ function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
   const u=U[id], m=STAR_MULT[star-1], sk=SKILLS[id], c=CLASSES[u.cls]||{name:u.boss?'Boss':u.cls==='summon'?'Summon':'Monster',color:colorOf(id)}, o=ORIGINS[u.org];
   const side=live?(live.team===0?'<span style="color:#7fd0ff">Ally</span>':'<span style="color:#ff8a80">Enemy</span>')+' · ':'';
   const st=live?['ward','frz','stun','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
-  return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${u.name} <span class="stars">${'★'.repeat(star)}</span></div>
+  return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${u.name} ${fuse?'<span class="stars" style="color:#ff3a3a">★</span>':`<span class="stars">${'★'.repeat(star)}</span>`}</div>
     <div class="tags">${side}<span style="color:${c.color}">${c.name}</span>${o?` · <span style="color:${o.color}">${o.icon} ${o.name}</span>`:''}${u.cost&&u.cost<5?` · ${u.cost} gold`:''}</div></div></div>
     <div class="chips">${live?`<span>❤ ${Math.max(0,Math.round(live.hp))} / ${Math.round(live.max)}</span><span>⚔ ${Math.round(live.atk*live.dmgM)}</span>${live.mshield>1?`<span style="color:#d0a0ff">🔮 ${Math.round(live.mshield)}</span>`:''}${live.shield>1?`<span>🛡 ${Math.round(live.shield)}</span>`:''}${sk.mp<1e9?`<span>💧 ${Math.round(live.mp)} / ${sk.mp}</span>`:''}`
       :`<span>❤ ${Math.round(u.hp*m)}</span><span>⚔ ${Math.round(u.atk*m)}</span>`}${u.heal?`<span>✚ ${Math.round(u.heal*m)}</span>`:''}<span>🎯 ${u.range}</span><span>⏱ ${u.as}s</span></div>
