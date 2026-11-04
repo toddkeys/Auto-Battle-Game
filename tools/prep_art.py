@@ -15,6 +15,20 @@ OUT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'art')
 HEIGHT = 162   # 3x the 54px sprite height: drawn about 1:1 on most screens
 
 
+def polish(pic):
+    """Bake in what the game would otherwise do every frame: a little more colour and contrast (painted art reads
+    paler than the pixel heroes) and a thin dark outline so the hero stands out on the grass."""
+    from PIL import ImageEnhance
+    rgb = ImageEnhance.Contrast(ImageEnhance.Color(pic.convert('RGB')).enhance(1.2)).enhance(1.06)
+    out = np.asarray(rgb.convert('RGBA')).copy()
+    alpha = np.asarray(pic)[..., 3]
+    out[..., 3] = alpha
+    solid = alpha > 40
+    ring = ndimage.binary_dilation(solid, iterations=2) & ~solid
+    out[ring] = (28, 16, 10, 230)
+    return Image.fromarray(out)
+
+
 def prep(src, cid, box, erase=()):
     im = Image.open(src).convert('RGBA')
     for x0, y0, x1, y1 in erase:
@@ -43,6 +57,7 @@ def prep(src, cid, box, erase=()):
     pic = pic.crop(pic.getbbox())
     w, h = pic.size
     pic = pic.resize((round(w * HEIGHT / h), HEIGHT), Image.LANCZOS)
+    pic = polish(pic)
     os.makedirs(OUT, exist_ok=True)
     pic.save(os.path.join(OUT, cid + '.png'), optimize=True)
     print('saved', cid, pic.size)

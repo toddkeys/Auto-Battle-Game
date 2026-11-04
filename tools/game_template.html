@@ -1070,7 +1070,7 @@ const U = Object.fromEntries([...UNITS,...SUMMONS,...MONSTERS].map(u=>[u.id,u]))
 const colorOf=t=>(CLASSES[U[t].cls]||{color:U[t].cls==='summon'?'#7fe8d0':'#c8a070'}).color;
 const $ = s=>document.querySelector(s);
 const cv=$('#cv'), ctx=cv.getContext('2d');
-const RES=Math.min(3,Math.max(2,Math.ceil((innerHeight-166)/600*(devicePixelRatio||1))));   // backing pixels per game pixel: crisp limbs + text on big screens
+const RES=2;   // backing pixels per game pixel: matches the 2x HD sprites exactly (the page scales the canvas crisply); 3 cost 2.25x the drawing on big screens
 cv.width=W*RES; cv.height=H*RES;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
@@ -2555,9 +2555,8 @@ function drawUnit(type,star,px,py,o={}){
     const fuseTint=o.fuse?[[colorOf(o.fuse),.1+.08*Math.sin(ANIM*2.2+(o.ph||0))]]:[];   // a soft shimmer in the partner's class colour
     if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
-    const art=!!sp.art||(!rig&&im.naturalHeight>130);   // hand-made pictures (and big custom images) scale smoothly; pixel sprites stay crisp
-    ctx.imageSmoothingEnabled=art;
-    ctx.filter=(art?'saturate(1.2) contrast(1.06) ':'')+'drop-shadow(0 0 1px rgba(28,16,10,.9))'; draw(); ctx.filter='none';   // a thin dark outline so every hero reads against the grass
+    ctx.imageSmoothingEnabled=!!sp.art||(!rig&&im.naturalHeight>130);   // hand-made pictures (and big custom images) scale smoothly; pixel sprites stay crisp
+    draw();   // outlines are baked into the sprites (no per-frame filter: it was costly on the GPU)
     if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
     if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.45,o.cast>0?.12+.08*Math.sin(ANIM*30):0); draw(); }   // soft, so the face still reads
   } else {
