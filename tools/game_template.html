@@ -1080,7 +1080,7 @@ function readStore(){ try{ return JSON.parse(localStorage.getItem('roab_sprites'
 function writeStore(d){ try{ localStorage.setItem('roab_sprites',JSON.stringify(d)); }catch(e){ msg('Could not save — the image will be lost on refresh'); } }
 function setSprite(id,src,faceLeft,rig){
   if(src){ const im=new Image(); im.onload=()=>{render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
-    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr}; } }   // custom images have no rig: they animate as one piece
+    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1}; } }   // custom images have no rig: they animate as one piece
   else delete SPR[id];
 }
 /*DEFAULT_SPRITES*/
@@ -2392,7 +2392,7 @@ function pose(o,b,rigged){
 // ====== rig: each sprite is split into pieces (legs, body, arms + weapons, head, cape...) that turn on their joints ======
 // attack style per unit: how the arms move on a basic attack
 const CLS_ANIM={mimic:'staff',mesmer:'staff',monkey:'slash',gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
-const MON_ANIM={thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',arctower:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
+const MON_ANIM={aegispaladin:'artsword',thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',arctower:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
 const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
 function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=ks[i]; if(p<=p1){ const q=(p-p0)/(p1-p0); return v0+(v1-v0)*(i===ks.length-1?easeInOut(q):easeOut(q)); } } return ks[ks.length-1][1]; }
@@ -2425,6 +2425,12 @@ function rigPose(o,type,b){
     const g=o.rel>0||o.atkT>0?0:guardOf(o); R.front=1;   // swings and thrusts carry their own guard start/end
     if(st==='slash'){ R.armR.r+=-.15+.55*g; R.weapon.r=.45-2.15*g+br*.03; }
     else { R.armR.r+=.4*g; R.weapon.r=-1.4*g+br*.02; } }   // spear: held across the front, tip forward and up, like the swords
+  if(st==='artsword'){   // the hand-made Paladin: sword arm hangs forward-down; lift the blade up and chop it down, shield braces
+    R.armR.r+=br*.03; R.armL.r-=br*.02;
+    const chop=(p,big)=>{ R.armR.r+=KF(p,[[0,0],[.35,big?2.2:1.8],[.52,-.55],[.62,-.6],[1,0]]); R.weapon.r+=KF(p,[[0,0],[.35,.35],[.52,-.35],[1,0]]);
+      R.armL.r+=KF(p,[[0,0],[.35,-.12],[.52,.1],[1,0]]); R.body.x+=KF(p,[[0,0],[.35,1],[.52,-1.5],[1,0]]); R.head.r+=KF(p,[[0,0],[.35,-.05],[.52,.06],[1,0]]); };
+    if(o.rel>0) chop(1-o.rel/REL_T,true); else if(o.atkT>0) chop(1-o.atkT/ATK_T,false);
+    else if(o.cast>0){ const q=easeOut(1-o.cast/CAST_T); R.armR.r+=1.6*q; R.armL.r-=.15*q; } }
   if(st==='gun'){ R.front=1; if(o.atkT>0){ const p=1-o.atkT/ATK_T; R.armR.x+=KF(p,[[0,0],[.4,0],[.5,2.5],[1,0]]); R.weapon.r+=KF(p,[[0,0],[.4,0],[.5,-.25],[1,0]]); } }   // cannon: recoil
   if(st==='golem'){ R.armL.r=Math.sin(t*1.6)*.06; R.armR.r=-Math.sin(t*1.6)*.06; }
   if(st==='blob') R.head.r=Math.sin(t*2.5)*.12;
@@ -2436,7 +2442,7 @@ function rigPose(o,type,b){
   }
   if(o.rel>0&&st==='slash'){ const p=1-o.rel/REL_T; swing(R,p,SWING_BIG); R.body.y+=KF(p,[[0,0],[.35,-3],[.5,1.5],[1,0]]); R.legL.r+=KF(p,[[0,0],[.35,.3],[.5,-.25],[1,0]]); R.legR.r+=KF(p,[[0,0],[.35,-.3],[.5,.25],[1,0]]); }
   else if(o.rel>0&&st==='spear'){ const p=1-o.rel/REL_T; thrust(R,p,1.6); R.legL.r+=KF(p,[[0,0],[.3,.2],[.45,-.3],[1,0]]); }
-  else if(o.rel>0){
+  else if(o.rel>0&&st!=='artsword'){
     const p=1-o.rel/REL_T, B=(w,h)=>beats(p,w,h);
     R.armR.r+=B(-2.1,1.4); R.armL.r+=B(1.5,-.8); R.body.y+=B(-3,1.5); R.head.r+=B(-.12,.12);
     R.legL.r+=B(.3,-.2); R.legR.r+=B(-.3,.2); R.wingL.r+=B(-.8,.6); R.wingR.r+=B(.8,-.6); R.cape.r+=B(.25,-.1);
@@ -2479,7 +2485,7 @@ function exprOf(o){
   if(o.psn) return 'sick'; if(o.cheer) return 'happy'; if(o.hp!==undefined&&o.hp<.25) return 'hurt'; return null;
 }
 function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose weapon and cape replace the lead's
-  const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=false;
+  const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=rig.k>1;   // k>1: a hand-made picture cut into pieces at k x detail
   let order=rig.layers.map((g,i)=>i);
   if(R.front&&rig.piv.weapon){   // weapon held in front of the body: blade, then the hand gripping it, go just under the head
     const mv=order.filter(i=>rig.layers[i]==='weapon'||rig.layers[i]==='armR').sort((x,y)=>(rig.layers[x]==='armR')-(rig.layers[y]==='armR'));
@@ -2498,11 +2504,11 @@ function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose 
     if(g==='weapon'&&rig.piv.weapon){   // shoulder -> arm turn -> wrist -> weapon turn
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon;
       rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
-      rg.drawImage(rig.img,i*56,0,56,54,-ph[0],-ph[1],56,54); rg.restore(); return; }
+      rg.drawImage(rig.img,i*56*rig.k,0,56*rig.k,54*rig.k,-ph[0],-ph[1],56,54); rg.restore(); return; }
     const j=R[g]||b, p=rig.piv[g]||rig.piv.body, ox=j.x+(LOOSE[g]?0:b.x), oy=j.y+(LOOSE[g]?0:b.y);
     rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r);
     const src=i===rig.faceLayer&&expr&&rig.expr?rig.expr[expr]??i:i;
-    rg.drawImage(rig.img,src*56,0,56,54,-p[0],-p[1],56,54); rg.restore();
+    rg.drawImage(rig.img,src*56*rig.k,0,56*rig.k,54*rig.k,-p[0],-p[1],56,54); rg.restore();
   });
   if(tints.length){ rg.globalCompositeOperation='source-atop';
     for(const [c,a] of tints){ rg.globalAlpha=a; rg.fillStyle=c; rg.fillRect(0,0,168,162); }

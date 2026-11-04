@@ -22,6 +22,7 @@ import gamblers  # noqa: E402
 import newclasses  # noqa: E402
 import newclasses2  # noqa: E402
 import bosses  # noqa: E402
+import art_rig  # noqa: E402
 import hookers  # noqa: E402
 import gunslingers  # noqa: E402
 import monkeys  # noqa: E402
@@ -55,9 +56,12 @@ if __name__ == '__main__':
         if os.path.exists(art):   # a hand-made picture replaces the drawn sprite (no limb rig: it moves as one piece)
             ims[cid] = Image.open(art).convert('RGBA')
             ims[cid].save(os.path.join(OUT, 'units', cid + '.png'))
-            for ext in ('.png', '.json'):
-                if os.path.exists(os.path.join(OUT, 'rig', cid + ext)):
-                    os.remove(os.path.join(OUT, 'rig', cid + ext))
+            if cid in art_rig.ART_RIGS:   # cut into rig pieces so it animates like the drawn heroes
+                art_rig.build(cid, os.path.join(OUT, 'art'), os.path.join(OUT, 'rig'))
+            else:
+                for ext in ('.png', '.json'):
+                    if os.path.exists(os.path.join(OUT, 'rig', cid + ext)):
+                        os.remove(os.path.join(OUT, 'rig', cid + ext))
             continue
         ims[cid] = fn().render()
         ims[cid].save(os.path.join(OUT, 'units', cid + '.png'))

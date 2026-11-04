@@ -9,7 +9,7 @@ A single-file auto battler (original anime-style pixel art). Open `ro-autobattle
   `assets/rig/<id>.png` (one layer per piece) + `<id>.json` (piece groups and joints); the game turns each piece on its
   joint (`rigPose` in the template) for walking, attacks, casting, hits, cheering and dying.
 - Sprites: `tools/kit.py`, `tools/classes.py`, `tools/tier4.py`, `tools/crusaders.py`, `tools/occultists.py`, `tools/samurai.py`, `tools/frostkin.py`, `tools/gamblers.py`, `tools/newclasses.py`, `tools/newclasses2.py`, `tools/bosses.py`, `tools/summoners.py`, `tools/monsters.py`, `tools/creatures.py` (engine in `tools/pixel.py`)
-- Hand-made hero pictures: put one in `assets/art/<id>.png` (prepared from a sheet with `tools/prep_art.py`) and it replaces that hero's drawn sprite; it animates as one piece (no limb rig). The Aegis Paladin uses `assets/art/src/aegispaladin_sheet.webp`.
+- Hand-made hero pictures: put one in `assets/art/<id>.png` (prepared from a sheet with `tools/prep_art.py`) and it replaces that hero's drawn sprite; it animates as one piece unless `tools/art_rig.py` cuts it into rig pieces (sword, arms, shield, head), as it does for the Aegis Paladin. The Aegis Paladin uses `assets/art/src/aegispaladin_sheet.webp`.
 
 Sound: `assets/audio` (credits in `assets/audio/CREDITS.txt`), rebuilt from the source packs with `python tools/build_audio.py <packs folder>` (needs ffmpeg).
 
