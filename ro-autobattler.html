@@ -373,7 +373,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper speeds up one ally (Rousing Note); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
-        <li><b>Statuses</b>: 💫 Stun 1s · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ <b>Poison</b>: damage once per second, <b>stacks up to 5</b>, lasts at least 5s and cuts healing on the target by 30% (good vs healers) · 🔥 <b>Burn</b>: fire skills, damage twice per second, refreshes instead of stacking, <b>deals double damage to shields</b> and <b>jumps to a nearby enemy</b> when the target dies (good vs shields and groups). Fire melts Frozen; freezing puts out fire. A hero can be poisoned and burning at once · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
+        <li><b>Statuses</b>: 💫 Stun 1s · 🎯 Taunt (must attack the taunter; hits on it are reflected back) · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ <b>Poison</b>: damage once per second, <b>stacks up to 5</b>, lasts at least 5s and cuts healing on the target by 30% (good vs healers) · 🔥 <b>Burn</b>: fire skills, damage twice per second, refreshes instead of stacking, <b>deals double damage to shields</b> and <b>jumps to a nearby enemy</b> when the target dies (good vs shields and groups). Fire melts Frozen; freezing puts out fire. A hero can be poisoned and burning at once · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. Each shop Upgrade improves the odds; a fully upgraded shop late in the run rolls 1💰 heroes only 10% of the time, and each slot has a 5% extra chance to show a hero you already own (not yet ★★★). "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
         <li><b>Gold</b>: 5 per round, +1 every 5 rounds (9 from round 20) + 1 interest per 10 saved (max 5) + a streak bonus for 2/4/6 wins or losses in a row (+1/+2/+3). Losing costs HP; at 0 the run ends.</li>
@@ -794,8 +794,8 @@ const SKILLS = {
     cast(a,t){ hit(a,t,2.2); inflict(t,'blind'); burst(t.x,t.y,'#ff9a40',10,3,3,3); }},
   golem:{name:'Quake Slam', names:['Quake Slam','Boulder Toss'], mp:70, desc:'Alternates Quake Slam (160% damage + 1s stun within 2 cells) and Boulder Toss (300% to the farthest enemy + 1s stun). Takes 30% less damage above half HP; at half HP it enrages and calls mosslings.',
     cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ const t=foes(a).sort((p,q)=>dist(q,a)-dist(p,a))[0]; if(t) shoot(a,t,3,'#a08060',true,e=>stun(e)); return; } for(const e of foes(a)) if(dist(e,a)<=2){ hit(a,e,1.6); stun(e); } V({k:'ring',x:a.x,y:a.y+.3,r:2,c:'#c8a070'}); V({k:'burst',x:a.x,y:a.y+.3,r:2,c:'#a08060'}); burst(a.x,a.y+.3,'#c0a080',18,4,4,5); hitStop(.08); }},
-  starwarden:{name:'Starfall Bulwark', mp:90, desc:'Gains a physical shield worth 35% of its max HP, then taunts enemies within 2.5 cells (they attack it) and stuns them for 1s.',
-    cast(a){ a.shield+=a.max*.35; for(const e of foes(a)) if(dist(e,a)<=2.5){ e.tgt=a; stun(e); }
+  starwarden:{name:'Starfall Challenge', mp:90, desc:'Slams down a star: 200% damage to every enemy within 2.5 cells, and Taunts them for 2s — they must attack the Star Warden, and every hit they land on it is reflected back at them at 100%.',
+    cast(a){ for(const e of foes(a)) if(dist(e,a)<=2.5){ hit(a,e,2); if(e.hp>0){ inflict(e,'taunt',2); e.tauntBy=a; e.tgt=a; } }
       V({k:'ring',x:a.x,y:a.y+.3,r:2.5,c:'#ffe27a'}); burst(a.x,a.y-.4,'#fff3a0',16,3,3,-1); hitStop(.06); }},
   stormranger:{name:'Arrow Storm', mp:80, desc:'Rains 3 volleys of arrows on the most crowded spot: 90% damage per volley to every enemy within 2.2 cells, slowing them for 2s.',
     cast(a){ const c=densest(a,2)||a.tgt; if(!c) return; const x=c.x, y=c.y; V({k:'ring',x,y,r:2.2,c:'#ffe45a',m:1.1});
@@ -1929,6 +1929,7 @@ const STATUS={tstop:{label:'Time Stopped',c:'#7fe0e0',icon:'⏳',tint:'#5ad8e8'}
   blind:{label:'Blinded',c:'#c8c8c8',icon:'🌫️',dur:2,tint:'#14141c'},slow:{label:'Slowed',c:'#8fd0ff',icon:'🐌',tint:'#7fd0ff'},
   psn:{label:'Poisoned',c:'#8be06a',icon:'☠️',tint:'#4ad040'},
   brn:{label:'Burning',c:'#ff9a40',icon:'🔥',tint:'#ff6a20'},
+  taunt:{label:'Taunted',c:'#ffe27a',icon:'🎯',tint:'#ffcf40'},   // must attack whoever taunted it; its hits on that unit are reflected
   frz:{label:'Frozen',c:'#bff2ff',icon:'🧊',tint:'#d8f6ff'},
   ward:{label:'Ice Ward',c:'#9ee8ff',icon:'❄️',tint:'#b8ecff'},          // ally protection: immune to physical, +20% magic damage
   dis:{label:'Disarmed',c:'#ffc080',icon:'🚫',dur:1,tint:'#b08050'},
@@ -2039,10 +2040,12 @@ function deal(t,dmg,crit,src){
   if(t.tstop>0&&src){ t.tsBank+=dmg; return; }   // Stop Time: banked until time resumes
   if(t.pmark&&src) t.pmark.acc+=dmg;   // Paradox Mark tally
   if(src) src.dd+=dmg; t.dtk+=dmg;
+  const raw=dmg;
   const sk=isMagic(src)?'mshield':'shield';   // gold shields stop physical damage, violet ones stop magic
   if(t[sk]>0){ const ab=Math.min(t[sk],dmg); t[sk]-=ab; dmg-=ab; }
   t.hp-=dmg; t.flash=1; gainMp(t,MANA_HIT);
   if(t.thorns&&src&&src.hp>0&&src.range<=1) deal(src,dmg*t.thorns,false,null);   // Thorn Mail: no src, so it never bounces back
+  if(src&&src.taunt>0&&src.tauntBy===t&&src.hp>0){ deal(src,raw,false,null); burst(src.x,src.y-.3,'#ffe27a',5,2,2,0); }   // Taunt: 100% reflected
   if(src&&src.leech&&src.hp>0){ const h=Math.min(dmg*src.leech*healMul(src),src.max-src.hp); src.hp+=h; src.hl+=h; }
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
@@ -2172,6 +2175,7 @@ function step(dt){
       continue; }
     a.atkT=Math.max(0,a.atkT-dt); a.relT=Math.max(0,(a.relT||0)-dt); a.moving=Math.max(0,a.moving-dt); a.glow=Math.max(0,a.glow-dt);
     if(a.regen) a.hp=Math.min(a.max,a.hp+a.max*a.regen*dt*healMul(a));
+    if(a.taunt>0&&(a.taunt-=dt)<=0) a.tauntBy=null;
     if(a.sil>0) a.sil-=dt; if(a.blind>0) a.blind-=dt; if(a.slow>0) a.slow-=dt; if(a.dis>0) a.dis-=dt; if(a.shred>0) a.shred-=dt; if(a.drain>0) a.drain-=dt; if(a.wnd>0) a.wnd-=dt;
     const slowM=a.slow>0?.6:1;
     if(a.psn){ const d=a.psn; d.acc=(d.acc||0)+dt; d.t-=dt; while(d.acc>=1-1e-6){ d.acc-=1; dotTick(a,d,d.dps*(d.n||1),'#8be06a'); } if(d.t<=1e-6) a.psn=null; }
@@ -2210,6 +2214,7 @@ function step(dt){
       if(hurt){ if(a.cd<=0){ a.cd=a.as; a.atkT=ATK_T; gainMp(a,(MANA_ATTACK+a.manaAtk)*(a.manaMul||1));
         later(ATK_T*.45,()=>{ if(a.hp>0){ if(U[a.type].hot) hot(hurt,a.heal*1.2,3,a); else heal(hurt,a.heal,a); } }); } continue; }
     }
+    if(a.taunt>0&&a.tauntBy&&a.tauntBy.hp>0) a.tgt=a.tauntBy;   // Taunted: forced onto the taunter
     if(!a.tgt||a.tgt.hp<=0||a.tgt.ghost>0) a.tgt=nearest(a,alive);
     if(a.root>0&&a.tgt&&dist(a,a.tgt)>a.range+.5){ const r=alive.filter(b=>b.team!==a.team&&!(b.ghost>0)&&dist(a,b)<=a.range+.5).sort((p,q)=>dist(a,p)-dist(a,q))[0]; if(r) a.tgt=r; }   // rooted: fight what is in reach
     const t=a.tgt; if(!t) continue;
@@ -2553,7 +2558,7 @@ function drawStatus(o,px,py){
     for(let i=0;i<4;i++){ const f=(T*.7+i/4)%1, x=px-14+i*9, y=py+22-f*20; ctx.globalAlpha=1-f; ctx.fillStyle='#dff6ff';
       ctx.beginPath(); ctx.moveTo(x,y-4); ctx.lineTo(x+2.5,y); ctx.lineTo(x,y+4); ctx.lineTo(x-2.5,y); ctx.fill(); } ctx.globalAlpha=1; }
   if(!o.ref) return;
-  const f=o.ref, act=['ward','frz','stun','sil','blind','slow','dis','shred','drain','wnd','psn','brn'].filter(k=>k==='psn'||k==='brn'?f[k]:f[k]>0);
+  const f=o.ref, act=['ward','frz','stun','taunt','sil','blind','slow','dis','shred','drain','wnd','psn','brn'].filter(k=>k==='psn'||k==='brn'?f[k]:f[k]>0);
   act.forEach((k,i)=>{ const x=px+(i-(act.length-1)/2)*17, y=py-48, left=k==='psn'||k==='brn'?f[k].t/f[k].T:f[k]/(f[k+'M']||f[k]);
     ctx.fillStyle='rgba(15,15,25,.85)'; ctx.beginPath(); ctx.arc(x,y,7.5,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle=STATUS[k].c; ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(x,y,7.5,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(0,left)); ctx.stroke();
@@ -2805,7 +2810,7 @@ function thumbHTML(id,size){
 function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
   const u=U[id], m=STAR_MULT[star-1], sk=SKILLS[id], c=CLASSES[u.cls]||{name:u.boss?'Boss':u.cls==='summon'?'Summon':'Monster',color:colorOf(id)}, o=ORIGINS[u.org];
   const side=live?(live.team===0?'<span style="color:#7fd0ff">Ally</span>':'<span style="color:#ff8a80">Enemy</span>')+' · ':'';
-  const st=live?['ward','frz','stun','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
+  const st=live?['ward','frz','stun','taunt','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
   return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${u.name} ${fuse?'<span class="stars" style="color:#ff3a3a">★</span>':`<span class="stars">${'★'.repeat(star)}</span>`}</div>
     <div class="tags">${side}<span style="color:${c.color}">${c.name}</span>${o?` · <span style="color:${o.color}">${o.icon} ${o.name}</span>`:''}${u.cost&&u.cost<5?` · ${u.cost} gold`:''}</div></div></div>
     <div class="chips">${live?`<span>❤ ${Math.max(0,Math.round(live.hp))} / ${Math.round(live.max)}</span><span>⚔ ${Math.round(live.atk*live.dmgM)}</span>${live.mshield>1?`<span style="color:#d0a0ff">🔮 ${Math.round(live.mshield)}</span>`:''}${live.shield>1?`<span>🛡 ${Math.round(live.shield)}</span>`:''}${sk.mp<1e9?`<span>💧 ${Math.round(live.mp)} / ${sk.mp}</span>`:''}`
