@@ -92,54 +92,49 @@ def templar():
 
 
 def aegispaladin():
-    # the Aegis Paladin, powered up: tall flame-like golden hair standing on end, fierce teal eyes,
-    # gold battle armour with broad shoulder flaps over a dark blue bodysuit, a crackling golden aura,
-    # a raised gauntlet charging a ball of holy light, a gold-rimmed round shield
+    # the Aegis Paladin as a wandering shield hero: messy dark hair, serious emerald eyes, a hooded
+    # forest-green travel mantle over chainmail and a dark leather vest, one steel pauldron, a big
+    # emerald-gem kite shield on the left arm, a plain steel longsword held forward like the other swordsmen
     s = Spr()
-    gold, deep, suit, aura, light = ramp('#f0b830', 1.35, 1.1), ramp('#b87a18', 1.3), ramp('#1e2a6a', 1.25), ramp('#fff4b0', .5), ramp('#fff6c0', .8)
-    hair = ramp('#ffc820', 1.45, 1.25)
-    with s.grp('cape'):   # golden power aura, flame-shaped
-        s.part(aura, [('poly', [(28, -2), (34, 6), (41, 2), (42, 12), (50, 12), (46, 24), (52, 32), (45, 38), (48, 50), (38, 46), (28, 54),
-                                (18, 46), (8, 50), (11, 38), (4, 32), (10, 24), (6, 12), (14, 12), (15, 2), (22, 6)])],
-               sub=[('ell', 28, 28, 17.5, 25)], soft=.6, gloss=.4, line=False)
-    legs(s, suit, ramp('#f2f2f2', .8))
-    with s.grp('legL'):
-        s.part(gold, [('rect', 21.5, 46, 27.5, 48)], soft=.3, gloss=1.2, line=False)
-    with s.grp('legR'):
-        s.part(gold, [('rect', 29.5, 46, 35, 48)], soft=.3, gloss=1.2, line=False)
-    torso(s, suit, hem=44)
-    with s.grp('body'):   # gold battle armour
-        s.part(gold, [('poly', [(21, 29), (35, 29), (35, 40), (28, 41.5), (21, 40)])], soft=1.4, gloss=1.6)
-        s.part(deep, [('cap', 23, 33.5, 33, 33.5, .4), ('cap', 28, 30, 28, 40.5, .35)], soft=.2, line=False)   # chest plate lines
-        s.part(gold, [('poly', [(21, 40), (35, 40), (36.5, 46), (31, 45), (28, 47), (25, 45), (19.5, 46)])], soft=1, gloss=1.3)   # hip flaps
-        s.part(light, [('ell', 28, 34, 1.6, 1.6)], soft=.2, gloss=1.6, line=False)
-    belt(s, suit, 39.5, gold)
-    with s.grp('weapon'):   # holy light charging in the raised fist
-        s.part(aura, [('ell', 45, 22, 4.4, 4.4)], soft=.6, gloss=1.2, line=False)
-        s.part(light, [('ell', 45, 22, 2.6, 2.6)], soft=.3, gloss=1.8, line=False)
-    arm(s, suit, suit, (35, 30), (40, 29), (44, 25.5), r=2.9, glove=gold)   # fist raised
-    arm(s, suit, suit, (21, 30), (18.5, 35), (17.5, 39.5), r=2.9, glove=gold)
-    for cx in (36.5, 19.5):   # broad shoulder flaps
-        s.part(gold, [('poly', [(cx - 6.5, 29.5), (cx - 4, 26), (cx + 4, 26), (cx + 6.5, 29.5), (cx + 5, 33), (cx - 5, 33)])], soft=1, gloss=1.5, cast=1)
-    s.part(gold, [('ell', 12.5, 38, 6.5, 6.8)], soft=1.5, gloss=1.5)   # round shield
-    s.part(suit, [('ell', 12.5, 38, 4.6, 4.8)], soft=1, gloss=1)
-    s.part(light, [('poly', [(12.5, 34), (14, 38), (12.5, 42), (11, 38)])], soft=.3, gloss=1.6, line=False)
+    green, mantle, mail, leather = ramp('#2f6a3a', 1.25), ramp('#3c5a34', 1.2), ramp('#9aa4b4', 1.2), ramp('#4a3424', 1.2)
+    steel, gem, hair, trim = ramp('#c8d2e0', 1.35), ramp('#3ae08a', 1.3, 1.2), ramp('#2a2430', 1.3), ramp('#d8c070', 1.1)
+    cape(s, mantle, 1.35, 52)
+    legs(s, ramp('#3a3440', 1.2), leather)
+    torso(s, mail, hem=45)
+    with s.grp('body'):
+        for y in (31, 34, 37, 40, 43):   # chainmail rings
+            for x in range(21, 36, 2):
+                s.mark(x, y, (110, 118, 132))
+        s.part(leather, [('poly', [(22, 29.5), (34, 29.5), (34.5, 40), (28, 41), (21.5, 40)])], soft=1, gloss=.6)   # leather vest
+        s.part(trim, [('cap', 28, 30, 28, 40, .35)], soft=.2, line=False)   # lacing
+        s.part(mantle, [('poly', [(19.5, 27.5), (36.5, 27.5), (35, 32), (28, 34), (21, 32)])], soft=1.2, cast=1)   # hood down around the shoulders
+        s.part(trim, [('ell', 28, 31.5, 1.3, 1.3)], soft=.3, gloss=1.4)   # cloak clasp
+    belt(s, leather, 40, trim)
+    sword(s, steel, ramp('#3a3440', 1.2), x0=42, y0=43, x1=49, y1=11, w=1.9, guard=4.6)   # held forward, like the other swordsmen
+    with s.grp('weapon'):
+        s.part(gem, [('ell', 41.8, 47.4, 1.2, 1.2)], soft=.2, gloss=1.6, line=False)   # emerald pommel
+    arm(s, mail, SKIN, (35, 30), (38.5, 36), (42, 41), r=2.8, glove=leather)
+    s.part(steel, [('chord', 36, 31, 5.6, 5, 180, 360)], soft=1.2, gloss=1.4, cast=1)   # one steel pauldron
+    arm(s, mail, SKIN, (21, 30), (18.5, 35), (17.5, 39.5), r=2.8, glove=leather)
+    # emerald-gem kite shield: silver frame, green face, a large glowing gem set in leaf-like prongs
+    s.part(steel, [('poly', [(4, 27), (23, 27), (23.5, 40), (13.5, 54), (3.5, 40)])], soft=1.6, gloss=1.4)
+    s.part(green, [('poly', [(6, 29), (21, 29), (21.5, 39.5), (13.5, 51.5), (5.5, 39.5)])], soft=1.6, gloss=1)
+    for dx, dy in ((0, -6), (5, -1), (-5, -1), (0, 5)):   # leaf prongs around the gem
+        s.part(trim, [('poly', [(13.5, 37), (13.5 + dx * .5 + dy * .15, 37 + dy * .5 - dx * .1), (13.5 + dx, 37 + dy)])], soft=.4, gloss=1.2)
+    s.part(gem, [('ell', 13.5, 37, 3.4, 3.8)], soft=.6, gloss=1.8)
+    s.part(ramp('#d8ffe8', .5), [('ell', 12.4, 35.6, 1, 1)], soft=.1, line=False, flat=True, bias=.5)
     head(s)
-    with s.grp('head'):   # golden hair standing on end
-        s.part(hair, [('chord', 28, 16.5, 12, 11.5, 175, 365),
-                      ('poly', [(16, 15), (9, 7), (17, 9), (15, 0), (22, 6), (23, -4), (28, 3), (33, -4), (34, 6), (41, 0), (39, 9), (47, 7), (40, 15)]),
-                      ('poly', [(16.5, 16), (18, 22), (20, 17.5), (23, 20), (25, 16.5), (27, 21), (29, 16.5), (31, 19), (33, 16.5), (36, 20.5), (39.5, 16)])],
-               soft=1.6, cast=2, shine=6)
-    face(s, '#18c0b0', mouth=None, blush=False)
+    with s.grp('head'):   # messy back hair
+        s.part(hair, [('poly', [(17, 19), (14, 25), (19, 23)]), ('poly', [(39, 19), (42, 25), (37, 23)])], soft=1)
+    bangs(s, hair, 'spiky', shine=8)
+    face(s, '#2aa060', mouth=None, blush=False)
     if not kit_expr():
-        for x0, x1 in ((20, 23), (27, 30)):   # fierce brows
-            for x in range(x0, x1):
-                s.mark(x, 18, (150, 100, 20))
-        s.mark(19, 17, (150, 100, 20)); s.mark(30, 17, (150, 100, 20))
-        for x in (24, 25, 26):
-            s.mark(x, 25, (150, 70, 70))
-    for x, y in ((3, 18), (53, 40), (50, 4), (6, 48)):
-        sparkle(s, x, y, (255, 240, 150))
+        for x in (20, 21, 22, 27, 28, 29):   # serious, narrowed eyes
+            s.mark(x, 18, (34, 24, 30))
+        for x in (20, 21, 22, 27, 28, 29):
+            s.mark(x, 22, (236, 196, 170))
+        s.mark(24, 25, (150, 80, 80)); s.mark(25, 25, (150, 80, 80))
+    sparkle(s, 3, 22, (170, 255, 210)); sparkle(s, 52, 8, (220, 235, 255))
     return s
 
 
