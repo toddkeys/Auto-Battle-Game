@@ -1,5 +1,5 @@
 -- Online top-10 leaderboard for the game (Supabase).
--- Paste this whole file into Supabase > SQL Editor and press Run, once.
+-- Already applied to the auto-battle Supabase project. Paste into Supabase > SQL Editor and Run only for a new project.
 -- Players can read scores and add new ones; nobody can edit or delete them from the game.
 
 create table if not exists public.scores (

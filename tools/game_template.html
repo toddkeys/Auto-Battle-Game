@@ -1168,13 +1168,13 @@ function openEvent(){
 }
 
 // ====== top-10 leaderboard: online (Supabase) when LB_URL and LB_KEY are set, otherwise kept in this browser ======
-const LB_URL='', LB_KEY='';   // Supabase project URL and its public "anon" key (safe to publish; the table only allows reading and adding scores)
+const LB_URL='https://zlnfiipmhrdxvabmxnmh.supabase.co', LB_KEY='sb_publishable_ZTFrkr8Wp-1dX-Y1EBCGIw_4mJlueqh';   // Supabase project URL and its publishable key (safe to publish; the table only allows reading and adding scores)
 const LB_ONLINE=!!(LB_URL&&LB_KEY);
 const boardId=m=>m==='daily'?'daily-'+today():m;
 const boardName=m=>({normal:'Normal',hard:'Hard',daily:'Daily '+today()})[m];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const lbBetter=(a,b)=>a.round!==b.round?a.round>b.round:a.bosses>b.bosses;   // does score a beat score b
-const lbHeaders=()=>({apikey:LB_KEY,Authorization:'Bearer '+LB_KEY});
+const lbHeaders=()=>({apikey:LB_KEY});
 async function lbFetch(board){
   if(!LB_ONLINE){ try{ return JSON.parse(localStorage.getItem('ab_lb_'+board)||'[]'); }catch(e){ return []; } }
   const r=await fetch(`${LB_URL}/rest/v1/scores?board=eq.${encodeURIComponent(board)}&select=name,round,bosses,created_at&order=round.desc,bosses.desc,created_at.asc&limit=10`,{headers:lbHeaders()});
