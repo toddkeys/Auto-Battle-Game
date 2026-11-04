@@ -113,6 +113,7 @@ button.go{font-size:30px;padding:9px 18px 10px;background:linear-gradient(180deg
 button.go:disabled{animation:none}
 @keyframes goPulse{50%{box-shadow:inset 0 2px 0 rgba(255,225,170,.35),inset 0 -3px 0 rgba(0,0,0,.35),0 3px 0 var(--ink),0 0 22px rgba(120,255,150,.55)}}
 .lockbtn{font-size:16px!important;padding:4px 9px 5px!important}
+.bigbtn{margin-left:6px;font-size:13px!important;padding:2px 8px 3px!important;vertical-align:middle}
 /* HUD over the board */
 .hud{display:flex;align-items:center;gap:14px;padding:8px 14px;border:2px solid var(--ink);border-radius:8px;
   background:linear-gradient(180deg,#3d2a1a,#20140c);box-shadow:inset 0 0 0 2px var(--brass-lo),0 6px 16px rgba(0,0,0,.5)}
@@ -329,13 +330,12 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
   </main>
   <aside class="col right">
     <div class="card">
-      <h3>Shop <span class="coins" id="coins"><span class="coin"></span><span id="sGold"></span></span><button class="b lockbtn" id="bLock">🔓 Lock</button></h3>
+      <h3>Shop <button class="b bigbtn" id="bBig" data-tip="Big Shop (200 gold): show 10 heroes instead of 5 for the rest of this run">🛒 ×10 · 200💰</button><span class="coins" id="coins"><span class="coin"></span><span id="sGold"></span></span><button class="b lockbtn" id="bLock">🔓 Lock</button></h3>
       <div class="shop" id="shop"></div>
       <div class="odds" id="odds"></div>
       <div class="actions">
         <button class="b blue" id="bReroll">Reroll · 2</button>
         <button class="b" id="bSell">Sell</button>
-        <button class="b" id="bBig" data-tip="Big Shop: the shop shows 10 heroes instead of 5 for the rest of this run">🛒 10 heroes (200💰)</button>
         <button class="b" id="bCap" data-tip="Upgrade the shop: +1 hero slot on the field and better odds for 2-4 gold heroes">Upgrade</button>
       </div>
       <button class="b go" id="bFight">⚔ Start battle</button>
