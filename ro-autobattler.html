@@ -2200,6 +2200,14 @@ const V=o=>{ o.m=o.m||.4; if(o.t===undefined) o.t=o.m; o.s=o.s??(Math.random()*1
 let CASTER=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
 const later=(t,fn)=>S.fight.timers.push({t,fn,c:CASTER});
 function pop(u,txt,c,big){ S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?1.1:.7,txt,c,big}); }
+function popIcon(u,icon,c){   // a status lands: its icon pops instead of a word; several at once sit side by side
+  const n=S.fight.fx.filter(f=>f.icon&&f.u===u&&f.t0-f.t<.3).length;
+  S.fight.fx.push({x:u.x+[0,.42,-.42,.84,-.84][n%5],y:u.y-.35,t:.8,t0:.8,icon,c,u}); }
+// emoji are drawn once into a small canvas and stamped: no colour-font text rendering every frame
+const ICONS={};
+function iconImg(ch){ let c=ICONS[ch]; if(c) return c; c=ICONS[ch]=document.createElement('canvas'); c.width=c.height=48;
+  const g=c.getContext('2d'); g.font='38px system-ui'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(ch,24,27); return c; }
+const drawIcon=(ch,x,y,size)=>ctx.drawImage(iconImg(ch),x-size/2,y-size/2,size,size);
 // status effects: stun (can't act), sil = silence (can't cast), blind (50% of attacks miss),
 // slow (-40% move and attack speed), psn = poison (damage over time)
 // dur = fixed length for every skill (stun 1s, silence 2s, blind 2s); slow keeps each skill's own length
@@ -2283,7 +2291,7 @@ function dispel(u){ if(u.hp<=0) return; u.haste=0; u.hotT=0; u.furyT=0; if(u.msh
 function spinStart(a){ for(const k of ['stun','sil','blind','slow','dis','shred','drain','wnd','shock','root','frz','taunt','crs']) if(a[k]>0) a[k]=0; a.psn=null; a.brn=null; a.tauntBy=null; }
 function inflict(u,k,s){ if(u.hp<=0||u.spin) return; s=STATUS[k].dur||s;   // spinning Berserkers shrug off every debuff
   if(u.cloak>0){ u.cloak--; pop(u,'Blocked','#e8e8ff'); burst(u.x,u.y-.3,'#e8e8ff',8,2,3,-1); return; }   // Quicksilver Cloak
-  if(!(u[k]>0)){ pop(u,STATUS[k].label,STATUS[k].c); V({k:'ring',x:u.x,y:u.y,r:.6,c:STATUS[k].c,m:.35}); burst(u.x,u.y-.3,STATUS[k].c,8,2,3,-1); }
+  if(!(u[k]>0)){ popIcon(u,STATUS[k].icon,STATUS[k].c); V({k:'ring',x:u.x,y:u.y,r:.6,c:STATUS[k].c,m:.35}); burst(u.x,u.y-.3,STATUS[k].c,8,2,3,-1); }
   if(k==='frz') SND.play('freeze');
   if(s>=(u[k]||0)) u[k+'M']=s; u[k]=Math.max(u[k]||0,s); }
 function stun(u){ inflict(u,'stun'); }
@@ -2310,7 +2318,7 @@ function freeze(u,chance,s){ if(u.hp<=0||U[u.type].boss||Math.random()>=chance) 
 // damage over time: poison ticks once per second, burn ticks twice per second (half the damage each tick)
 function burn(u,dps,s,src){ if(u.hp<=0||u.spin) return;
   if(u.frz>0){ u.frz=0; pop(u,'Thawed','#ffd0a0'); }   // fire melts ice
-  if(!u.brn){ pop(u,'Burning','#ff9a40'); burst(u.x,u.y-.3,'#ff9a40',8,2,3,-1.5); }
+  if(!u.brn){ popIcon(u,STATUS.brn.icon,'#ff9a40'); burst(u.x,u.y-.3,'#ff9a40',8,2,3,-1.5); }
   u.brn={dps:Math.max(dps,u.brn?u.brn.dps:0),t:s,T:s,src,acc:0}; }
 // a burn tick melts shields first, at double damage
 function burnTick(a,d,dmg){ let left=dmg;
@@ -3032,8 +3040,8 @@ function drawUnit(type,star,px,py,o={}){
   px+=P.dx*.5;
   if(o.items&&o.items.length){ ctx.font='10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
     const gap=o.items.some(k=>ILV(k)>1)?22:12;   // room for a '+N' tag beside an enchanted item
-    o.items.forEach((k,i)=>{ const x=px+(i-(o.items.length-1)/2)*gap; ctx.fillText(IT(k).icon,x,py+31);
-      if(ILV(k)>1){ ctx.font="13px 'Jersey 10',system-ui"; ctx.fillStyle='#ffe27a'; ctx.fillText('+'+(ILV(k)-1),x+9,py+29); ctx.font='10px system-ui'; } }); ctx.textBaseline='alphabetic'; }
+    o.items.forEach((k,i)=>{ const x=px+(i-(o.items.length-1)/2)*gap; drawIcon(IT(k).icon,x,py+31,11);
+      if(ILV(k)>1){ ctx.font="13px 'Jersey 10',system-ui"; ctx.fillStyle='#ffe27a'; ctx.fillText('+'+(ILV(k)-1),x+11,py+29); ctx.font='10px system-ui'; } }); ctx.textBaseline='alphabetic'; }
   py+=oy;
   if(o.shield>0){ ctx.strokeStyle='rgba(255,226,122,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(px,py,24,30,0,0,Math.PI*2); ctx.stroke(); }   // physical shield: gold
   if(o.mshield>0){ ctx.strokeStyle=`rgba(190,120,255,${.75+.2*Math.sin(ANIM*5)})`; ctx.lineWidth=2; ctx.setLineDash([5,3]); ctx.beginPath(); ctx.ellipse(px,py,27,33,0,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]); }   // magic shield: violet
@@ -3046,7 +3054,7 @@ function drawUnit(type,star,px,py,o={}){
   if(o.fuse){ ctx.font='bold 11px system-ui'; ctx.lineWidth=2.5; ctx.strokeStyle='#3a0808'; ctx.strokeText('★',px,py-38); ctx.fillStyle='#ff3a3a'; ctx.fillText('★',px,py-38);   // fused: one small red star, on top of the health bar
     ctx.font='bold 12px system-ui'; ctx.fillStyle=colorOf(o.fuse); ctx.textAlign='right'; ctx.fillText('⚭',px-sw-2,py-38); ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; }
   else ctx.fillText('★'.repeat(star),px,py-38);   // stars sit on top of the health bar
-  if(o.org&&ORIGINS[b.org]){ ctx.font='11px system-ui'; ctx.textAlign='left'; ctx.fillText(ORIGINS[b.org].icon,px+sw+2,py-37); ctx.textAlign='center'; }   // origin badge
+  if(o.org&&ORIGINS[b.org]) drawIcon(ORIGINS[b.org].icon,px+sw+8,py-41,12);   // origin badge
   if(o.hp!==undefined){
     ctx.fillStyle='#000'; ctx.fillRect(px-22,py-36,44,8);
     ctx.fillStyle='#fff6d0'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hpLag),5);   // recent damage drains away
@@ -3077,16 +3085,18 @@ function drawStatus(o,px,py){
   act.forEach((k,i)=>{ const x=px+(i-(act.length-1)/2)*17, y=py-56, left=k==='psn'||k==='brn'?f[k].t/f[k].T:f[k]/(f[k+'M']||f[k]);
     ctx.fillStyle='rgba(15,15,25,.85)'; ctx.beginPath(); ctx.arc(x,y,7.5,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle=STATUS[k].c; ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(x,y,7.5,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(0,left)); ctx.stroke();
-    ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(STATUS[k].icon,x,y+.5); ctx.textBaseline='alphabetic'; });
+    drawIcon(STATUS[k].icon,x,y+.5,11); });
 }
 // ---- sprite-sheet effects (VFX_DATA): drawn additively so they glow; optional tint recolours them ----
 const FXI={}; for(const [k,v] of Object.entries(VFX_DATA)){ const im=new Image(); im.src=v.src; FXI[k]={im,...v}; }
 FXI.strike&&(FXI.strike.ay=.93); FXI.geyser&&(FXI.geyser.ay=.8);   // these hit the ground at the bottom of the frame
-const TINT=document.createElement('canvas'), tg=TINT.getContext('2d');
+const TINTED={};   // recoloured effect frames are made once and kept
 function fxFrame(name,i,tint){
   const f=FXI[name]; if(!f||!f.im.naturalWidth) return null; if(!tint) return [f.im,i*f.fw,0];
-  TINT.width=f.fw; TINT.height=f.fh; tg.clearRect(0,0,f.fw,f.fh); tg.globalCompositeOperation='source-over'; tg.drawImage(f.im,i*f.fw,0,f.fw,f.fh,0,0,f.fw,f.fh);
-  tg.globalCompositeOperation='source-atop'; tg.globalAlpha=.65; tg.fillStyle=tint; tg.fillRect(0,0,f.fw,f.fh); tg.globalAlpha=1; return [TINT,0,0];
+  const key=name+'|'+i+'|'+tint; let c=TINTED[key];
+  if(!c){ c=TINTED[key]=document.createElement('canvas'); c.width=f.fw; c.height=f.fh; const g=c.getContext('2d'); g.drawImage(f.im,i*f.fw,0,f.fw,f.fh,0,0,f.fw,f.fh);
+    g.globalCompositeOperation='source-atop'; g.globalAlpha=.65; g.fillStyle=tint; g.fillRect(0,0,f.fw,f.fh); }
+  return [c,0,0];
 }
 // FX(name,x,y,{s:scale,m:seconds,tint,flip,rot,add:false for smoke}) — x/y in cells, anchored where the effect hits
 let FXS=1;   // skill effect scale (3-star heroes cast bigger)
@@ -3342,6 +3352,7 @@ function render(){
         for(let i=0;i<20;i++){ const an=i/20*Math.PI*2+age*2, rr=i%2?13:24; ctx.lineTo(Math.cos(an)*rr*1.25,Math.sin(an)*rr*.8-7); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
         ctx.font="32px 'Jersey 10',system-ui"; ctx.lineJoin='round'; ctx.lineWidth=5; ctx.strokeStyle='#2a0800'; ctx.strokeText(f.txt,0,0); ctx.fillStyle='#ff3a2a'; ctx.fillText(f.txt,0,0);
         ctx.font="12px 'Jersey 10',system-ui"; ctx.lineWidth=3; ctx.strokeText('CRITICAL',0,-24); ctx.fillStyle='#fff3c0'; ctx.fillText('CRITICAL',0,-24); ctx.restore(); continue; }
+      if(f.icon){ ctx.fillStyle='rgba(15,15,25,.8)'; ctx.strokeStyle=f.c; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,-7,13,0,Math.PI*2); ctx.fill(); ctx.stroke(); drawIcon(f.icon,0,-7,19); ctx.restore(); continue; }
       ctx.font=f.big?"23px 'Jersey 10',system-ui":"20px 'Jersey 10',system-ui";
       ctx.fillStyle='#000'; ctx.fillText(f.txt,1,1); ctx.fillStyle=f.c; ctx.fillText(f.txt,0,0); ctx.restore(); }
     ctx.restore();
