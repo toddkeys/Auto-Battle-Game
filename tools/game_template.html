@@ -2466,7 +2466,10 @@ function endFight(win){
   const F=S.fight, gb=(S.goldBonus||[0,0])[win?0:1]; S.gold+=gb;
   S.streak=win?Math.max(0,S.streak||0)+1:Math.min(0,S.streak||0)-1;   // win streak > 0, lose streak < 0
   F.winner=win?0:F.f.some(x=>x.team===1&&x.hp>0)&&!F.f.some(x=>x.team===0&&x.hp>0)?1:null;
-  S.meter=F.f.filter(x=>x.team===0).map(x=>({type:x.type,star:x.star,dd:x.dd,dt:x.dtk,hl:x.hl}));
+  const rows=new Map();   // summons, turrets and raised dead count toward the hero who made them
+  for(const x of F.f.filter(x=>x.team===0)){ let o=x; while(o.summon&&o.owner) o=o.owner; if(o.summon) continue;
+    const r=rows.get(o)||rows.set(o,{type:o.type,star:o.star,dd:0,dt:0,hl:0}).get(o); r.dd+=x.dd; r.dt+=x.dtk; r.hl+=x.hl; }
+  S.meter=[...rows.values()];
   if(win&&F.kind==='boss'){ S.cardsDue=true; S.bosses++; }
   if(win&&F.kind==='monster'&&S.mod==='titan') S.cardsDue=true;
   if(win){ const coins=Math.round(F.f.filter(x=>x.team===0&&x.hp>0).reduce((g,x)=>g+(x.coin||0),0)); S.gold+=1+coins; S.result=`Victory! +${1+gb+coins} gold`;
