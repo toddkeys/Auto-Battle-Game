@@ -243,6 +243,7 @@ button.go{display:block;width:100%;margin-top:10px}
 /* unit info */
 #info{min-height:150px;color:var(--muted);font-size:14px}
 #info .fz{font-size:12px;color:#ffe27a;margin:-1px 0 2px}
+#info .combo .cs{margin-top:4px;font-size:13px}#info .combo i{display:block;margin-top:4px;font-size:12px}#info .fzi{font-size:12px;margin:6px 0 2px}
 #info .ih,#tip .ih,#heroCard .ih{display:flex;gap:12px;align-items:center;margin-bottom:8px;color:var(--text)}
 #info .ih .th,#tip .ih .th,#heroCard .ih .th{width:70px;height:70px;flex:none;display:flex;align-items:flex-end;justify-content:center;border:2px solid var(--ink);border-radius:8px;
   background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--cc) 45%,transparent),#140c07 75%);box-shadow:inset 0 0 0 2px var(--brass-lo)}
@@ -1631,6 +1632,7 @@ const FUSE_WORDS={warrior:['Battle','Knight'],archer:['Swift','Ranger'],holy:['H
   gunner:['Gunpowder','Gunslinger'],grapple:['Chained','Grappler'],gravity:['Void','Voidcaller'],druid:['Verdant','Druid'],berserker:['Raging','Berserker']};
 function fusedName(lead,partner){ const a=FUSE_WORDS[U[partner].cls], b=FUSE_WORDS[U[lead].cls]; return a&&b?a[0]+' '+b[1]:U[lead].name; }
 const heroName=(type,fuse)=>fuse?fusedName(type,fuse):U[type].name;
+const comboName=(lead,partner)=>(FUSE_WORDS[U[partner].cls]||[''])[0]+' '+SKILLS[lead].name;   // the fused skill: partner's class word + lead's skill ("Holy Shield Charge")
 const fuseMana=(a,b)=>Math.round((SKILLS[a].mp+SKILLS[b].mp)*.85);   // a fused hero casts both skills at once for 85% of both manas (simulated: as strong as alternating them)
 const typesOf=u=>u.fuse?[u.type,u.fuse]:[u.type];   // what a hero counts as for class/origin bonuses
 const canTryFuse=(a,b)=>a&&b&&a!==b&&a.star===3&&b.star===3&&!a.fuse&&!b.fuse&&U[a.type].cls!==U[b.type].cls&&U[a.type].cost<5&&U[b.type].cost<5;
@@ -1650,7 +1652,7 @@ function askFuse(e,a,b){
     c.innerHTML=`<div>⚭ Fuse <b>${U[a.type].name} ★★★</b> + <b>${U[b.type].name} ★★★</b>${err?'':` for <b>${FUSE_COST} gold</b>`}?</div>
     ${err?`<div style="font-size:13px;margin-top:4px;max-width:320px;color:#ff9a80">${err}</div>`:
       `<div class="fuselead">Lead: ${leadBtn(a)}${leadBtn(b)}</div>
-       <div style="font-size:12px;margin-top:4px;max-width:330px">Becomes the <b style="color:#ffe27a">${fusedName(lead.type,other.type)}</b>. Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), casts both skills at once (${fuseMana(lead.type,other.type)} mana), holds 2 items.</div>`}
+       <div style="font-size:12px;margin-top:4px;max-width:330px">Becomes the <b style="color:#ffe27a">${fusedName(lead.type,other.type)}</b> with the combo skill <b style="color:#ffe27a">${comboName(lead.type,other.type)}</b>. Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), casts both skills at once (${fuseMana(lead.type,other.type)} mana), holds 2 items.</div>`}
     <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`; };
   draw(); c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
   c.onclick=ev=>{ const l=ev.target.closest('[data-lead]'); if(l){ lead=l.dataset.lead==='a'?a:b; draw(); return; }
@@ -3168,13 +3170,15 @@ function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
   const st=live?['ward','frz','stun','taunt','crs','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
   return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${heroName(id,fuse)} ${fuse?'<span class="stars" style="color:#ff3a3a">★</span>':`<span class="stars">${'★'.repeat(star)}</span>`}</div>${fuse?`<div class="fz">⚭ ${u.name} + ${U[fuse].name}</div>`:''}
     <div class="tags">${side}<span style="color:${c.color}">${c.name}</span>${o?` · <span style="color:${o.color}">${o.icon} ${o.name}</span>`:''}${u.cost&&u.cost<5?` · ${u.cost} gold`:''}</div></div></div>
-    <div class="chips">${live?`<span>❤ ${Math.max(0,Math.round(live.hp))} / ${Math.round(live.max)}</span><span>⚔ ${Math.round(live.atk*live.dmgM)}</span>${live.mshield>1?`<span style="color:#d0a0ff">🔮 ${Math.round(live.mshield)}</span>`:''}${live.shield>1?`<span>🛡 ${Math.round(live.shield)}</span>`:''}${sk.mp<1e9?`<span>💧 ${Math.round(live.mp)} / ${sk.mp}</span>`:''}`
+    <div class="chips">${live?`<span>❤ ${Math.max(0,Math.round(live.hp))} / ${Math.round(live.max)}</span><span>⚔ ${Math.round(live.atk*live.dmgM)}</span>${live.mshield>1?`<span style="color:#d0a0ff">🔮 ${Math.round(live.mshield)}</span>`:''}${live.shield>1?`<span>🛡 ${Math.round(live.shield)}</span>`:''}${sk.mp<1e9?`<span>💧 ${Math.round(live.mp)} / ${Math.round(live.mpMax)}</span>`:''}`
       :`<span>❤ ${Math.round(u.hp*m)}</span><span>⚔ ${Math.round(u.atk*m)}</span>`}${u.heal?`<span>✚ ${Math.round(u.heal*m)}</span>`:''}<span>🎯 ${u.range}</span><span>⏱ ${u.as}s</span></div>
     ${st.length?`<div class="chips">${st.map(x=>`<span>${x}</span>`).join('')}</div>`:''}
-    <div class="sk">${sk.mp<1e9?`<b>${sk.names?sk.names.join(' / '):sk.name}</b> <span class="mp">${Math.round(sk.mp*((starPerk(u.cls,star)||{}).mana||1))} mana</span><br>${sk.desc}`:'No skill — fights until the battle ends.'}</div>`+
+    ${fuse?`<div class="sk combo">⚭ <b>${comboName(id,fuse)}</b> <span class="mp">${Math.round(fuseMana(id,fuse)*Math.min(...[id,fuse].map(t=>(starPerk(U[t].cls,star)||{}).mana||1)))} mana</span>
+      <div class="cs"><b>1 · ${sk.name}</b> — ${sk.desc}</div><div class="cs"><b>2 · ${SKILLS[fuse].name}</b> — ${SKILLS[fuse].desc}</div>
+      <i>One cast fires both, ${sk.name} first.</i></div>`
+    :`<div class="sk">${sk.mp<1e9?`<b>${sk.names?sk.names.join(' / '):sk.name}</b> <span class="mp">${Math.round(sk.mp*((starPerk(u.cls,star)||{}).mana||1))} mana</span><br>${sk.desc}`:'No skill — fights until the battle ends.'}</div>`}`+
     (u.cost>=1&&u.cost<5&&CLASS_STAR[u.cls]?`<div class="stl">${['Base',...CLASS_STAR[u.cls].map(p=>p[0])].map((t,i)=>`<div class="${i<star?'on':''}">${i===star?'<b>Next:</b> ':''}${'★'.repeat(i+1)} ${t}</div>`).join('')}</div>`:'')+
-    (fuse?`<div class="sk">⚭ <b>Fused with ${U[fuse].name}</b> · <span style="color:${colorOf(fuse)}">${CLASSES[U[fuse].cls].name}</span> · ${ORIGINS[U[fuse].org].icon} ${ORIGINS[U[fuse].org].name}<br>
-      <b>${SKILLS[fuse].name}</b> <span class="mp">${SKILLS[fuse].mp} mana</span><br>${SKILLS[fuse].desc}<br><i>Counts as both classes and origins; casts both skills at once for ${Math.round(fuseMana(id,fuse)*Math.min(...[id,fuse].map(t=>(starPerk(U[t].cls,star)||{}).mana||1)))} mana; holds 2 items.</i></div>`:'')+
+    (fuse?`<div class="fzi">Also counts as <span style="color:${colorOf(fuse)}">${CLASSES[U[fuse].cls].name}</span> · ${ORIGINS[U[fuse].org].icon} ${ORIGINS[U[fuse].org].name} · holds 2 items</div>`:'')+
     (items&&items.length?`<div class="held">Holding: ${items.map(k=>`<span class="hi" data-item="${k}">${IT(k).icon} ${INAME(k)}</span>`).join(' ')}</div>`:'');
 }
 const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare?' <span class="rare">RARE</span>':''}<div>${IDESC(k)}</div>${subOf(k)?`<div class="sub">Sub-stat: ${subOf(k).s.d(subOf(k).t)}</div>`:''}${IT(k).use?'':ILV(k)<MAX_ILV?`<div class="next">Next +${ILV(k)}: ${IT(k).desc(IK_TAB[ILV(k)])}${subOf(k,ILV(k)+1)?` · sub-stat ${subOf(k,ILV(k)+1).s.d(subOf(k,ILV(k)+1).t)}`:ILV(k)+1<4&&ITEM_SUB[k.split(':')[0]]?` · sub-stat unlocks at +3`:''}</div><div class="ench">Combine with another ${IT(k).name} to enchant it</div>`:'<div class="ench">Fully enchanted</div>'}<div class="ench">Sells for ${itemValue(k)} gold (drag to the shop or right-click)</div></div>`;
