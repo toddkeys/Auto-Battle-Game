@@ -77,6 +77,12 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 .lbt td{padding:4px 6px;border-top:1px solid #5a4024}
 .lbt td:first-child,.lbt th:first-child{width:28px;text-align:right}
 .lbt tr.me td{background:rgba(255,210,90,.18);color:#fff3b0}
+.lbn.has{cursor:pointer;border-bottom:1px dashed var(--muted)}.lbn.has:hover{color:var(--gold)}.lbn small{color:var(--muted);font-size:10px}
+.lineup{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0 2px}.lineup.none{color:var(--muted);font-size:12px}
+.lu{position:relative;width:38px;height:40px;display:flex;align-items:flex-end;justify-content:center;border:1px solid #5a4024;border-radius:6px;background:rgba(0,0,0,.3);cursor:help}
+.lu img{max-width:36px;max-height:36px;image-rendering:pixelated}.lu.fz{border-color:#ff5a5a;box-shadow:0 0 6px rgba(255,80,80,.5)}
+.lu i{position:absolute;top:-3px;left:0;right:0;text-align:center;font-style:normal;font-size:9px;color:var(--gold);text-shadow:0 1px 0 #000}
+#bubble .lineup{margin-top:6px}#bubble .lu{background:rgba(0,0,0,.12)}
 .lbform{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;padding:10px;border:1px solid var(--gold);border-radius:8px;background:rgba(255,210,90,.08)}
 .lbform b{width:100%;color:#fff3b0}
 .lbform input{flex:1;min-width:0;padding:8px 10px;font:inherit;color:var(--text);background:rgba(0,0,0,.35);border:1px solid #5a4024;border-radius:6px}
@@ -251,6 +257,8 @@ button.go{display:block;width:100%;margin-top:10px}
 .sy .pips i.on{background:var(--sc);box-shadow:0 0 6px var(--sc)}
 .sy.on{color:var(--text);border-left-color:var(--sc);background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 22%,transparent),transparent)}
 .sy.on .nm{color:#fff}
+.synall{float:right;margin-top:6px;font-size:13px;padding:2px 8px;letter-spacing:0;text-transform:none}
+#syn .none{font-size:13px;color:var(--muted);padding:4px 2px}
 /* last battle meter */
 #meter{font-size:13px;color:var(--muted)}
 #meter table{width:100%;border-collapse:collapse}
@@ -283,7 +291,7 @@ details summary::before{content:'▸ ';color:var(--brass)}details[open] summary:
 #heroCard .bon{margin-top:8px;font-size:12.5px;line-height:1.35;color:var(--muted)}#heroCard .bon b{color:var(--text)}
 #heroCard .hca{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--muted)}#heroCard .hca .b{font-size:14px}
 .cx,.pt,.pc{cursor:pointer}
-#bubble{position:fixed;z-index:30;max-width:260px;padding:8px 11px;border:2px solid var(--ink);border-radius:8px;pointer-events:none;
+#bubble{position:fixed;z-index:90;max-width:260px;padding:8px 11px;border:2px solid var(--ink);border-radius:8px;pointer-events:none;
   background:linear-gradient(180deg,#fbe9bd,#e6c47c);color:#2a1607;font:500 13px/1.35 var(--body);box-shadow:0 4px 0 var(--ink),0 10px 24px rgba(0,0,0,.5)}
 #bubble[hidden]{display:none}
 #bubble::after{content:'';position:absolute;left:calc(var(--ax) - 7px);bottom:-9px;border:7px solid transparent;border-top-color:#e6c47c;border-bottom:0}
@@ -315,7 +323,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 <div class="game">
   <aside class="col left">
     <div class="card" id="meterCard"><h3>Last battle</h3><div id="meter"></div></div>
-    <div class="card syn"><h3>Bonuses</h3><div id="syn"></div><div class="sh">Blessings</div><div id="bless" class="blesslist"></div></div>
+    <div class="card syn"><h3>Bonuses <button class="b mkreset synall" id="synAll" title="Show every class and origin">Show all ▾</button></h3><div id="syn"></div><div class="sh">Blessings</div><div id="bless" class="blesslist"></div></div>
     <div class="card">
       <details>
         <summary>Credits</summary>
@@ -1468,21 +1476,33 @@ const boardName=m=>({normal:'Normal',hard:'Hard',daily:'Daily '+today()})[m];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const lbBetter=(a,b)=>a.round!==b.round?a.round>b.round:a.bosses>b.bosses;   // does score a beat score b
 const lbHeaders=()=>({apikey:LB_KEY});
+let LB_TEAM=null;   // does the online table have the line-up column (null = not checked yet)
+// the line-up a run ended with: [{t:type, s:stars, f:fused partner}] (the field, or the bench if the field is empty)
+const lineupOf=()=>{ const us=onBoard().length?onBoard():S.units; return us.slice(0,12).map(u=>({t:u.type,s:u.star,...(u.fuse?{f:u.fuse}:{})})); };
+const okTeam=tm=>Array.isArray(tm)?tm.filter(h=>h&&U[h.t]&&(!h.f||U[h.f])):[];
+function heroTip(h){ const u=U[h.t], f=h.f&&U[h.f];
+  return f?`<b>${u.name}</b> ⚭ <b>${f.name}</b><br><span style="color:${colorOf(h.t)}">${CLASSES[u.cls].name}</span> + <span style="color:${colorOf(h.f)}">${CLASSES[f.cls].name}</span> · ${ORIGINS[u.org].icon} ${ORIGINS[f.org].icon}`
+    :`<b>${u.name}</b> ${'★'.repeat(h.s||1)}<br><span style="color:${colorOf(h.t)}">${CLASSES[u.cls].name}</span> · ${ORIGINS[u.org].icon} ${ORIGINS[u.org].name}`; }
+const lineupHTML=tm=>okTeam(tm).length?`<div class="lineup">${okTeam(tm).map(h=>`<span class="lu${h.f?' fz':''}" data-tip="${esc(heroTip(h))}">${thumbHTML(h.t,32)}<i>${h.f?'<b style="color:#ff3a3a">★</b>':'★'.repeat(h.s||1)}</i></span>`).join('')}</div>`
+  :'<div class="lineup none">No line-up saved for this score.</div>';
 async function lbFetch(board){
   if(!LB_ONLINE){ try{ return JSON.parse(localStorage.getItem('ab_lb_'+board)||'[]'); }catch(e){ return []; } }
-  const r=await fetch(`${LB_URL}/rest/v1/scores?board=eq.${encodeURIComponent(board)}&select=name,round,bosses,created_at&order=round.desc,bosses.desc,created_at.asc&limit=10`,{headers:lbHeaders()});
+  const q=cols=>fetch(`${LB_URL}/rest/v1/scores?board=eq.${encodeURIComponent(board)}&select=${cols}&order=round.desc,bosses.desc,created_at.asc&limit=10`,{headers:lbHeaders()});
+  let r=LB_TEAM!==false?await q('name,round,bosses,created_at,team'):null;
+  if(r&&r.ok) LB_TEAM=true; else { if(r) LB_TEAM=false; r=await q('name,round,bosses,created_at'); }   // older table without the line-up column
   if(!r.ok) throw new Error('HTTP '+r.status);
   return r.json();
 }
-async function lbSubmit(board,name,round,bosses){
+async function lbSubmit(board,name,round,bosses,team){
   if(!LB_ONLINE){
-    const l=await lbFetch(board); l.push({name,round,bosses,created_at:new Date().toISOString()});
+    const l=await lbFetch(board); l.push({name,round,bosses,team,created_at:new Date().toISOString()});
     l.sort((a,b)=>b.round-a.round||b.bosses-a.bosses||a.created_at.localeCompare(b.created_at));
     try{ localStorage.setItem('ab_lb_'+board,JSON.stringify(l.slice(0,10))); }catch(e){}
     return;
   }
-  const r=await fetch(`${LB_URL}/rest/v1/scores`,{method:'POST',headers:{...lbHeaders(),'Content-Type':'application/json',Prefer:'return=minimal'},
-    body:JSON.stringify({board,name,round,bosses})});
+  const post=b=>fetch(`${LB_URL}/rest/v1/scores`,{method:'POST',headers:{...lbHeaders(),'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(b)});
+  let r=LB_TEAM!==false&&team?await post({board,name,round,bosses,team}):null;
+  if(!r||!r.ok){ if(r&&r.status>=400&&r.status<500) LB_TEAM=false; r=await post({board,name,round,bosses}); }   // the table may not have the line-up column yet
   if(!r.ok) throw new Error('HTTP '+r.status);
 }
 const qualifies=(list,sc)=>list.length<10||lbBetter(sc,list[list.length-1]);
@@ -1491,7 +1511,9 @@ function lbTable(list,mine){
   let marked=false;
   return '<table class="lbt"><tr><th>#</th><th>Name</th><th>Round</th><th>Bosses</th></tr>'+list.map((e,i)=>{
     const me=!marked&&mine&&e.name===mine.name&&e.round===mine.round&&e.bosses===mine.bosses; if(me) marked=true;
-    return `<tr class="${me?'me':''}"><td>${i+1}</td><td>${esc(e.name)}</td><td>${e.round}</td><td>${e.bosses}</td></tr>`; }).join('')+'</table>';
+    const tm=okTeam(e.team), tip='<b>'+esc(e.name)+'</b> line-up'+lineupHTML(tm);   // hover the name for a quick look, click it to open the line-up (hover its heroes for their classes)
+    return `<tr class="${me?'me':''}"><td>${i+1}</td><td><span class="lbn${tm.length?' has':''}" data-row="${i}" ${tm.length?`data-tip="${esc(tip)}"`:''}>${esc(e.name)}${tm.length?' <small>▾</small>':''}</span></td><td>${e.round}</td><td>${e.bosses}</td></tr>`
+      +(tm.length?`<tr class="lbteam" data-team="${i}" hidden><td></td><td colspan="3">${lineupHTML(tm)}</td></tr>`:''); }).join('')+'</table>';
 }
 const lbHead=m=>`<h3>🏆 Top 10 · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
 async function lbRunOver(){   // after a run: show the board, plus a name box when the run made the top 10
@@ -1504,7 +1526,7 @@ async function lbRunOver(){   // after a run: show the board, plus a name box wh
   const send=async()=>{
     const name=$('#lbName').value.trim().replace(/\s+/g,' ').slice(0,16); if(!name) return $('#lbName').focus();
     $('#lbSend').disabled=true; try{ localStorage.setItem('ab_lb_name',name); }catch(e){}
-    try{ await lbSubmit(board,name,sc.round,sc.bosses); el.innerHTML=lbHead(mode)+lbTable(await lbFetch(board),{name,...sc}); SND.play('star'); }
+    try{ await lbSubmit(board,name,sc.round,sc.bosses,lineupOf()); el.innerHTML=lbHead(mode)+lbTable(await lbFetch(board),{name,...sc}); SND.play('star'); }
     catch(e){ $('#lbSend').disabled=false; el.querySelector('.lbform b').textContent="Couldn't send — try again"; }
   };
   $('#lbSend').onclick=send;
@@ -1517,6 +1539,8 @@ async function openBoards(m='normal'){   // browse the boards from the run menu
   catch(e){ $('#lbView').innerHTML="<p>Couldn't reach the leaderboard.</p>"; }
 }
 
+document.addEventListener('click',e=>{ const n=e.target.closest('.lbn.has'); if(!n) return;   // click a name: open or close its line-up row
+  const row=n.closest('table').querySelector(`.lbteam[data-team="${n.dataset.row}"]`); if(row){ row.hidden=!row.hidden; hideBubble(); } });
 // ====== best run (kept in this browser) ======
 function readBest(m=S&&S.mode||'normal'){ try{ return JSON.parse(localStorage.getItem(bestKey(m))||'null'); }catch(e){ return null; } }
 function showSummary(){
@@ -2963,11 +2987,17 @@ function renderUI(){
   const row=(c,n,l,mark)=>`<div class="sy ${l?'on':''}" style="--sc:${c.color}"><span class="ic">${mark}</span><span class="nm">${c.name}</span><span class="pips">${pips(n)}</span><span class="ds">${l?c.desc[l-1]:'2: '+c.desc[0]}</span></div>`;
   $('#bless').innerHTML=S.buffs.length?Object.entries(S.buffs.reduce((m,k)=>(m[k]=(m[k]||0)+1,m),{})).map(([k,n])=>`<span class="bl" data-tip="${BLESSINGS[k].desc}${n>1?`<br><b>×${n} stacked:</b> ${BLESSINGS[k].total(n)}`:''}">${BLESSINGS[k].icon} ${BLESSINGS[k].name}${n>1?' ×'+n:''}</span>`).join('')
     :'<span class="none">Beat a boss (round 15, 20, 25…) to choose a blessing.</span>';
-  $('#syn').innerHTML='<div class="sh">Classes</div>'+Object.entries(CLASSES).map(([k,c])=>row(c,cnt[k],lv[k],`<b style="color:${c.color}">◆</b>`)).join('')
-    +'<div class="sh">Origins</div>'+Object.entries(ORIGINS).map(([k,o])=>row(o,ocnt[k],olv[k],o.icon)).join('');
+  const shown=(m,n)=>Object.entries(m).filter(([k])=>synAll||n[k]).sort((a,b)=>synAll?0:(n[b[0]]||0)-(n[a[0]]||0));   // only what is on the field, unless expanded
+  const cl=shown(CLASSES,cnt), og=shown(ORIGINS,ocnt);
+  $('#synAll').textContent=synAll?'Show less ▴':'Show all ▾';
+  $('#syn').innerHTML=(cl.length||og.length)?(cl.length?'<div class="sh">Classes</div>'+cl.map(([k,c])=>row(c,cnt[k],lv[k],`<b style="color:${c.color}">◆</b>`)).join(''):'')
+    +(og.length?'<div class="sh">Origins</div>'+og.map(([k,o])=>row(o,ocnt[k],olv[k],o.icon)).join(''):'')
+    :'<div class="none">Put heroes on the field to see their bonuses — or press Show all.</div>';
   renderInfo();
   if(bubbleFor&&!document.body.contains(bubbleFor)) hideBubble();   // its item was re-drawn or moved
 }
+let synAll=false; try{ synAll=localStorage.getItem('ab_synall')==='1'; }catch(e){}
+$('#synAll').onclick=()=>{ synAll=!synAll; try{ localStorage.setItem('ab_synall',synAll?'1':'0'); }catch(e){} renderUI(); };
 // touch screens have no hover: press and hold a shop unit to see its stats, tap to buy
 let peekTimer=null, peeked=false;
 function showTip(b){

@@ -25,3 +25,9 @@ create policy "anyone can add a score" on public.scores for insert to anon with 
 revoke all on public.scores from anon;
 grant select on public.scores to anon;
 grant insert (board, name, round, bosses) on public.scores to anon;
+
+-- Line-ups: the heroes each top-10 run ended with, as [{"t":type,"s":stars,"f":fused partner}] (up to 12).
+-- Safe to run on the existing table: it only adds the column and lets the game fill it in.
+alter table public.scores add column if not exists team jsonb
+  check (team is null or (jsonb_typeof(team) = 'array' and jsonb_array_length(team) <= 12 and pg_column_size(team) < 2000));
+grant insert (board, name, round, bosses, team) on public.scores to anon;
