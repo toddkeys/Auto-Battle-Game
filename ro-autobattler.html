@@ -2684,10 +2684,10 @@ function drawUnit(type,star,px,py,o={}){
   drawStatus(o,px,py);
   ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
   const sw=o.fuse?6:star*5;   // half-width of the star label
-  if(o.fuse){ ctx.font='bold 11px system-ui'; ctx.lineWidth=2.5; ctx.strokeStyle='#3a0808'; ctx.strokeText('★',px,py-28); ctx.fillStyle='#ff3a3a'; ctx.fillText('★',px,py-28);   // fused: one small red star, clear of the head
-    ctx.font='bold 12px system-ui'; ctx.fillStyle=colorOf(o.fuse); ctx.textAlign='right'; ctx.fillText('⚭',px-sw-2,py-28); ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; }
-  else ctx.fillText('★'.repeat(star),px,py-24);
-  if(o.org&&ORIGINS[b.org]){ ctx.font='11px system-ui'; ctx.textAlign='left'; ctx.fillText(ORIGINS[b.org].icon,px+sw+2,py-23); ctx.textAlign='center'; }   // origin badge
+  if(o.fuse){ ctx.font='bold 11px system-ui'; ctx.lineWidth=2.5; ctx.strokeStyle='#3a0808'; ctx.strokeText('★',px,py-38); ctx.fillStyle='#ff3a3a'; ctx.fillText('★',px,py-38);   // fused: one small red star, on top of the health bar
+    ctx.font='bold 12px system-ui'; ctx.fillStyle=colorOf(o.fuse); ctx.textAlign='right'; ctx.fillText('⚭',px-sw-2,py-38); ctx.textAlign='center'; ctx.fillStyle='#ffd23f'; ctx.font='11px system-ui'; }
+  else ctx.fillText('★'.repeat(star),px,py-38);   // stars sit on top of the health bar
+  if(o.org&&ORIGINS[b.org]){ ctx.font='11px system-ui'; ctx.textAlign='left'; ctx.fillText(ORIGINS[b.org].icon,px+sw+2,py-37); ctx.textAlign='center'; }   // origin badge
   if(o.hp!==undefined){
     ctx.fillStyle='#000'; ctx.fillRect(px-22,py-36,44,8);
     ctx.fillStyle='#fff6d0'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hpLag),5);   // recent damage drains away
@@ -2715,7 +2715,7 @@ function drawStatus(o,px,py){
       ctx.beginPath(); ctx.moveTo(x,y-4); ctx.lineTo(x+2.5,y); ctx.lineTo(x,y+4); ctx.lineTo(x-2.5,y); ctx.fill(); } ctx.globalAlpha=1; }
   if(!o.ref) return;
   const f=o.ref, act=['ward','frz','stun','taunt','crs','sil','blind','slow','dis','shred','drain','wnd','psn','brn'].filter(k=>k==='psn'||k==='brn'?f[k]:f[k]>0);
-  act.forEach((k,i)=>{ const x=px+(i-(act.length-1)/2)*17, y=py-48, left=k==='psn'||k==='brn'?f[k].t/f[k].T:f[k]/(f[k+'M']||f[k]);
+  act.forEach((k,i)=>{ const x=px+(i-(act.length-1)/2)*17, y=py-56, left=k==='psn'||k==='brn'?f[k].t/f[k].T:f[k]/(f[k+'M']||f[k]);
     ctx.fillStyle='rgba(15,15,25,.85)'; ctx.beginPath(); ctx.arc(x,y,7.5,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle=STATUS[k].c; ctx.lineWidth=2.2; ctx.beginPath(); ctx.arc(x,y,7.5,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(0,left)); ctx.stroke();
     ctx.font='9px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(STATUS[k].icon,x,y+.5); ctx.textBaseline='alphabetic'; });
