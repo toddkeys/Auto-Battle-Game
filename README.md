@@ -66,3 +66,36 @@ template. These were tuned against side-by-side renders of the full hero roster;
 heads, body presence, large hats and weapons are balanced visually rather than
 forcing every image into the same outer bounding box. Feet stay anchored and
 health bars follow the adjusted size. Bosses retain their separate larger scale.
+
+## Full roster and interface
+
+All 72 playable heroes now have individual reworked skins. The 62 remaining
+heroes use eight coordinated source sheets in `assets/art/src/roster/`; the
+manifest records their exact cell order. `tools/roster_rigs.py` defines their
+animation masks, and `art_rig.py` builds the same rig format used by the earlier
+reworks. Combat names, classes, stats and skills are unchanged.
+
+```bash
+python tools/prep_roster.py
+python tools/build_game.py
+```
+
+Use `--group vanguard` (or another manifest group) to rebuild just one sheet.
+The complete sprite builder also recognizes these art overrides. Keep each
+figure within its atlas cell when replacing source artwork.
+
+The interface theme is `assets/ui/sanctuary.css`. The game builder embeds it in
+the generated HTML alongside the sprites and arena: no font CDN or separate CSS
+request is needed. Desktop uses three columns; narrow screens put the shop below
+the battlefield. The existing shop, planner, codex, settings and keyboard controls
+are preserved.
+
+Optional browser smoke checks use Python Playwright and system Chromium:
+
+```bash
+python tools/check_visuals.py
+```
+
+These exercise all 72 skill casts and idle, walking, attack, casting, release,
+frozen, death and spinning renders in both directions, plus buying, locking,
+opening the planner/codex and checking a phone-width layout.

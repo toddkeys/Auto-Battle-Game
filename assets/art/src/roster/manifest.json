@@ -1,0 +1,120 @@
+[
+  {
+    "key": "vanguard",
+    "ids": [
+      "swordsman",
+      "knight",
+      "lordknight",
+      "bulwark",
+      "templar",
+      "axebrute",
+      "brawler",
+      "anchorbrute"
+    ],
+    "columns": 4,
+    "rows": 2
+  },
+  {
+    "key": "marksmen",
+    "ids": [
+      "archer",
+      "hunter",
+      "sniper",
+      "stormranger",
+      "gunslinger",
+      "deadshot",
+      "harpooner",
+      "phantomblade"
+    ],
+    "columns": 4,
+    "rows": 2
+  },
+  {
+    "key": "restoration",
+    "ids": [
+      "acolyte",
+      "priest",
+      "highpriest",
+      "dawnoracle",
+      "snowmender",
+      "frostoracle",
+      "glacierwarden",
+      "winterqueen"
+    ],
+    "columns": 4,
+    "rows": 2
+  },
+  {
+    "key": "arcana",
+    "ids": [
+      "mage",
+      "wizard",
+      "highwizard",
+      "hexer",
+      "bogwitch",
+      "doomherald",
+      "riftcaller",
+      "galecaller"
+    ],
+    "columns": 4,
+    "rows": 2
+  },
+  {
+    "key": "duelists",
+    "ids": [
+      "cardshark",
+      "fortuneteller",
+      "highroller",
+      "ronin",
+      "kensei",
+      "shogun",
+      "mirrormage",
+      "maskedmagus"
+    ],
+    "columns": 4,
+    "rows": 2
+  },
+  {
+    "key": "wilds",
+    "ids": [
+      "spiritcaller",
+      "beastmaster",
+      "stonebinder",
+      "starcaller",
+      "thornweaver",
+      "puppeteer",
+      "rimedragoness",
+      "thief"
+    ],
+    "columns": 4,
+    "rows": 2
+  },
+  {
+    "key": "guild",
+    "ids": [
+      "piper",
+      "minstrel",
+      "dancer",
+      "apothecary",
+      "merchant",
+      "gravecaller",
+      "bonelord",
+      "assassin"
+    ],
+    "columns": 4,
+    "rows": 2
+  },
+  {
+    "key": "artificers",
+    "ids": [
+      "tinkerer",
+      "gearmaster",
+      "mechanist",
+      "chronomancer",
+      "timekeeper",
+      "assassincross"
+    ],
+    "columns": 3,
+    "rows": 2
+  }
+]

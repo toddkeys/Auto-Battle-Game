@@ -9,6 +9,7 @@ import os
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage
+import roster_rigs
 
 K = 3
 W, H = 56 * K, 54 * K
@@ -169,11 +170,14 @@ _BOSS_HEADS={
  'stormdjinn':(.27,.02,.78,.36), 'colossus':(.25,.08,.64,.36),
 }
 for _cid in _BOSS_HEADS: ART_RIGS[_cid]={}
+for _cid in roster_rigs.HEROES: ART_RIGS[_cid]={}
 
 
 def build(cid, art_dir, rig_dir):
     spec = ART_RIGS[cid]
     pic = Image.open(os.path.join(art_dir, cid + '.png')).convert('RGBA')
+    if cid in roster_rigs.HEROES:
+        spec=roster_rigs.spec(cid,pic.size)
     if cid in _BOSS_HEADS:
         x0,y0,x1,y1=_BOSS_HEADS[cid]; w,h=pic.size
         parts={'head':{'poly':[(x0*w,y0*h),(x1*w,y0*h),(x1*w,y1*h),(x0*w,y1*h)],'piv':((x0+x1)*w/2,y1*h)}}
@@ -226,4 +230,4 @@ def build(cid, art_dir, rig_dir):
     for name, part in spec['parts'].items():
         piv[name] = ((part['piv'][0] + ox) / K - (fw - 56) / 2, (part['piv'][1] + oy) / K)   # pivots are on the 56-wide design grid
     with open(os.path.join(rig_dir, cid + '.json'), 'w') as f:
-        json.dump({'layers': spec['order'], 'piv': piv, 'k': K, **({'fw': fw} if fw != 56 else {})}, f)
+        json.dump({'layers': spec['order'], 'piv': piv, 'k': K, **({'roster': True} if cid in roster_rigs.HEROES else {}), **({'fw': fw} if fw != 56 else {})}, f)

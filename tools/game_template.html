@@ -4,9 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Auto Battler</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=Jersey+10&display=swap" rel="stylesheet">
 <style>
 /* ====== look: an adventurers' tavern — dark oak, aged brass, gold plaques ====== */
 :root{--ink:#0c0806;--oak:#3a2718;--oak2:#26180f;--oak3:#1b110a;--brass:#c89b4a;--brass-hi:#f3d48a;--brass-lo:#7a5626;
@@ -319,6 +316,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 @media (min-width:2200px){.game{grid-template-columns:375px auto 500px}.col{zoom:1.25}}
 @media (prefers-reduced-motion:reduce){.card,button.go,.items .it.rare{animation:none}}
 </style>
+<style>/*UI_THEME*/</style>
 </head>
 <body>
 <div class="game">
@@ -342,17 +340,18 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
     </div>
   </aside>
   <main class="center">
+    <header class="arena-brand"><strong>Auto Battle</strong><span>The Sanctuary</span></header>
     <div class="hud">
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
-      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">Runs</button></div></div>
     </div>
     <div class="board"><canvas id="cv"></canvas><div id="msg"></div></div>
   </main>
   <aside class="col right">
     <div class="card">
-      <h3>Shop <button class="b bigbtn" id="bBig" data-tip="Big Shop (200 gold): show 10 heroes instead of 5 for the rest of this run">🛒 ×10 · 200💰</button><span class="coins" id="coins"><span class="coin"></span><span id="sGold"></span></span><button class="b lockbtn" id="bLock">🔓 Lock</button></h3>
+      <h3>Shop <button class="b bigbtn" id="bBig" data-tip="Big Shop (200 gold): show 10 heroes instead of 5 for the rest of this run">10 slots · 200 G</button><span class="coins" id="coins"><span class="coin"></span><span id="sGold"></span></span><button class="b lockbtn" id="bLock">🔓 Lock</button></h3>
       <div class="shop" id="shop"></div>
       <div class="odds" id="odds"></div>
       <div class="actions">
@@ -360,14 +359,14 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <button class="b" id="bSell">Sell</button>
         <button class="b" id="bCap" data-tip="Upgrade the shop: +1 hero slot on the field and better odds for 2-4 gold heroes">Upgrade</button>
       </div>
-      <button class="b go" id="bFight">⚔ Start battle</button>
+      <button class="b go" id="bFight">Start battle</button>
     </div>
     <div class="card"><h3>Hero</h3><div id="info"></div></div>
-    <div class="card"><h3 class="shophead">Items <span class="hint">drag onto a hero</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="items" class="items"></div></div>
+    <div class="card"><h3 class="shophead">Items <span class="hint">drag onto a hero</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">Scroll · 50 G</button></h3><div id="items" class="items"></div></div>
     <div class="card">
       <details id="howto"><summary>How to play</summary>
       <ol class="help">
-        <li><b>Buy</b> heroes in the shop. They wait on the bench (the wooden deck).</li>
+        <li><b>Buy</b> heroes in the shop. They wait on the bench (the reserve row).</li>
         <li><b>Drag</b> a hero to move it (drop on another hero to swap). Click selects; click empty ground to cancel. <b>Right-click</b> a hero or drop it on the shop to sell.</li>
         <li><b>3 copies</b> merge into ★★ automatically (3 × ★★ = ★★★).</li>
         <li><b>Bonuses</b>: 2 or 3 <i>different</i> heroes of the same class or origin unlock a bonus (copies count once).</li>
@@ -395,7 +394,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
-        <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop. <b>Click any hero</b> in the Codex or the Team Plan to see its full details.</li>
+        <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the Codex (☆, up to 10): they glow gold in the shop. <b>Click any hero</b> in the Codex or the Team Plan to see its full details.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper speeds up one ally (Rousing Note); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
@@ -1084,12 +1083,11 @@ const $ = s=>document.querySelector(s);
 const cv=$('#cv'), ctx=cv.getContext('2d');
 const RES=2;   // backing pixels per game pixel: matches the 2x HD sprites exactly (the page scales the canvas crisply); 3 cost 2.25x the drawing on big screens
 cv.width=W*RES; cv.height=H*RES;
-function fitBoard(){   // the board takes whatever room the side panels and the HUD leave, in both directions
-  const g=$('.game'), hud=$('.hud'), L=$('.col.left'), Rc=$('.col.right'); if(!g||!hud) return;
-  const cs=getComputedStyle(g), gap=parseFloat(cs.columnGap)||0, pad=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight), padV=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
-  const frame=24, side=(L?L.getBoundingClientRect().width:0)+(Rc?Rc.getBoundingClientRect().width:0);
-  const availW=document.documentElement.clientWidth-side-gap*2-pad-frame-4, availH=innerHeight-padV-hud.offsetHeight-10-frame;
-  const h=Math.max(240,Math.min(availH,availW*H/W)); cv.style.height=h+'px'; }
+function fitBoard(){
+  const hud=$('.hud'), center=$('.center'); if(!hud||!center) return;
+  const availW=center.getBoundingClientRect().width-12, availH=innerHeight-hud.offsetHeight-90;
+  const h=Math.max(180,Math.min(Math.max(250,availH),availW*H/W)); cv.style.height=h+'px'; }
+
 addEventListener('resize',fitBoard);
 if(window.ResizeObserver) new ResizeObserver(fitBoard).observe(document.querySelector('.hud'));
 fitBoard(); addEventListener('load',fitBoard); if(document.fonts) document.fonts.ready.then(fitBoard);
@@ -1107,7 +1105,7 @@ function setSprite(id,src,faceLeft,rig){
       let top=c.height,bottom=0; for(let y=0;y<c.height;y++) for(let x=0;x<c.width;x++) if(a[(y*c.width+x)*4+3]>10){ top=Math.min(top,y); bottom=Math.max(bottom,y+1); }
       if(SPR[id]&&SPR[id].img===im) SPR[id].bounds={top,bottom,height:Math.max(1,bottom-top)};
       render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
-    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56}; } }   // custom images have no rig: they animate as one piece
+    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56,roster:!!rig.roster}; } }   // custom images have no rig: they animate as one piece
   else delete SPR[id];
 }
 /*DEFAULT_SPRITES*/
@@ -1309,11 +1307,11 @@ const HARD_UNLOCK=15;
 const bestKey=m=>m==='hard'?'ab_best_hard':m==='daily'?'ab_daily_'+today():'ab_best';
 function openModes(first){
   const nb=readBest('normal'), hb=readBest('hard'), db=readBest('daily'), open=true;   // Hard mode is open to everyone
-  $('#modesbox').innerHTML=`<h2>New run</h2><div class="modegrid">
-    <button class="mode" data-m="normal"><div class="mi">⚔</div><div class="mn">Normal</div><div class="md">The classic run.</div><div class="mb">🏆 Best ${nb?'round '+nb.round:'–'}</div></button>
-    <button class="mode" data-m="daily"><div class="mi">📅</div><div class="mn">Daily Challenge</div><div class="md">Everyone gets the same shops, enemies and events today (${today()}). Compare with friends!</div><div class="mb">🏆 Today ${db?'round '+db.round:'–'}</div></button>
-    <button class="mode" data-m="hard" ${open?'':'disabled'}><div class="mi">💀</div><div class="mn">Hard</div><div class="md">${open?'Enemies 20% stronger, plus a run modifier you pick.':`Reach round ${HARD_UNLOCK} in Normal to unlock.`}</div><div class="mb">🏆 Best ${hb?'round '+hb.round:'–'}</div></button></div>
-    <button class="b" id="modesCodex">📖 Hero Codex</button> <button class="b" id="modesTop">🏆 Top 10</button> <button class="b" id="modesClose" ${first?'hidden':''}>Back to the current run</button>`;
+  $('#modesbox').innerHTML=`<div class="lobby-kicker">Auto Battle · The Sanctuary</div><h2>Choose your run</h2><p class="lobby-note">Build a team. Survive the next round.</p><div class="modegrid">
+    <button class="mode" data-m="normal"><div class="mi">01 / CLASSIC</div><div class="mn">Normal</div><div class="md">The classic run.</div><div class="mb">Best ${nb?'round '+nb.round:'–'}</div></button>
+    <button class="mode" data-m="daily"><div class="mi">02 / SHARED SEED</div><div class="mn">Daily Challenge</div><div class="md">Everyone gets the same shops, enemies and events today (${today()}). Compare with friends!</div><div class="mb">Today ${db?'round '+db.round:'–'}</div></button>
+    <button class="mode" data-m="hard" ${open?'':'disabled'}><div class="mi">03 / MODIFIERS</div><div class="mn">Hard</div><div class="md">${open?'Enemies 20% stronger, plus a run modifier you pick.':`Reach round ${HARD_UNLOCK} in Normal to unlock.`}</div><div class="mb">Best ${hb?'round '+hb.round:'–'}</div></button></div>
+    <button class="b" id="modesCodex">Hero Codex</button> <button class="b" id="modesTop">Leaderboard</button> <button class="b" id="modesClose" ${first?'hidden':''}>Back to the current run</button>`;
   $('#modes').hidden=false;
 }
 $('#modesbox').addEventListener('click',e=>{
@@ -1537,7 +1535,7 @@ function lbTable(list,mine){
     return `<tr class="${me?'me':''}"><td>${i+1}</td><td><span class="lbn${tm.length?' has':''}" data-row="${i}" ${tm.length?`data-tip="${esc(tip)}"`:''}>${esc(e.name)}${tm.length?' <small>▾</small>':''}</span></td><td>${e.round}</td><td>${e.bosses}</td></tr>`
       +(tm.length?`<tr class="lbteam" data-team="${i}" hidden><td></td><td colspan="3">${lineupHTML(tm)}</td></tr>`:''); }).join('')+'</table>';
 }
-const lbHead=m=>`<h3>🏆 Top 10 · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
+const lbHead=m=>`<h3>Leaderboard · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
 async function lbRunOver(){   // after a run: show the board, plus a name box when the run made the top 10
   const el=$('#lb'); if(!el) return;
   const mode=S.mode, board=boardId(mode), sc={round:S.round,bosses:S.bosses};
@@ -1577,7 +1575,7 @@ function showSummary(){
     <div><span>Main origin</span><b>${to&&ORIGINS[to[0]]?ORIGINS[to[0]].icon+' '+ORIGINS[to[0]].name:'–'}</b></div></div>
     ${!rec&&best?`<p>Your best is round ${best.round}${best.date?` (${best.date})`:''} — ${best.round-S.round} more to beat it.</p>`:''}
     <div id="lb" class="lb">Loading top 10…</div>
-    <button class="b go" id="bAgain">⚔ Play again</button><button class="b" id="bOther" style="margin-top:8px;width:100%">☰ Other runs · 📖 Codex</button></div>`;
+    <button class="b go" id="bAgain">⚔ Play again</button><button class="b" id="bOther" style="margin-top:8px;width:100%">☰ Other runs · Codex</button></div>`;
   $('#summary').hidden=false; $('#bAgain').onclick=()=>{ newGame(S.mode,S.mode==='hard'?S.mod:undefined); }; $('#bOther').onclick=()=>{ $('#summary').hidden=true; openModes(); };
   if(rec) SND.play('star');
   lbRunOver();
@@ -2457,7 +2455,7 @@ function pose(o,b,rigged){
 // attack style per unit: how the arms move on a basic attack
 const CLS_ANIM={mimic:'staff',mesmer:'staff',monkey:'slash',gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={chieftain:'artsword',shadowstep:'artkatana',eclipsewitch:'arthalberd',voidsage:'artstaff',grandmaster:'artpunch',aegispaladin:'artsword',starwarden:'arthalberd',stonemonkey:'artsword',wukong:'arthalberd',thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',arctower:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
-const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'reaper':type==='templar'?'spear':CLS_ANIM[b.cls]);
+const animOf=(type,b)=>SPR[type]?.rig?.roster?'roster':MON_ANIM[type]||(type==='nightreaper'?'reaper':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
 function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=ks[i]; if(p<=p1){ const q=(p-p0)/(p1-p0); return v0+(v1-v0)*(i===ks.length-1?easeInOut(q):easeOut(q)); } } return ks[ks.length-1][1]; }
 // overhead sword cut, angles in radians from the rest pose: the arm lifts the hand above the shoulder while the blade
@@ -2484,6 +2482,13 @@ function rigPose(o,type,b){
   R.body=J(0,br*.5); R.head=J(0,br*.35,Math.sin(t*1.3)*.03); R.cape=J(0,0,Math.sin(t*1.9)*.05);
   R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
   R.wingL=J(); R.wingR=J();
+  if(st==='roster'){
+    R.armR.r=0; R.armL.r=0; R.weapon.r=0;
+    const p=o.rel>0?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
+    if(p>=0){ const k=b.range<=1?1:.5, hit=beats(p,.18,-.3)*k;
+      R.armR.r=hit; R.weapon.r=hit*.2; R.armL.r=-hit*.45; R.body.x=beats(p,.4,-.8)*k; R.head.r-=hit*.08; }
+    if(o.cast>0){const q=1-o.cast/CAST_T;R.armR.r=-.15*q;R.armL.r=.12*q;R.body.y+=.5*q;}
+  }
   if(st==='reaper'){
     R.armR.r=-.15+br*.04; R.armL.r=.15-br*.04;
     const q=o.rel>0?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
@@ -2872,8 +2877,10 @@ function render(){
     ctx.stroke();
   }
   if(S.fight&&S.fight.dim>.01){ ctx.fillStyle=`rgba(8,6,20,${S.fight.dim*.4})`; ctx.fillRect(0,0,W,BOARD_H); }
-  for(let i=0;i<BENCH;i++){ ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(i*CELL+4,BENCH_Y+2,CELL-8,CELL-4); }
-  ctx.fillStyle='#f3e7cf'; ctx.font="17px 'Jersey 10',system-ui"; ctx.textAlign='left'; ctx.fillText('BENCH',6,BENCH_Y-6);
+  ctx.fillStyle='#1c2830';ctx.fillRect(0,BOARD_H,W,H-BOARD_H);
+  ctx.strokeStyle='#64717a';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(0,BOARD_H+.5);ctx.lineTo(W,BOARD_H+.5);ctx.stroke();
+  for(let i=0;i<BENCH;i++){ ctx.strokeStyle='#46545e';ctx.lineWidth=.5;ctx.strokeRect(i*CELL+4,BENCH_Y+2,CELL-8,CELL-4); ctx.fillStyle='#24323c'; ctx.fillRect(i*CELL+4,BENCH_Y+2,CELL-8,CELL-4); }
+  ctx.fillStyle='#f3e7cf'; ctx.font="9px system-ui"; ctx.textAlign='left'; ctx.fillText('RESERVES',6,BENCH_Y-6);
 
   if(shopDrag&&shopDrag.moved&&shopDrag.over){   // where a hero dragged from the shop would land
     const l=shopDrag.over, ok=S.gold>=U[shopDrag.id].cost&&!(l.w==='board'&&(l.cy<4||onBoard().length>=cap()))&&!S.units.some(v=>sameLoc(v.loc,l));
@@ -2900,7 +2907,7 @@ function render(){
   }
   if(dragging) drawUnit(dragging.u.type,dragging.u.star,dragging.pos.x,dragging.pos.y-10,{team:0,sel:true,ph:dragging.u.uid*1.7});
   if(S.phase==='prep'){
-    ctx.fillStyle='rgba(255,250,235,.55)'; ctx.font="26px 'Jersey 10',system-ui"; ctx.textAlign='center';
+    ctx.fillStyle='rgba(255,250,235,.55)'; ctx.font="12px system-ui"; ctx.textAlign='center';
     ctx.fillText(roundKind(S.round)==='pvp'?'Enemy zone':KIND_LABEL[roundKind(S.round)],W/2,BOARD_H/4);
   }
   for(const e of S.ufx){   // star-up: golden beam drops on the unit, stars pop
@@ -3077,7 +3084,7 @@ function renderUI(){
   $('#shop').innerHTML=S.shop.map((id,k)=>id?`<button class="su c${U[id].cost}${marks.includes(id)?' marked':''}" data-k="${k}" data-id="${id}" ${!prep||S.gold<U[id].cost?'disabled':''} style="--cc:${colorOf(id)}">
     <div class="th">${thumbHTML(id,30)}</div><div class="nm">${U[id].name}</div><div class="cl">${ORIGINS[U[id].org].icon} ${CLASSES[U[id].cls].name}</div><div class="c">${U[id].cost}</div></button>`:`<div></div>`).join('');
   $('#bReroll').disabled=!prep; $('#bSell').disabled=!prep||!S.sel; $('#bFight').disabled=!prep;
-  $('#bLock').textContent=S.locked?'🔒 Locked':'🔓 Lock'; $('#bLock').title=S.locked?'Shop stays the same next round. Click to unlock.':'Keep these shop units for next round';
+  $('#bLock').textContent=S.locked?'Locked':'Lock'; $('#bLock').title=S.locked?'Shop stays the same next round. Click to unlock.':'Keep these shop units for next round';
   $('#shop').classList.toggle('locked',S.locked);
   const capMax=cap()>=MAX_CAP;
   $('#bCap').textContent=capMax?'Max level':`Upgrade · ${capCost()}`;
