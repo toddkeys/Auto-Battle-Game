@@ -4,11 +4,13 @@ the drawn heroes: the sword arm swings, the shield and head turn. Writes assets/
 Pieces are polygons in picture pixels. Whatever a moving piece covered on the body is filled with the nearest
 body colours, so no holes show when it moves."""
 import json
+import copy
 import os
 
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage
+import roster_rigs
 
 K = 3
 W, H = 56 * K, 54 * K
@@ -112,9 +114,100 @@ ART_RIGS = {
 }
 
 
+# Coordinated 2026 skins: polygons measured on the trimmed 162px-high artwork.
+# Keep weapon and gripping hand together so they cannot slide apart during attacks.
+_SKIN_PARTS = {
+ 'stonemonkey': {'head': ([(18,0),(102,0),(94,48),(70,60),(39,57),(22,35)],(63,57)),
+                 'armR': ([(0,107),(36,83),(39,65),(56,66),(51,87),(112,46),(113,57),(43,100),(0,117)],(49,69)),
+                 'armL': ([(77,55),(88,62),(84,82),(65,90),(61,81),(74,71)],(76,60))},
+ 'wukong': {'head': ([(10,0),(101,0),(108,42),(83,61),(48,61),(20,43)],(65,60)),
+            'armR': ([(0,100),(24,88),(33,64),(48,65),(45,88),(113,45),(115,55),(39,101),(0,111)],(43,68)),
+            'armL': ([(80,60),(94,67),(90,86),(70,93),(65,83),(79,77)],(82,66))},
+ 'eclipsewitch': {'head': ([(37,0),(85,0),(99,30),(85,51),(60,51),(44,37)],(70,49)),
+                  'armR': ([(0,0),(35,0),(42,27),(24,43),(39,97),(33,105),(16,46),(0,34)],(42,62)),
+                  'armL': ([(82,62),(100,74),(102,93),(91,99),(83,82)],(84,65))},
+ 'voidsage': {'head': ([(36,13),(79,13),(91,34),(79,56),(56,55),(42,42)],(66,54)),
+              'armR': ([(0,0),(38,0),(41,38),(27,47),(39,108),(31,115),(18,46),(0,34)],(42,63)),
+              'armL': ([(79,63),(96,75),(103,92),(94,97),(81,85)],(79,67))},
+ 'chieftain': {'head': ([(43,0),(98,0),(103,30),(88,47),(64,48),(49,32)],(75,46)),
+               'armR': ([(0,31),(32,33),(47,71),(61,66),(63,79),(37,93),(24,81),(13,69),(0,65)],(55,56)),
+               'armL': ([(106,31),(149,32),(150,66),(134,80),(120,92),(104,80),(98,61),(112,67),(120,72)],(100,54))},
+ 'grandmaster': {'head': ([(38,0),(83,0),(87,31),(75,46),(54,46),(40,31)],(65,44)),
+                 'armR': ([(22,41),(38,35),(52,49),(47,68),(33,75),(20,64)],(47,50)),
+                 'armL': ([(79,44),(93,41),(104,55),(101,71),(86,69),(79,57)],(80,49))},
+ 'shadowstep': {'head': ([(5,0),(66,0),(75,27),(57,48),(29,49),(10,34)],(42,47)),
+                'armR': ([(12,61),(32,61),(37,88),(19,102),(103,149),(97,153),(7,106),(5,92)],(27,64)),
+                'armL': ([(66,54),(80,60),(90,81),(81,88),(67,74)],(67,57))},
+}
+_SKIN_PARTS.update({
+ 'aegispaladin': {
+  'head': ([(59,0),(112,0),(132,37),(113,54),(78,52),(58,38)],(94,51)),
+  'armR': ([(69,67),(81,67),(81,75),(71,88),(66,96),(60,95),(66,81)],(78,68)),
+  'armL': ([(117,57),(140,46),(162,66),(160,100),(151,127),(131,104),(121,86)],(124,66)),
+  'weapon': ([(0,156),(45,103),(45,89),(57,88),(60,97),(69,101),(61,108),(56,106),(3,162)],(63,94)),
+ },
+ 'starwarden': {
+  'head': ([(63,15),(115,12),(124,51),(108,63),(82,62),(63,48)],(96,61)),
+  'armR': ([(80,65),(91,66),(90,75),(82,85),(71,88),(66,83),(69,72)],(87,69)),
+  'armL': ([(109,70),(119,72),(126,79),(131,80),(133,88),(122,92),(116,84)],(115,70)),
+  'weapon': ([(0,48),(39,43),(64,60),(61,70),(173,85),(173,98),(61,80),(54,88),(18,94),(0,74)],(73,76)),
+ },
+})
+
+_SKIN_PARTS['nightreaper']={
+ 'head': ([(34,0),(87,0),(86,38),(68,50),(45,47),(33,29)],(60,48)),
+ 'armR': ([(38,60),(49,65),(41,82),(34,94),(16,116),(0,119),(17,98),(20,84)],(44,63)),
+ 'armL': ([(78,60),(89,65),(98,89),(94,105),(83,118),(71,120),(85,102),(82,89)],(78,63)),
+}
+
+for _cid, _parts in _SKIN_PARTS.items():
+    ART_RIGS[_cid] = {'order':['body','head',*(['weapon'] if 'weapon' in _parts else []),'armL','armR'], 'nofill':[name for name in ('armR','armL','weapon') if name in _parts],
+                     'parts':{name:{'poly':poly,'piv':piv} for name,(poly,piv) in _parts.items()}}
+
+# Boss heads and heavy limbs are cut relative to their own new artwork.
+_BOSS_HEADS={
+ 'golem':(.06,.06,.49,.36), 'lich':(.34,.02,.75,.37),
+ 'wyrm':(.01,.24,.58,.65), 'thornmother':(.32,.12,.72,.46),
+ 'stormdjinn':(.27,.02,.78,.36), 'colossus':(.25,.08,.64,.36),
+}
+for _cid in _BOSS_HEADS: ART_RIGS[_cid]={}
+for _cid in roster_rigs.HEROES: ART_RIGS[_cid]={}
+
+
 def build(cid, art_dir, rig_dir):
     spec = ART_RIGS[cid]
     pic = Image.open(os.path.join(art_dir, cid + '.png')).convert('RGBA')
+    if cid in roster_rigs.HEROES:
+        spec=roster_rigs.spec(cid,pic.size)
+    if cid in _BOSS_HEADS:
+        x0,y0,x1,y1=_BOSS_HEADS[cid]; w,h=pic.size
+        parts={'head':{'poly':[(x0*w,y0*h),(x1*w,y0*h),(x1*w,y1*h),(x0*w,y1*h)],'piv':((x0+x1)*w/2,y1*h)}}
+        if cid in ('golem','colossus'):
+            for name,poly,piv in [
+                ('armR',[(.07,.45),(.22,.39),(.34,.53),(.3,.73),(.17,.8),(.02,.69)],(.27,.46)),
+                ('armL',[(.73,.42),(.88,.4),(.98,.58),(.96,.75),(.83,.8),(.7,.65)],(.76,.45)),
+                ('legL',[(.2,.84),(.5,.84),(.5,1),(.15,1)],(.38,.85)),
+                ('legR',[(.6,.84),(.95,.84),(1,1),(.6,1)],(.74,.85))]:
+                parts[name]={'poly':[(x*w,y*h) for x,y in poly],'piv':(piv[0]*w,piv[1]*h)}
+        if cid=='wyrm':
+            for name,poly,piv in [
+                ('wingR',[(.58,0),(1,0),(1,.52),(.7,.45)],(.64,.35)),
+                ('wingL',[(.25,0),(.6,0),(.65,.33),(.4,.4)],(.48,.32))]:
+                parts[name]={'poly':[(x*w,y*h) for x,y in poly],'piv':(piv[0]*w,piv[1]*h)}
+        spec={'parts':parts,'order':[n for n in ('wingR','wingL') if n in parts]+['body']+[n for n in parts if not n.startswith('wing')],'nofill':list(parts),'seams':{'armR':8,'armL':8} if cid in ('golem','colossus') else {}}
+    if cid in _SKIN_PARTS:
+        spec=copy.deepcopy(spec)
+        w,h=pic.size
+        extras={
+            'legL':([( .3,.8),(.55,.8),(.55,1),(.26,1)],(.44,.81)),
+            'legR':([(.6,.8),(.9,.8),(.95,1),(.59,1)],(.72,.81)),
+            'cape':([(.82,.43),(1,.48),(1,.94),(.84,.9),(.76,.66)],(.8,.5)),
+            'cloth':([(.44,.68),(.73,.68),(.8,.84),(.36,.85)],(.57,.69)),
+        }
+        for name,(poly,piv) in extras.items():
+            spec['parts'][name]={'poly':[(x*w,y*h) for x,y in poly],'piv':(piv[0]*w,piv[1]*h)}
+        spec['order']=['cape','body','legL','legR','cloth']+[n for n in spec['order'] if n!='body']
+        spec['nofill']=spec.get('nofill',[])+list(extras)
     cw = max(W, -(-pic.width // K) * K)   # a picture wider than the frame gets a wider frame (fw), so nothing is clipped
     fw = cw // K
     canvas = Image.new('RGBA', (cw, H), (0, 0, 0, 0))
@@ -149,7 +242,7 @@ def build(cid, art_dir, rig_dir):
             m = Image.new('L', (cw, H), 0)
             for poly in spec['parts'][name].get('polys', [spec['parts'][name].get('poly')]):
                 ImageDraw.Draw(m).polygon([(x + ox, y + oy) for x, y in poly], fill=255)
-            fill &= ~(np.asarray(m) > 0) | (dist <= 1)
+            fill &= ~(np.asarray(m) > 0) | (dist <= spec.get('seams',{}).get(name,1))
     body[fill] = body[iy[fill], ix[fill]]
     layers['body'] = body
     strip = Image.new('RGBA', (cw * len(spec['order']), H), (0, 0, 0, 0))
@@ -160,4 +253,4 @@ def build(cid, art_dir, rig_dir):
     for name, part in spec['parts'].items():
         piv[name] = ((part['piv'][0] + ox) / K - (fw - 56) / 2, (part['piv'][1] + oy) / K)   # pivots are on the 56-wide design grid
     with open(os.path.join(rig_dir, cid + '.json'), 'w') as f:
-        json.dump({'layers': spec['order'], 'piv': piv, 'k': K, **({'fw': fw} if fw != 56 else {})}, f)
+        json.dump({'layers': spec['order'], 'piv': piv, 'k': K, **({'roster': True} if cid in roster_rigs.HEROES else {}), **({'fw': fw} if fw != 56 else {})}, f)

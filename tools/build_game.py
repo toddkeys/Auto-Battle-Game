@@ -16,10 +16,6 @@ for cid in re.findall(r"\{id:'(\w+)'", tpl):
         data[cid] = {'src': 'data:image/png;base64,' + base64.b64encode(f.read()).decode(), 'faceLeft': True}
     if os.path.exists(os.path.join(ROOT, 'assets', 'art', cid + '.png')):
         data[cid]['art'] = True   # hand-made picture: drawn smoothly, not as crisp pixels
-    back = os.path.join(ROOT, 'assets', 'art', cid + '_back.png')
-    if os.path.exists(back):   # a hand-made back view, shown while the hero faces away
-        with open(back, 'rb') as f:
-            data[cid]['back'] = 'data:image/png;base64,' + base64.b64encode(f.read()).decode()
     rig = os.path.join(ROOT, 'assets', 'rig', cid)
     if os.path.exists(rig + '.json'):   # heroes drawn from a hand-made picture (assets/art) have no limb rig
         with open(rig + '.png', 'rb') as f, open(rig + '.json') as j:
@@ -36,6 +32,9 @@ for f in sorted(os.listdir(os.path.join(ROOT, 'assets', 'vfx'))):
 block += ('\n// skill effect animations (CC0, see assets/vfx/CREDITS.txt), built by tools/build_vfx.py\n'
           'const VFX_DATA = ' + json.dumps(vfx) + ';')
 out = tpl.replace('/*DEFAULT_SPRITES*/', block, 1)
+with open(os.path.join(ROOT,'assets','scenery','sanctuary.jpg'),'rb') as f:
+    arena='data:image/jpeg;base64,'+base64.b64encode(f.read()).decode()
+out=out.replace('/*ARENA_ART*/','const ARENA_SRC = '+json.dumps(arena)+';',1)
 path = os.path.join(ROOT, 'ro-autobattler.html')
 open(path, 'w', encoding='utf8', newline='\n').write(out)
 print(f'built ro-autobattler.html with {len(data)} sprites ({len(out) // 1024} KB)')

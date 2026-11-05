@@ -19,3 +19,89 @@ Rebuild (needs Python with Pillow and numpy):
 python tools/build_sprites.py   # redraw sprites -> assets/units/*.png, assets/preview.png
 python tools/build_game.py      # embed sprites into ro-autobattler.html
 ```
+
+## Coordinated hero skins
+
+The first seven reworked skins live in `assets/art/src/hero_skins_atlas.png`:
+Wukong (`stonemonkey`), Mythic Wukong (`wukong`), Eclipse Witch (`eclipsewitch`),
+Stormweaver (`voidsage`), Crimson Ravager/Berserker (`chieftain`),
+Worldbreaker (`grandmaster`), and Shadowstep (`shadowstep`). Gameplay names,
+classes, and stats are unchanged. Paladin (`aegispaladin`) and Crimson Valkyrie
+(`starwarden`) use the matching `assets/art/src/holy_skins_atlas.png`. Only front
+artwork is used, mirrored for facing.
+
+To extract the skins, copy them into the unit assets, rebuild their animation rigs,
+and embed them into the game (requires ImageMagick plus the Python dependencies above):
+
+```bash
+python tools/prep_hero_skins.py
+python tools/build_game.py
+```
+
+The atlas cell boundaries are in `tools/prep_hero_skins.py`; the matching animation
+piece polygons are in `_SKIN_PARTS` in `tools/art_rig.py`. Adjust both when replacing
+the atlas. The full sprite build also uses these rig definitions for these heroes.
+
+## Sanctuary visual upgrade
+
+Night Reaper and the six boss skins are extracted from
+`assets/art/src/nightreaper_bosses_atlas.png`. Their animation pieces are defined
+in `tools/art_rig.py`. The sanctuary battlefield is `assets/scenery/sanctuary.jpg`;
+`build_game.py` embeds it with the sprites so the generated HTML still works
+without a server (audio remains in the checked-in assets directory).
+
+```bash
+python tools/prep_boss_skins.py
+python tools/build_game.py
+```
+
+The renderer adds class-colored casting sigils, radial impact bursts, crimson
+Night Reaper effects, boss ground markings, floating motes, and assassin trails.
+Reduced-motion mode freezes ambient drift and disables the new assassin trails.
+The background has a quiet playable center and an existing meadow fallback while
+its embedded image loads. This update changes presentation, not combat stats or skills.
+
+Hero size is art-directed in `HERO_VISUAL_SCALE` and `HERO_HEAD_SCALE` in the game
+template. These were tuned against side-by-side renders of the full hero roster;
+heads, body presence, large hats and weapons are balanced visually rather than
+forcing every image into the same outer bounding box. Feet stay anchored and
+health bars follow the adjusted size. Bosses retain their separate larger scale.
+
+## Full roster and interface
+
+All 72 playable heroes now have individual reworked skins. The 62 remaining
+heroes use eight coordinated source sheets in `assets/art/src/roster/`; the
+manifest records their exact cell order. `tools/roster_rigs.py` defines their
+animation masks, and `art_rig.py` builds the same rig format used by the earlier
+reworks. Combat names, classes, stats and skills are unchanged.
+
+```bash
+python tools/prep_roster.py
+python tools/build_game.py
+```
+
+Use `--group vanguard` (or another manifest group) to rebuild just one sheet.
+The complete sprite builder also recognizes these art overrides. Keep each
+figure within its atlas cell when replacing source artwork.
+
+The original oak-and-brass interface, compact shop and wooden reserve bench are
+restored. Narrow screens still stack the panels so controls remain reachable.
+
+Animation uses separate torso, head, arms, elbow/wrist, boots, cape and clothing
+pieces. Attacks have class-specific anticipation, action and recovery poses;
+bows draw, guns recoil, punches extend, and casters raise their staffs. The ten
+earlier skins also have animated lower-body and trailing-cloth pieces. Wolves,
+wisps, drakes, turrets and bosses have species-specific motion. Summons and small
+monsters use their native silhouettes and individual scale, rather than the hero
+height normalization. Combat definitions are unchanged.
+
+Optional browser smoke checks use Python Playwright and system Chromium:
+
+```bash
+python tools/check_visuals.py
+```
+
+These exercise all 72 skill casts and idle, walking, attack, casting, release,
+frozen, death and spinning renders in both directions, plus buying, locking,
+opening the planner/codex and checking a phone-width layout. Render checks also
+cover all seven summons and nine monsters/bosses.

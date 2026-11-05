@@ -1,1 +1,1 @@
-{"layers": ["wingR", "cape", "legR", "body", "legL", "head", "wingL"], "piv": {"head": [16, 26], "body": [28, 44], "cape": [40, 42], "wingL": [24, 26], "wingR": [34, 26], "legL": [24, 44], "legR": [36, 44]}, "k": 2}
+{"layers": ["wingR", "wingL", "body", "head"], "piv": {"body": [28, 44], "cape": [28, 28], "head": [15.836666666666666, 35.1], "wingR": [36.306666666666665, 18.9], "wingL": [26.813333333333333, 17.28]}, "k": 3, "fw": 60}

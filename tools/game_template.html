@@ -218,7 +218,7 @@ button.go{display:block;width:100%;margin-top:10px}
 .su .th{height:60px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:3px}
 .su img{-webkit-user-drag:none;user-select:none;pointer-events:none}   /* the browser's own image drag would steal the shop drag */
 .su .th img{max-width:60px;max-height:60px;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))}
-.su .nm{font:400 15px/0.95 var(--pixel);letter-spacing:0;hyphens:auto;-webkit-hyphens:auto;color:#fff4dc;text-shadow:0 1px 0 #000}
+.su .nm{overflow-wrap:anywhere;min-width:0;font:400 15px/0.95 var(--pixel);letter-spacing:0;hyphens:auto;-webkit-hyphens:auto;color:#fff4dc;text-shadow:0 1px 0 #000}
 .su .cl{margin-top:2px;font-size:11px;line-height:1.1;color:var(--muted)}
 .su .c{position:absolute;top:-7px;right:-7px;width:25px;height:25px;display:grid;place-items:center;border:2px solid var(--ink);border-radius:50%;
   font:400 19px/1 var(--pixel);color:#3a2000;background:radial-gradient(circle at 35% 30%,#fff6b8,#f2b733 55%,#a8700f)}
@@ -318,6 +318,8 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 @media (max-width:1000px){.game{grid-template-columns:200px auto 270px}.col{zoom:.78}}
 @media (min-width:2200px){.game{grid-template-columns:375px auto 500px}.col{zoom:1.25}}
 @media (prefers-reduced-motion:reduce){.card,button.go,.items .it.rare{animation:none}}
+@media(max-width:960px){body{overflow:auto}.game{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr) 270px}.center{grid-column:1;grid-row:1;min-width:0}.right{grid-column:2;grid-row:1}.left{grid-column:1/3;grid-row:2;display:grid;grid-template-columns:1fr 1fr;overflow:visible}.col{zoom:1;overflow:visible}.board{max-width:100%}}
+@media(max-width:600px){.game{display:flex;flex-direction:column;padding:8px}.center{order:0}.right{order:1}.left{order:2;display:flex}.sumbox{max-height:94vh;overflow:auto}.modegrid{grid-template-columns:1fr}.mode .md{min-height:0}.mode{padding:12px}.mode .mi{font-size:22px}.hudbtns{flex-wrap:wrap}.cardrow{flex-direction:column}.cardsbox{max-height:94vh;overflow:auto}.bless{width:100%;min-height:0}}
 </style>
 </head>
 <body>
@@ -853,8 +855,8 @@ const SKILLS = {
       FX('strike',d.x,d.y+.35,{s:.9,tint:'#ffe27a',m:.7}); Object.assign(d,{hp:d.max*.4,hpLag:d.max*.4,dead:false,dieT:0,reborn:true,spawnT:.3,stun:0,sil:0,blind:0,slow:0,psn:null,brn:null,mp:0,castT:0,tgt:null,leap:null,leapDelay:0});
       a.hl+=d.hp; pop(d,'Reborn!','#ffe27a',true); V({k:'pillar',x:d.x,y:d.y+.35,c:'#ffd27a',m:.6}); V({k:'ring',x:d.x,y:d.y+.3,r:.9,c:'#ffe27a'}); hitStop(.08); }},
   nightreaper:{name:'Reap', mp:70, desc:'Strikes for 280% damage. A target left under 30% HP (bosses: 15%) is executed, and the Reaper gets half its mana back.',
-    cast(a,t){ hit(a,t,2.8,true); V({k:'slash',x:t.x,y:t.y,c:'#5ee08a',dir:a.face});
-      if(t.hp>0&&t.hp<t.max*(U[t.type].boss?.15:.3)){ a.dd+=t.hp; t.dtk+=t.hp; t.hp=0; pop(t,'Executed','#5ee08a',true); burst(t.x,t.y,'#5ee08a',14,3,3,2); hitStop(.08); }
+    cast(a,t){ hit(a,t,2.8,true); V({k:'slash',x:t.x,y:t.y,c:'#ff5276',dir:a.face});
+      if(t.hp>0&&t.hp<t.max*(U[t.type].boss?.15:.3)){ a.dd+=t.hp; t.dtk+=t.hp; t.hp=0; pop(t,'Executed','#ff5276',true); burst(t.x,t.y,'#ff5276',14,3,3,2); hitStop(.08); }
       if(t.hp<=0) a.mp=a.mpMax*.5; }},
   voidsage:{name:'Void Chain', mp:90, desc:'Lightning jumps between up to 6 enemies (3 cells per jump): 260% damage, 15% less each jump, a 2s silence, and each one is ⚡ Shocked (a 0.4s mini-stun).',
     cast(a,t){ const hitSet=new Set(); let from=a, cur=t, m=2.6;
@@ -1084,12 +1086,11 @@ const $ = s=>document.querySelector(s);
 const cv=$('#cv'), ctx=cv.getContext('2d');
 const RES=2;   // backing pixels per game pixel: matches the 2x HD sprites exactly (the page scales the canvas crisply); 3 cost 2.25x the drawing on big screens
 cv.width=W*RES; cv.height=H*RES;
-function fitBoard(){   // the board takes whatever room the side panels and the HUD leave, in both directions
-  const g=$('.game'), hud=$('.hud'), L=$('.col.left'), Rc=$('.col.right'); if(!g||!hud) return;
-  const cs=getComputedStyle(g), gap=parseFloat(cs.columnGap)||0, pad=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight), padV=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
-  const frame=24, side=(L?L.getBoundingClientRect().width:0)+(Rc?Rc.getBoundingClientRect().width:0);
-  const availW=document.documentElement.clientWidth-side-gap*2-pad-frame-4, availH=innerHeight-padV-hud.offsetHeight-10-frame;
-  const h=Math.max(240,Math.min(availH,availW*H/W)); cv.style.height=h+'px'; }
+function fitBoard(){
+  const hud=$('.hud'), center=$('.center'); if(!hud||!center) return;
+  const availW=center.getBoundingClientRect().width-12, availH=innerHeight-hud.offsetHeight-90;
+  const h=Math.max(180,Math.min(Math.max(250,availH),availW*H/W)); cv.style.height=h+'px'; }
+
 addEventListener('resize',fitBoard);
 if(window.ResizeObserver) new ResizeObserver(fitBoard).observe(document.querySelector('.hud'));
 fitBoard(); addEventListener('load',fitBoard); if(document.fonts) document.fonts.ready.then(fitBoard);
@@ -1100,14 +1101,19 @@ const SPR = {};
 function readStore(){ try{ return JSON.parse(localStorage.getItem('roab_sprites')||'{}'); }catch(e){ return {}; } }
 function writeStore(d){ try{ localStorage.setItem('roab_sprites',JSON.stringify(d)); }catch(e){ msg('Could not save — the image will be lost on refresh'); } }
 function setSprite(id,src,faceLeft,rig){
-  if(src){ const im=new Image(); im.onload=()=>{render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
-    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56}; } }   // custom images have no rig: they animate as one piece
+  if(src){ const im=new Image(); im.onload=()=>{
+      // Measure visible pixels once so transparent margins do not change hero size.
+      const c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight;
+      const g=c.getContext('2d'); g.drawImage(im,0,0); const a=g.getImageData(0,0,c.width,c.height).data;
+      let top=c.height,bottom=0; for(let y=0;y<c.height;y++) for(let x=0;x<c.width;x++) if(a[(y*c.width+x)*4+3]>10){ top=Math.min(top,y); bottom=Math.max(bottom,y+1); }
+      if(SPR[id]&&SPR[id].img===im) SPR[id].bounds={top,bottom,height:Math.max(1,bottom-top)};
+      render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
+    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56,roster:!!rig.roster}; } }   // custom images have no rig: they animate as one piece
   else delete SPR[id];
 }
 /*DEFAULT_SPRITES*/
 for(const [id,v] of Object.entries(DEFAULT_SPRITES)) setSprite(id,v.src,v.faceLeft,v.rig);
-for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.back&&SPR[id]){ const b=new Image(); b.src=v.back; SPR[id].back=b; }
-for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.art&&SPR[id]){ SPR[id].art=true; if(SPR[id].rig) SPR[id].rig.art=true; }   // hand-made pictures scale smoothly   // back view, shown while facing away (target above)
+for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.art&&SPR[id]){ SPR[id].art=true; if(SPR[id].rig) SPR[id].rig.art=true; }   // hand-made pictures scale smoothly
 for(const [id,v] of Object.entries(readStore())) setSprite(id,v.src,v.faceLeft);
 
 // ====== background: a sunny hand-painted-style pixel meadow (original art) ======
@@ -1116,6 +1122,18 @@ for(const [id,v] of Object.entries(readStore())) setSprite(id,v.src,v.faceLeft);
 const calmMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;   // also turns off screen shake
 const RIVER_Y=new Float32Array(W/2);   // river centre line (game pixels) for every 2-pixel column, filled by makeBG
 const BG = makeBG();
+/*ARENA_ART*/
+const ARENA=new Image(); ARENA.src=ARENA_SRC;
+const BOSS_PALETTES={golem:'#e4b74f',lich:'#79dcff',wyrm:'#ff704b',thornmother:'#99e67c',stormdjinn:'#c49aff',colossus:'#6fffe5'};
+function drawSanctuary(){
+  if(!ARENA.naturalWidth) return;
+  ctx.save(); ctx.imageSmoothingEnabled=true; ctx.drawImage(ARENA,0,0,W,BOARD_H);
+  // An understated border keeps the playable cells clear of the scenery.
+  ctx.strokeStyle='rgba(222,200,151,.35)'; ctx.lineWidth=1; ctx.strokeRect(5,5,W-10,BOARD_H-10);
+  const boss=S.fight&&S.fight.f.find(a=>a.team===1&&U[a.type].boss&&a.hp>0);
+  if(boss){ ctx.globalAlpha=.1; ctx.fillStyle=BOSS_PALETTES[boss.type]||'#a092cc'; ctx.fillRect(0,0,W,BOARD_H); }
+  ctx.restore();
+}
 function makeBG(){
   const s=2, w=W/s, h=H/s, bh=BOARD_H/s, by=(BENCH_Y-4)/s;
   const lo=document.createElement('canvas'); lo.width=w; lo.height=h;
@@ -1213,9 +1231,12 @@ function drawAmbient(){
   const T=calmMotion?0:ANIM;
   ctx.save(); ctx.globalAlpha=.07;
   for(const [o,y,sp] of [[0,40,9],[420,260,7],[760,420,8]]){ const x=((T*sp+o)%(W+320))-320; ctx.drawImage(CLOUD,x,y-90); }
-  for(let i=0;i<26;i++){ const x=((i*41.3+T*(14+i%4*5))%W), y=RIVER_Y[(x/2)|0]+((i*13)%9-4)*1.6, a=.35+.35*Math.sin(T*4+i*1.7);   // glints drifting downstream
+  for(let i=0;i<(ARENA.naturalWidth?0:26);i++){ const x=((i*41.3+T*(14+i%4*5))%W), y=RIVER_Y[(x/2)|0]+((i*13)%9-4)*1.6, a=.35+.35*Math.sin(T*4+i*1.7);   // glints drifting downstream
     if(a<=0) continue; ctx.globalAlpha=a; ctx.fillStyle='#f4fcff'; ctx.fillRect(x|0,y|0,4+(i%3)*2,2); }
-  ctx.globalAlpha=.85;
+  for(let i=0;i<18;i++){ const x=(i*79.7+Math.sin(T*.25+i)*18+W)%W, y=(i*53.1-T*(2+i%3)+BOARD_H*100)%BOARD_H;
+    ctx.globalAlpha=.15+.3*(.5+.5*Math.sin(T*1.4+i*2)); ctx.fillStyle=i%3?'#ffe6a1':'#b4e6ff';
+    ctx.beginPath(); ctx.arc(x,y,i%4===0?1.7:1,0,Math.PI*2); ctx.fill(); }
+  ctx.globalAlpha=.6;
   for(let i=0;i<10;i++){ const sx=(i*137.5)%W, sy=(i*89.3)%BOARD_H, x=(sx+T*(10+i%3*4))%W, y=(sy+T*(6+i%4*2)+Math.sin(T*1.3+i)*6)%BOARD_H;
     ctx.save(); ctx.translate(x,y); ctx.rotate(T*2+i); ctx.fillStyle=i%3?'#ffd6e4':'#fffaf0'; ctx.fillRect(-2,-1,4,2); ctx.restore(); }
   ctx.restore();
@@ -1517,7 +1538,7 @@ function lbTable(list,mine){
     return `<tr class="${me?'me':''}"><td>${i+1}</td><td><span class="lbn${tm.length?' has':''}" data-row="${i}" ${tm.length?`data-tip="${esc(tip)}"`:''}>${esc(e.name)}${tm.length?' <small>▾</small>':''}</span></td><td>${e.round}</td><td>${e.bosses}</td></tr>`
       +(tm.length?`<tr class="lbteam" data-team="${i}" hidden><td></td><td colspan="3">${lineupHTML(tm)}</td></tr>`:''); }).join('')+'</table>';
 }
-const lbHead=m=>`<h3>🏆 Top 10 · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
+const lbHead=m=>`<h3>Leaderboard · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
 async function lbRunOver(){   // after a run: show the board, plus a name box when the run made the top 10
   const el=$('#lb'); if(!el) return;
   const mode=S.mode, board=boardId(mode), sc={round:S.round,bosses:S.bosses};
@@ -1557,7 +1578,7 @@ function showSummary(){
     <div><span>Main origin</span><b>${to&&ORIGINS[to[0]]?ORIGINS[to[0]].icon+' '+ORIGINS[to[0]].name:'–'}</b></div></div>
     ${!rec&&best?`<p>Your best is round ${best.round}${best.date?` (${best.date})`:''} — ${best.round-S.round} more to beat it.</p>`:''}
     <div id="lb" class="lb">Loading top 10…</div>
-    <button class="b go" id="bAgain">⚔ Play again</button><button class="b" id="bOther" style="margin-top:8px;width:100%">☰ Other runs · 📖 Codex</button></div>`;
+    <button class="b go" id="bAgain">⚔ Play again</button><button class="b" id="bOther" style="margin-top:8px;width:100%">☰ Other runs · Codex</button></div>`;
   $('#summary').hidden=false; $('#bAgain').onclick=()=>{ newGame(S.mode,S.mode==='hard'?S.mod:undefined); }; $('#bOther').onclick=()=>{ $('#summary').hidden=true; openModes(); };
   if(rec) SND.play('star');
   lbRunOver();
@@ -2183,7 +2204,7 @@ const SKILL_FX={
   starwarden:a=>{ FX('geyser',a.x,a.y+.3,{s:1.1,tint:'#ffe27a',m:.7}); V({k:'dome',x:a.x,y:a.y,c:'#ffe27a',r:.75,m:.9}); V({k:'shards',x:a.x,y:a.y,c:'#fff3a0',r:2.5,n:10}); },
   stormranger:a=>{ const c=densest(a,2); if(c) V({k:'reticle',x:c.x,y:c.y,c:'#ffe45a',m:.45}); },
   dawnoracle:a=>{ FX('geyser',a.x,a.y+.3,{s:1.4,tint:'#ffd27a',m:.8}); V({k:'flash',x:0,y:0,c:'#ffe0a0',m:.35}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffd27a',r:2.6,m:1.1}); },
-  nightreaper:(a,t)=>{ V({k:'arc',x:t.x,y:t.y,c:'#5ee08a',r:1.7,dir:a.face,m:.45}); FX('slash',t.x,t.y-.25,{s:1.1,tint:'#40ff90',flip:a.face<0,m:.5}); FX('smoke',t.x,t.y-.2,{s:1.2,add:false,m:.6}); },
+  nightreaper:(a,t)=>{ V({k:'arc',x:t.x,y:t.y,c:'#ff5276',r:1.7,dir:a.face,m:.45}); FX('slash',t.x,t.y-.25,{s:1.1,tint:'#ff365e',flip:a.face<0,m:.5}); FX('smoke',t.x,t.y-.2,{s:1.2,add:false,m:.6}); },
   voidsage:a=>{ V({k:'rays',x:a.x,y:a.y+.3,c:'#b070ff',r:1.4,m:.6}); FX('spark',a.x,a.y-.5,{s:1.2,tint:'#c080ff',m:.6}); },
 };
 const bigCaster=x=>U[x.type].cost>=3||U[x.type].boss;   // these dim the field while they charge
@@ -2194,7 +2215,10 @@ function releaseCast(a){
   if(a.star===3){ FXS=1.3; V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.6,m:.8}); V({k:'ring',x:a.x,y:a.y,r:1.1,c:'#fff3c0',m:.6}); burst(a.x,a.y-.4,'#ffe9a0',18,3.5,3,-2); }   // 3 stars: a golden flourish
   for(const m of S.fight.f) if(m.mimicMp&&m.team!==a.team&&m.hp>0) gainMp(m,m.mimicMp);   // Mimic class bonus
   CASTER=a; SND.play(SKILL_SND[a.type]||'skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
-  burst(a.x,a.y-.3,colorOf(a.type),10,3,3,0);
+  const accent=a.type==='nightreaper'?'#ff5276':BOSS_PALETTES[a.type]||colorOf(a.type);
+  V({k:'sigilBloom',x:a.x,y:a.y+.2,c:accent,r:U[a.type].boss?1.3:.75,m:.65});
+  if(t&&!(a.heal>0)) V({k:'impactBloom',x:t.x,y:t.y-.2,c:accent,r:U[a.type].boss?1.1:.65,m:.42});
+  burst(a.x,a.y-.3,accent,10,3,3,0);
   V({k:'pillar',x:a.x,y:a.y+.35,c:colorOf(a.type),m:.4});   // light pillar on release
   const skId=a.fuse&&(a.fAlt=(a.fAlt||0)+1)%2===0?a.fuse:a.type;   // fused heroes alternate their two skills
   if(a.fuse) pop(a,'⚭','#ffe27a');
@@ -2420,7 +2444,8 @@ function pose(o,b,rigged){
   if(o.cast>0){ const q=Math.sin((1-o.cast/CAST_T)*Math.PI*.5);
     if(b.range<=1){ dy+=3*q; sx*=1+.05*q; sy*=1-.05*q; } else lift+=8*q;   // melee crouches to wind up; casters float
     rot+=Math.sin(ANIM*45)*.03; }
-  if(o.spin>0) sx*=Math.cos(ANIM*16);   // whirling: the sprite turns edge-on and back
+  if(o.spin>0){ rot+=Math.sin(ANIM*18)*.09; lift+=Math.abs(Math.sin(ANIM*18))*2; }   // keep the silhouette solid during the whirlwind
+  if(rigged&&o.moving&&!o.spin){ const stride=Math.sin((o.walk||0)*5); lift+=Math.abs(stride)*2; rot+=stride*.025; }
   if(o.leapP){ lift+=Math.sin(o.leapP*Math.PI)*48; rot+=face*.35*Math.sin(o.leapP*Math.PI); }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); lift+=q*q*90; alpha*=o.spawn>1?0:1-q*.5; }
   if(o.cheer) lift+=Math.abs(Math.sin(ANIM*7+(o.ph||0)))*10;
@@ -2433,7 +2458,7 @@ function pose(o,b,rigged){
 // attack style per unit: how the arms move on a basic attack
 const CLS_ANIM={mimic:'staff',mesmer:'staff',monkey:'slash',gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={chieftain:'artsword',shadowstep:'artkatana',eclipsewitch:'arthalberd',voidsage:'artstaff',grandmaster:'artpunch',aegispaladin:'artsword',starwarden:'arthalberd',stonemonkey:'artsword',wukong:'arthalberd',thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',arctower:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
-const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
+const animOf=(type,b)=>SPR[type]?.rig?.roster?'roster':MON_ANIM[type]||(type==='nightreaper'?'reaper':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
 function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=ks[i]; if(p<=p1){ const q=(p-p0)/(p1-p0); return v0+(v1-v0)*(i===ks.length-1?easeInOut(q):easeOut(q)); } } return ks[ks.length-1][1]; }
 // overhead sword cut, angles in radians from the rest pose: the arm lifts the hand above the shoulder while the blade
@@ -2453,13 +2478,44 @@ function thrust(R,p,k){ R.weapon.r+=KF(p,[[0,-1.4],[.3,-1.45],[.45,-1.55],[.7,-1
 function beats(p,wind,hit){ return p<.35?wind*easeOut(p/.35) : p<.55?wind+(hit-wind)*easeOut((p-.35)/.2) : hit*(1-easeInOut((p-.55)/.45)); }
 // joint offsets for this frame: {group:{x,y,r}} in sprite pixels / radians. The sprite faces left, so forward = -x.
 // Arm rotation: armR negative = raise, armL positive = raise.
+// Separate anticipation, action and recovery poses for each combat discipline.
+const ACTION_STYLE={warrior:'cut',crusader:'thrust',samurai:'cut',rogue:'stab',ninja:'stab',berserker:'cut',monkey:'thrust',monk:'punch',archer:'bow',gunner:'gun',engineer:'gun',grapple:'thrust',bard:'song',alchemist:'throw',gambler:'throw'};
+function articulateAttack(R,p,style,big){
+  const k=big?1.25:1,B=(wind,hit)=>beats(p,wind,hit)*k;
+  R.foreR.r+=B(.35,-.25);
+  R.body.x+=B(1,-2);R.body.y+=B(1,-.8);R.head.r+=B(-.06,.08);
+  R.legL.r+=B(.18,-.2);R.legR.r+=B(-.14,.15);R.cloth.r+=B(-.06,.1);R.cape.r+=B(.12,-.18);
+  if(style==='cut'){R.armR.r+=B(-.6,.7);R.weapon.r+=B(.18,-.3);R.armL.r+=B(.2,-.25);}
+  else if(style==='thrust'||style==='stab'){R.armR.x+=B(1.8,-3.6);R.armR.r+=B(-.18,.3);R.armL.r+=B(.25,-.35);R.weapon.r+=B(.08,-.12);}
+  else if(style==='punch'){R.foreR.r+=B(.5,-.1);R.armR.x+=B(2,-4);R.armR.y+=B(-.7,-1.5);R.armR.r+=B(.3,-.25);R.armL.r+=B(-.2,.45);}
+  else if(style==='bow'){R.foreR.r+=B(.2,-.3);R.armR.x+=B(2.8,-.5);R.armR.y+=B(.3,-.2);R.armL.x+=B(-1,.3);R.armL.r+=B(.1,-.1);R.body.x+=B(1,.5);}
+  else if(style==='gun'){R.armR.x+=B(-.4,2.4);R.armR.r+=B(0,-.12);R.weapon.r+=B(0,-.1);R.armL.x+=B(-.2,1.3);R.body.x+=B(0,1.5);}
+  else if(style==='throw'){R.armR.r+=B(-.5,.55);R.armR.x+=B(1,-2);R.armL.r+=B(.1,-.2);}
+  else if(style==='song'){R.armR.r+=B(-.12,.2);R.armL.x+=B(.8,-.8);R.head.r+=B(.05,-.05);}
+  else {R.armR.r+=B(-.5,.4);R.armL.r+=B(.3,-.4);R.weapon.r+=B(.12,-.15);R.body.y+=B(1,-1.2);}
+}
 function rigPose(o,type,b){
-  if(o.frz>0) return {};   // frozen solid: every piece stays at rest
+  if(o.frz>0) return {head:{x:0,y:0,r:0,s:HERO_HEAD_SCALE[type]||1}};   // freeze the pose, keeping the hero's art-directed proportions
   const t=ANIM+(o.ph||0), br=Math.sin(t*3.2), st=animOf(type,b), R={};
   const J=(x=0,y=0,r=0)=>({x,y,r});
-  R.body=J(0,br*.5); R.head=J(0,br*.35,Math.sin(t*1.3)*.03); R.cape=J(0,0,Math.sin(t*1.9)*.05);
-  R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
-  R.wingL=J(); R.wingR=J();
+  R.body=J(0,br*.5);R.body.sx=1+br*.012;R.body.sy=1-br*.01; R.head=J(0,br*.35,Math.sin(t*1.3)*.03); R.cape=J(0,0,Math.sin(t*1.9)*.05);
+  R.foreR=J(); R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
+  R.wingL=J(); R.wingR=J(); R.cloth=J(0,0,Math.sin(t*2.1)*.025);
+  if(st==='roster'){
+    R.armR.r=br*.025; R.armL.r=-br*.02; R.weapon.r=0;
+    const style=ACTION_STYLE[b.cls]||'cast', big=o.rel>0, p=big?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
+    if(p>=0) articulateAttack(R,p,style,big);
+    if(o.cast>0){const q=easeOut(1-o.cast/CAST_T);
+      R.foreR.r-=.25*q;R.armR.r-=(style==='cast'?.55:.35)*q; R.armL.r+=.28*q;
+      R.body.y+=1.5*q;R.legL.r+=.18*q;R.legR.r-=.18*q; R.head.y+=.5*q;
+      R.cloth.r-=.06*q;R.cape.r+=.12*q;}
+  }
+  if(st==='reaper'){
+    R.armR.r=-.15+br*.04; R.armL.r=.15-br*.04;
+    const q=o.rel>0?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
+    if(q>=0){ const slash=beats(q,.65,-.85); R.armR.r+=slash; R.armL.r-=slash*.75; R.body.x+=beats(q,1,-1.8); R.head.r-=slash*.06; }
+    if(o.cast>0){ const q=1-o.cast/CAST_T; R.armR.r-=q*.5; R.armL.r+=q*.5; R.body.y+=q; }
+  }
   if(st==='bat'){ const f=Math.sin(t*14); R.wingL.r=f*.45; R.wingR.r=-f*.45; R.body.y=Math.sin(t*14+1.2)*1.4; }
   if(st==='slash'||st==='spear'){   // guard stance: weapon held in front of the body, pointing forward; it eases out of the guard to attack
     const g=o.rel>0||o.atkT>0?0:guardOf(o); R.front=1;   // swings and thrusts carry their own guard start/end
@@ -2507,17 +2563,18 @@ function rigPose(o,type,b){
   if(st==='blob') R.head.r=Math.sin(t*2.5)*.12;
   if(o.moving){   // walk cycle: legs step in turn, arms swing against them, body bobs, cape trails
     const w=(o.walk||0)*5, s=Math.sin(w), c=Math.cos(w);
-    R.legL.r=s*.5; R.legR.r=-s*.5; R.legL.y=Math.min(0,c)*1.3; R.legR.y=Math.min(0,-c)*1.3;
+    R.legL.r=s*.55; R.legR.r=-s*.55; R.legL.y=Math.min(0,c)*2.7; R.legR.y=Math.min(0,-c)*2.7;
+    R.foreR.r+=s*.15;R.legL.x=-s*.8;R.legR.x=s*.8;R.legL.sy=1+Math.min(0,c)*.12;R.legR.sy=1+Math.min(0,-c)*.12;R.cloth.r+=s*.09;
     R.body.y-=Math.abs(c)*1.2; R.armL.r-=s*.4; R.armR.r-=s*.35; R.cape.r+=.12+s*.05; R.head.r+=s*.03;
     if(st==='blob') R.head.r+=s*.15;
   }
   if(o.rel>0&&st==='slash'){ const p=1-o.rel/REL_T; swing(R,p,SWING_BIG); R.body.y+=KF(p,[[0,0],[.35,-3],[.5,1.5],[1,0]]); R.legL.r+=KF(p,[[0,0],[.35,.3],[.5,-.25],[1,0]]); R.legR.r+=KF(p,[[0,0],[.35,-.3],[.5,.25],[1,0]]); }
   else if(o.rel>0&&st==='spear'){ const p=1-o.rel/REL_T; thrust(R,p,1.6); R.legL.r+=KF(p,[[0,0],[.3,.2],[.45,-.3],[1,0]]); }
-  else if(o.rel>0&&st!=='artsword'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
+  else if(o.rel>0&&st!=='roster'&&st!=='reaper'&&st!=='artsword'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
     const p=1-o.rel/REL_T, B=(w,h)=>beats(p,w,h);
     R.armR.r+=B(-2.1,1.4); R.armL.r+=B(1.5,-.8); R.body.y+=B(-3,1.5); R.head.r+=B(-.12,.12);
     R.legL.r+=B(.3,-.2); R.legR.r+=B(-.3,.2); R.wingL.r+=B(-.8,.6); R.wingR.r+=B(.8,-.6); R.cape.r+=B(.25,-.1);
-  } else if(o.atkT>0&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
+  } else if(o.atkT>0&&st!=='roster'&&st!=='reaper'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
     const p=1-o.atkT/ATK_T, B=(w,h)=>beats(p,w,h);
     if(st==='slash') swing(R,p,SWING);
     else if(st==='spear') thrust(R,p,1);
@@ -2532,22 +2589,46 @@ function rigPose(o,type,b){
   if(o.cast>0&&(st==='slash'||st==='stab')){   // melee wind-up: hand up by the shoulder, blade laid back, knees bent
     const q=easeOut(1-o.cast/CAST_T);
     R.armR.r-=1.8*q; R.weapon.r+=(1.8+1.7)*q; R.armL.r+=.35*q; R.body.y+=2*q; R.legL.r+=.25*q; R.legR.r-=.25*q; R.head.r+=.06*q;
-  } else if(o.cast>0&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){   // charging a skill: arms (or wings) lift, weapon held high
+  } else if(o.cast>0&&st!=='roster'&&st!=='reaper'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){   // charging a skill: arms (or wings) lift, weapon held high
     const q=easeOut(1-o.cast/CAST_T);
     R.armR.r-=1.3*q; R.armL.r+=1.1*q; R.head.r-=.08*q; R.wingL.r-=.7*q; R.wingR.r+=.7*q; R.body.y-=q;
   }
+  if(type==='wolf'){
+    const gait=Math.sin((o.walk||0)*7);R.cape.r=Math.sin(t*9)*.3;
+    if(o.moving){R.legL.r=gait*.8;R.legR.r=-gait*.8;R.body.y-=Math.abs(gait)*1.5;R.head.y+=gait*.6;}
+    if(o.atkT>0){const p=1-o.atkT/ATK_T;R.head.x+=beats(p,1,-3.5);R.head.r+=beats(p,-.1,.22);}
+  }
+  if(type==='wisp'){R.head.y=Math.sin(t*4)*2.4;R.head.sx=1+Math.sin(t*3)*.04;R.head.sy=1-Math.sin(t*3)*.03;R.head.r=Math.sin(t*2)*.05;}
+  if(type==='drake'||type==='wyrm'){const flap=Math.sin(t*(type==='drake'?11:6));R.wingL.r=flap*.7;R.wingR.r=-flap*.7;R.body.y+=flap*.8;R.head.r-=flap*.035;}
+  if(type==='turret'||type==='arctower'){R.head.r=Math.sin(t*1.3)*.04;if(o.atkT>0){const p=1-o.atkT/ATK_T;R.head.x+=beats(p,0,2.2);R.head.y+=beats(p,-.4,.5);}}
+  if(type==='stormdjinn'||type==='lich'){R.body.y+=Math.sin(t*2)*1.5;R.head.y-=Math.sin(t*2)*.4;}
+  if(b.boss&&o.moving&&(type==='golem'||type==='colossus')){const step=Math.sin((o.walk||0)*4);R.body.r+=step*.035;R.armR.r+=step*.2;R.armL.r-=step*.2;}
   if(o.flash){ const f=o.flash; R.head.r+=f*.2; R.body.x+=f*1.5; R.armR.r+=f*.3; R.armL.r-=f*.3; }   // hit recoil
   if(o.stun>0){ R.head.r+=Math.sin(ANIM*6)*.18; R.armR.r+=.4; R.armL.r-=.4; }                          // dizzy
   if(o.cheer){ const wv=Math.sin(t*10)*.25; R.armR.r=-2+wv; R.armL.r=2-wv; R.wingL.r=-.6; R.wingR.r=.6; }   // V-shape: straight up would hide behind the head
   if(o.leapP){ const q=Math.sin(o.leapP*Math.PI); R.legL.r+=.8*q; R.legR.r-=.5*q; R.armR.r+=.8*q; R.armL.r-=.8*q; }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); R.armR.r-=.9*q; R.armL.r+=.9*q; R.legL.r+=.3*q; R.legR.r-=.3*q; }
   if(o.die!==undefined){ const q=1-o.die; R.armR.r+=q*.9; R.armL.r-=q*.9; R.head.r+=q*.5; R.legL.r-=q*.3; R.legR.r+=q*.3; R.wingL.r+=q; R.wingR.r-=q; }
+  if(o.spin>0){ const sweep=Math.sin(t*18); R.front=1; R.body.r=sweep*.1; R.head.r=-sweep*.06;
+    R.armR.r=-.6+sweep*.55; R.weapon.r=-.8+sweep*1.1; R.armL.r=.5-sweep*.35;
+    R.cape.r+=sweep*.2; R.legL.r=sweep*.15; R.legR.r=-sweep*.15; }
+  if(type==='golem'||type==='colossus'){
+    R.armR.r=Math.max(-.4,Math.min(.4,R.armR.r));R.armL.r=Math.max(-.4,Math.min(.4,R.armL.r));
+    R.armR.x-=Math.sin(R.armR.r)*1.5;R.armL.x+=Math.sin(R.armL.r)*1.5;
+  }
+  if(SPR[type]&&SPR[type].art){
+    R.head.s=HERO_HEAD_SCALE[type]||1;
+    if(o.moving&&!o.spin){ const stride=Math.sin((o.walk||0)*5); R.body.y-=Math.abs(stride)*.8; R.head.r-=stride*.025;
+      R.cape.r+=Math.sin(t*8)*.12; R.armL.r+=stride*.08; }
+    if(o.cast>0){ const q=Math.sin((1-o.cast/CAST_T)*Math.PI); R.head.y-=q*.6; R.cape.r+=Math.sin(t*9)*.08*q; }
+    if(o.rel>0){ const q=Math.sin((1-o.rel/REL_T)*Math.PI); R.body.x-=q*.7; R.cape.r+=q*.12; }
+  }
   if(st==='arthalberd'&&GRIPS[type]) gripShaft(R,GRIPS[type]);   // two-handed: the back hand stays on the shaft whatever the front hand does
   return R;
 }
 const LOOSE={legL:1,legR:1,fx:1,body:1};
 // two-handed weapons in hand-made art: where the front hand's shoulder and wrist are, and where the back hand grips the shaft (design pixels)
-const GRIPS={eclipsewitch:{sh:[21.17,20.67],wr:[15.17,20],hand:[29.83,31.33]},starwarden:{sh:[22.5,28.67],wr:[18.5,33.33],hand:[34.5,33]},wukong:{sh:[16.83,32.67],wr:[7.83,34.33],hand:[37.5,30.67]}};
+const GRIPS={eclipsewitch:{sh:[21.17,20.67],wr:[15.17,20],hand:[29.83,31.33]},starwarden:{sh:[37.33,23.33],wr:[23.33,25.33],hand:[41,28]},wukong:{sh:[16.83,32.67],wr:[7.83,34.33],hand:[37.5,30.67]}};
 function gripShaft(R,G){ const a=R.armR.r, w=R.weapon.r, c=Math.cos, s=Math.sin;
   const vx=G.wr[0]-G.sh[0], vy=G.wr[1]-G.sh[1], wx=G.sh[0]+vx*c(a)-vy*s(a)+R.armR.x, wy=G.sh[1]+vx*s(a)+vy*c(a)+R.armR.y;   // where the front hand is now
   const dx=G.hand[0]-G.wr[0], dy=G.hand[1]-G.wr[1], t=a+w, px=wx+dx*c(t)-dy*s(t), py=wy+dx*s(t)+dy*c(t);   // that point of the shaft, turned with it
@@ -2564,6 +2645,13 @@ function exprOf(o){
 }
 // one rig layer: frames are fw x 54 design pixels (fw is 56 unless a hand-made picture is wider), stored k x bigger
 function rigLayer(r,i,p){ const fw=r.fw||56, k=r.k||1; rg.drawImage(r.img,i*fw*k,0,fw*k,54*k,-p[0]-(fw-56)/2,-p[1],fw,54); }
+// Shoulder -> elbow -> wrist. The hand and weapon share this transform.
+function gripTransform(rig,R,target){
+  const a=R.armR||{x:0,y:0,r:0}, b=R.body||{x:0,y:0}, pa=rig.piv.armR, ph=target;
+  rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y);if(a.r)rg.rotate(a.r);rg.scale(a.sx||1,a.sy||1);
+  if(rig.piv.foreR){const f=R.foreR||{x:0,y:0,r:0},pe=rig.piv.foreR;rg.translate(pe[0]-pa[0]+f.x,pe[1]-pa[1]+f.y);if(f.r)rg.rotate(f.r);rg.translate(ph[0]-pe[0],ph[1]-pe[1]);}
+  else rg.translate(ph[0]-pa[0],ph[1]-pa[1]);
+}
 function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose weapon and cape replace the lead's
   const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=!!rig.art;   // layers are k x detail: crisp for pixel sprites, smooth for hand-made pictures
   let order=rig.layers.map((g,i)=>i);
@@ -2578,15 +2666,16 @@ function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose 
   order.forEach(i=>{ const g=rig.layers[i];
     if(g==='weapon'&&mixW.length){ if(mixDone) return; mixDone=true;   // the partner's weapon in the lead's hand
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon, pm=mix.piv.weapon;
-      for(const k of mixW){ rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
+      for(const k of mixW){ rg.save(); gripTransform(rig,R,ph); if(w.r) rg.rotate(w.r);
         rigLayer(mix,k,pm); rg.restore(); }
       return; }
     if(g==='weapon'&&rig.piv.weapon){   // shoulder -> arm turn -> wrist -> weapon turn
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon;
-      rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
+      rg.save(); gripTransform(rig,R,ph); if(w.r) rg.rotate(w.r);
       rigLayer(rig,i,ph); rg.restore(); return; }
+    if(g==='foreR'&&rig.piv.foreR){rg.save();gripTransform(rig,R,rig.piv.foreR);rigLayer(rig,i,rig.piv.foreR);rg.restore();return;}
     const j=R[g]||b, p=rig.piv[g]||rig.piv.body, ox=j.x+(LOOSE[g]?0:b.x), oy=j.y+(LOOSE[g]?0:b.y);
-    rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r);
+    rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r); if(j.s) rg.scale(j.s,j.s);rg.scale(j.sx||1,j.sy||1);
     const src=i===rig.faceLayer&&expr&&rig.expr?rig.expr[expr]??i:i;
     rigLayer(rig,src,p); rg.restore();
   });
@@ -2597,16 +2686,32 @@ function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose 
 // which statuses tint the unit right now, pulsing so it reads as "an effect", not a palette swap
 function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,blind:.42,slow:.3,psn:.26,brn:.3,frz:.5,dis:.3,shred:.28,drain:.3,wnd:.28,ward:.4};
   A.root=.3; A.shock=.45; A.tstop=.45; const t=Object.keys(A).filter(k=>k==='psn'||k==='brn'?o[k]:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
+// Art-directed size corrections, reviewed side by side in the actual renderer.
+// Hair, hats, weapons and capes are not a reliable guide to perceived body size.
+const HERO_HEAD_SCALE={starwarden:1.2,nightreaper:1.35,voidsage:1.3,aegispaladin:1.18,grandmaster:1.25,shadowstep:1.15,stonemonkey:1.2,wukong:1.18,eclipsewitch:1.25,chieftain:1.25};
+const HERO_VISUAL_SCALE={
+  mage:1.08,wizard:1.05,lordknight:1.05,highwizard:1.04,shogun:1.04,
+  winterqueen:1.08,doomherald:1.08,maskedmagus:1.1,puppeteer:1.13,
+  rimedragoness:1.08,bonelord:1.06,phantomblade:1.05,
+  starwarden:1,nightreaper:.98,voidsage:1.04,aegispaladin:1,
+  grandmaster:.98,shadowstep:1,stonemonkey:.97,wukong:.96,
+  eclipsewitch:1,chieftain:.98,
+};
+const CREATURE_SCALE={wisp:.8,wolf:.9,guardian:1.15,drake:1.1,skeleton:.9,turret:.9,arctower:1,mossling:.85,shroomkin:.9,emberbat:.9};
 function drawUnit(type,star,px,py,o={}){
-  const back=o.back&&SPR[type]&&SPR[type].back&&SPR[type].back.naturalWidth;   // facing away: the hand-made back view, if there is one
-  const b=U[type], sp=SPR[type], col=colorOf(type), rig=!back&&sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.scale||1, oy=-54*(sc-1);
+  const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), native=Object.hasOwn(CREATURE_SCALE,type), sc=b.boss?(b.scale||1):native?CREATURE_SCALE[type]:(HERO_VISUAL_SCALE[type]||1),
+    visible=native&&sp&&sp.bounds?sp.bounds.height/sp.img.naturalHeight:1, oy=54*(1-sc*visible);
   ctx.save(); ctx.globalAlpha=P.alpha;
-  const sh=Math.max(.3,1-P.lift/30)*sc;
+  const sh=Math.max(.3,1-P.lift/30)*sc*(native?.7:1);
   ctx.save(); ctx.translate(px+P.dx,py+22); ctx.scale(1,.36);   // soft ground shadow
   const gsh=ctx.createRadialGradient(0,0,0,0,0,22*sh); gsh.addColorStop(0,'rgba(12,18,10,.5)'); gsh.addColorStop(.65,'rgba(12,18,10,.28)'); gsh.addColorStop(1,'rgba(12,18,10,0)');
   ctx.fillStyle=gsh; ctx.beginPath(); ctx.arc(0,0,22*sh,0,Math.PI*2); ctx.fill(); ctx.restore();
   ctx.strokeStyle=o.team===1?'rgba(255,96,86,.8)':'rgba(110,184,255,.8)'; ctx.lineWidth=1.5;   // thin team ring at the feet
   ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,17*sh,6*sh,0,0,Math.PI*2); ctx.stroke();
+  if(b.boss&&o.die===undefined){ ctx.save(); ctx.strokeStyle=BOSS_PALETTES[type]||'#cfb674'; ctx.globalAlpha=P.alpha*.5;
+    ctx.lineWidth=1.5; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,26*sc,9*sc,0,0,Math.PI*2); ctx.stroke();
+    for(let i=0;i<6;i++){ const a=i*Math.PI/3+(calmMotion?0:ANIM*.18); const x=px+P.dx+Math.cos(a)*29*sc,y=py+22+Math.sin(a)*10*sc;
+      ctx.fillStyle=ctx.strokeStyle; ctx.fillRect(x-1,y-1,2,2); } ctx.restore(); }
   if(o.sel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,20*sh,7*sh,0,0,Math.PI*2); ctx.stroke(); }
   if(o.fuse&&!o.ghost&&o.die===undefined){   // fused: a soft glow of both class colours behind the hero
     const k=.22+.08*Math.sin(ANIM*2.6+(o.ph||0)), cy=py+2;
@@ -2623,18 +2728,27 @@ function drawUnit(type,star,px,py,o={}){
     g.addColorStop(0,`rgba(255,226,140,${k})`); g.addColorStop(1,'rgba(255,226,140,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+2,26*sc,32*sc,0,0,Math.PI*2); ctx.fill();
     for(let i=0;i<3;i++){ const q=(ANIM*.35+i/3+(o.ph||0))%1; ctx.globalAlpha=P.alpha*.5*Math.sin(q*Math.PI); ctx.fillStyle='#fff0b0'; ctx.fillRect(px+P.dx+Math.sin(i*2.1+ANIM)*14-1,py+20-q*44,2,2); }
     ctx.globalAlpha=P.alpha; }
+  if(o.spin>0){   // broad, ground-plane slash trails convey speed without flattening the hero
+    ctx.save(); ctx.translate(px+P.dx,py+9+P.dy-P.lift); ctx.scale(1,.38);
+    for(let i=0;i<3;i++){ const a=ANIM*18+i*Math.PI*2/3;
+      ctx.strokeStyle=i===0?'rgba(255,243,200,.9)':'rgba(220,177,109,.55)'; ctx.lineWidth=4-i;
+      ctx.beginPath(); ctx.arc(0,0,32+i*4,a,a+Math.PI*.85); ctx.stroke(); }
+    ctx.restore(); }
   if(o.enraged){ ctx.fillStyle='#ff3020'; ctx.globalAlpha=P.alpha*(.35+.2*Math.sin(ANIM*10)); ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,34,13,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
   if(o.glow||o.cast>0){ const g=o.cast>0?.5+.3*Math.sin(ANIM*30):o.glow*1.2;
     ctx.fillStyle=col; ctx.globalAlpha=P.alpha*g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,26,10,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
   if(sp&&sp.img.naturalWidth){
-    const im=back?sp.back:sp.img, s=Math.min(54/im.naturalHeight,60/im.naturalWidth,3)*sc, u=rig?Math.min(1,60/(rig.fw||56))*sc:0;
-    const w=rig?56*u:im.naturalWidth*s, h=rig?54*u:im.naturalHeight*s;   // a rig is drawn on its design grid (wide frames shrink to the same 60px as the plain picture)
+    const im=sp.img, bounds=sp.bounds||{bottom:im.naturalHeight,height:im.naturalHeight}, s=54/(native?im.naturalHeight:bounds.height)*sc, u=rig?(native?1:im.naturalHeight/bounds.height)*sc:0;
+    const w=rig?56*u:im.naturalWidth*s, h=rig?54*u:im.naturalHeight*s;   // optical corrections balance body size across different art styles; bosses stay larger
     const flip=o.face!==undefined&&((o.face<0)!==!!sp.faceLeft);
     ctx.translate(px+P.dx,py+26+P.dy-P.lift); ctx.rotate(P.rot); ctx.scale(flip?-P.sx:P.sx,P.sy);
+    ctx.translate(0,(im.naturalHeight-bounds.bottom)*(rig?54*u/im.naturalHeight:s));
     const fuseTint=o.fuse?[[colorOf(o.fuse),.1+.08*Math.sin(ANIM*2.2+(o.ph||0))]]:[];   // a soft shimmer in the partner's class colour
     if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
     ctx.imageSmoothingEnabled=!!sp.art||(!rig&&im.naturalHeight>130);   // hand-made pictures (and big custom images) scale smoothly; pixel sprites stay crisp
+    if(!calmMotion&&o.moving&&(type==='nightreaper'||type==='shadowstep')&&!o.ghost){
+      ctx.save(); for(let i=2;i>0;i--){ctx.globalAlpha=P.alpha*.07*(3-i);ctx.translate((o.face<0?1:-1)*5,-.5);draw();}ctx.restore(); }
     draw();   // outlines are baked into the sprites (no per-frame filter: it was costly on the GPU)
     if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
     if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.45,o.cast>0?.12+.08*Math.sin(ANIM*30):0); draw(); }   // soft, so the face still reads
@@ -2710,7 +2824,20 @@ const FX=(fx,x,y,o={})=>V({k:'anim',fx,x,y,s:(o.s||1)*FXS,m:o.m||.55,tint:o.tint
 function drawVfx(v){
   const p=1-v.t/v.m, x=v.x*CELL, y=v.y*CELL;
   ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,v.t/v.m*1.5));
-  if(v.k==='ring'){ const e=.3+.7*easeOut(p); ctx.strokeStyle=v.c; ctx.lineWidth=5*(1-p)+1; ctx.beginPath(); ctx.ellipse(x,y,v.r*CELL*e,v.r*CELL*e*.6,0,0,Math.PI*2); ctx.stroke();
+  if(v.k==='sigilBloom'){
+    const e=easeOut(p), r=v.r*CELL*(.45+.65*e); ctx.translate(x,y); ctx.scale(1,.42);
+    ctx.globalAlpha*=Math.sin(Math.PI*p)*.65; ctx.strokeStyle=v.c; ctx.lineWidth=2*(1-p)+.5;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke(); ctx.rotate(calmMotion?0:p*.6);
+    ctx.beginPath(); for(let i=0;i<6;i++){ const a=i*Math.PI/3; ctx.moveTo(Math.cos(a)*r*.78,Math.sin(a)*r*.78); ctx.lineTo(Math.cos(a)*r*.96,Math.sin(a)*r*.96); } ctx.stroke();
+    ctx.strokeStyle='#fff3d9'; ctx.globalAlpha*=.6; ctx.beginPath(); ctx.arc(0,0,r*.7,-p*2,-p*2+Math.PI*1.3); ctx.stroke();
+  }
+  else if(v.k==='impactBloom'){
+    const e=easeOut(p), r=v.r*CELL; ctx.translate(x,y); ctx.globalAlpha*=.8;
+    ctx.strokeStyle=v.c; ctx.lineWidth=3*(1-p)+.5;
+    for(let i=0;i<8;i++){ const a=i*Math.PI/4+v.s; ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*e*.4,Math.sin(a)*r*e*.4); ctx.lineTo(Math.cos(a)*r*(.25+e),Math.sin(a)*r*(.25+e)); ctx.stroke(); }
+    ctx.fillStyle='#fff6de'; ctx.beginPath(); const q=9*(1-p); ctx.moveTo(0,-q*2);ctx.lineTo(q*.4,0);ctx.lineTo(0,q*2);ctx.lineTo(-q*.4,0);ctx.closePath();ctx.fill();
+  }
+  else if(v.k==='ring'){ const e=.3+.7*easeOut(p); ctx.strokeStyle=v.c; ctx.lineWidth=5*(1-p)+1; ctx.beginPath(); ctx.ellipse(x,y,v.r*CELL*e,v.r*CELL*e*.6,0,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle=v.c; ctx.globalAlpha*=.15; ctx.fill(); }
   else if(v.k==='rune'){ const fade=Math.min(1,v.t/.25,(v.m-v.t)/.12), rx=v.r*CELL, ry=rx*.5, spin=ANIM*2.5;
     ctx.globalAlpha=fade*.9; ctx.strokeStyle=v.c; ctx.lineWidth=2;
@@ -2783,7 +2910,7 @@ function drawVfx(v){
 }
 function render(){
   ctx.setTransform(RES,0,0,RES,0,0); ctx.clearRect(0,0,W,H);
-  ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); drawAmbient();
+  ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); drawSanctuary(); drawAmbient();
   if(S.fight&&S.fight.holes) for(const h of S.fight.holes){ const x=h.x*CELL, y=h.y*CELL, R=h.r*CELL, k=Math.min(1,(h.T-h.t)*4,h.t*4);   // black hole
     const g=ctx.createRadialGradient(x,y,0,x,y,R); g.addColorStop(0,`rgba(0,0,0,${.95*k})`); g.addColorStop(.35,`rgba(40,10,70,${.7*k})`); g.addColorStop(1,'rgba(90,40,160,0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(x,y,R,R*.7,0,0,Math.PI*2); ctx.fill();
@@ -2824,7 +2951,7 @@ function render(){
   }
   if(dragging) drawUnit(dragging.u.type,dragging.u.star,dragging.pos.x,dragging.pos.y-10,{team:0,sel:true,ph:dragging.u.uid*1.7});
   if(S.phase==='prep'){
-    ctx.fillStyle='rgba(255,250,235,.55)'; ctx.font="26px 'Jersey 10',system-ui"; ctx.textAlign='center';
+    ctx.fillStyle='rgba(255,250,235,.55)'; ctx.font="12px system-ui"; ctx.textAlign='center';
     ctx.fillText(roundKind(S.round)==='pvp'?'Enemy zone':KIND_LABEL[roundKind(S.round)],W/2,BOARD_H/4);
   }
   for(const e of S.ufx){   // star-up: golden beam drops on the unit, stars pop
@@ -2845,7 +2972,7 @@ function render(){
     const F=S.fight;
     ctx.save();
     if(trauma>0){ const k=trauma*trauma, t=ANIM*30; ctx.translate(7*k*Math.sin(t*1.7),5*k*Math.sin(t*2.3)); }
-    const UNDER=['ring','meteor','charge','rune','quake','rays'];
+    const UNDER=['ring','meteor','charge','rune','quake','rays','sigilBloom'];
     for(const w of F.walls||[]){ const n=7, fade=Math.min(1,w.t/.4), hpk=w.hp/w.max;   // Ice Wall: a row of ice blocks, cracking as it weakens
       for(let i=0;i<n;i++){ const q=(i+.5)/n, x=(w.x1+(w.x2-w.x1)*q)*CELL, y=(w.y1+(w.y2-w.y1)*q)*CELL, h=28+(i%2)*6;
         ctx.globalAlpha=.75*fade; ctx.fillStyle=hpk>.5?'#bfefff':'#9fd8f0'; ctx.fillRect(x-7,y-h+8,14,h);
@@ -3001,7 +3128,7 @@ function renderUI(){
   $('#shop').innerHTML=S.shop.map((id,k)=>id?`<button class="su c${U[id].cost}${marks.includes(id)?' marked':''}" data-k="${k}" data-id="${id}" ${!prep||S.gold<U[id].cost?'disabled':''} style="--cc:${colorOf(id)}">
     <div class="th">${thumbHTML(id,30)}</div><div class="nm">${U[id].name}</div><div class="cl">${ORIGINS[U[id].org].icon} ${CLASSES[U[id].cls].name}</div><div class="c">${U[id].cost}</div></button>`:`<div></div>`).join('');
   $('#bReroll').disabled=!prep; $('#bSell').disabled=!prep||!S.sel; $('#bFight').disabled=!prep;
-  $('#bLock').textContent=S.locked?'🔒 Locked':'🔓 Lock'; $('#bLock').title=S.locked?'Shop stays the same next round. Click to unlock.':'Keep these shop units for next round';
+  $('#bLock').textContent=S.locked?'Locked':'Lock'; $('#bLock').title=S.locked?'Shop stays the same next round. Click to unlock.':'Keep these shop units for next round';
   $('#shop').classList.toggle('locked',S.locked);
   const capMax=cap()>=MAX_CAP;
   $('#bCap').textContent=capMax?'Max level':`Upgrade · ${capCost()}`;
