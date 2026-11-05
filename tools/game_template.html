@@ -474,7 +474,7 @@ const CLASSES = {
   magic:  {name:'Arcane',  color:'#5aa9ff', desc:['Team damage +30%','Team damage +60%']},
   gambler:{name:'Gambler',color:'#ff6ab0', desc:['Lucky: dice are rolled twice and the better roll counts','Lucky: better rolls, and every ally starts battle with a random blessing of fortune']},
   samurai:{name:'Samurai',color:'#ff7a5a', desc:['Bushido: samurai deal +25% damage below half HP','Bushido: samurai deal +50% damage below half HP and their first strike each battle crits']},
-  frost:{name:'Frost Healer',color:'#8ae0ff', desc:['Heals-over-time 30% stronger; Ice Walls 30% tougher','Heals-over-time 60% stronger; Ice Walls 25% wider, 60% tougher, and enemies touching them are slowed']},
+  frost:{name:'Frost Healer',color:'#8ae0ff', desc:['Heals-over-time 30% stronger; Ice Walls 30% tougher','Heals-over-time 60% stronger; Ice Walls 60% tougher, and enemies touching them are slowed']},
   occultist:{name:'Occultist',color:'#9ac040', desc:['Enemies take 10% more damage','Enemies take 20% more damage and gain 25% less mana']},
   crusader:{name:'Crusader',color:'#e0b080', desc:['Allies in the back two rows take 20% less damage; crusaders take 10% less damage','Allies in the back two rows take 35% less damage; crusaders take 20% less damage and start with a 25% max HP shield']},
   summoner:{name:'Summoner',color:'#3fd0b0', desc:['Summons have +25% HP and damage','Summons have +50% HP and damage; summoners call one when battle starts']},
@@ -619,7 +619,7 @@ const CLASS_STAR={
   magic:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; skill costs 20% less mana',{skPow:1.4,mana:.8}]],
   gambler:[['Lucky: dice are rolled twice, the better counts',{fx:x=>{ x.lucky=true; }}],['Lucky, and every skill effect is 30% stronger',{skPow:1.3,skHeal:1.3,fx:x=>{ x.lucky=true; }}]],
   samurai:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; the first strike each battle is a critical hit',{skPow:1.4,fx:x=>{ x.firstCrit=true; }}]],
-  frost:[['Heals over time +25%; Ice Walls last 1s longer',{fx:x=>{ x.hotBoost*=1.25; x.wallT=(x.wallT||0)+1; }}],['Heals over time +50%; Ice Walls last 2s longer and shatter for 50% more',{fx:x=>{ x.hotBoost*=1.5; x.wallT=(x.wallT||0)+2; x.wallShat=1.5; }}]],
+  frost:[['Heals over time +25%; Ice Walls 20% tougher',{fx:x=>{ x.hotBoost*=1.25; x.wallHp=(x.wallHp||1)*1.2; }}],['Heals over time +50%; Ice Walls 40% tougher and shatter for 50% more',{fx:x=>{ x.hotBoost*=1.5; x.wallHp=(x.wallHp||1)*1.4; x.wallShat=1.5; }}]],
   occultist:[['Skill damage +20%',{skPow:1.2}],['Skill damage +40%; skill costs 25% less mana',{skPow:1.4,mana:.75}]],
   crusader:[['Guardian Link takes 10% more of the ally\'s damage; skill damage +15%',{skPow:1.15,fx:x=>{ x.guardPlus=.1; }}],['Starts battle with a 25% max HP shield; skill damage +30%',{skPow:1.3,fx:x=>{ x.guardPlus=.1; x.shield+=x.max*.25; }}]],
   summoner:[['Summons +25% HP and damage',{fx:x=>{ x.sumBoost*=1.25; }}],['Summons +50%; calls one summon when battle starts',{fx:x=>{ x.sumBoost*=1.5; x.sumStart=true; }}]],
@@ -887,14 +887,14 @@ const SKILLS = {
       FX('slash',t.x,t.y-.25,{s:1.2,tint:'#ff8060',flip:a.face<0,m:.5}); addTrauma(.3); hitStop(.07); }},
   snowmender:{name:'Chill Mend', mp:55, desc:'Wraps the two most injured allies in healing frost: they recover 160% of its heal over 4s and are cleansed (restoring 15% mana).',
     cast(a){ for(const b of friends(a).sort(byHurt).slice(0,2)){ hot(b,a.heal*1.6,4,a); cleanse(b); FX('nova',b.x,b.y-.3,{s:.7,tint:'#bff2ff',m:.5}); } }},
-  frostoracle:{name:'Frost Bastion', mp:75, desc:'Raises a wide ice wall (4 cells) in front of the most endangered ally, facing the enemy attacking it, for 7s, and gives that ally a frost shield worth 150% of the oracle\'s heal. The wall can take 100% of the oracle\'s max HP and shatters for 130% damage and a slow. Allies within 2 cells recover 100% of its heal over 4s.',
+  frostoracle:{name:'Frost Bastion', mp:75, desc:'Raises an ice wall (3 cells) in front of the most endangered ally, facing the enemy attacking it, for 6s, and gives that ally a frost shield worth 150% of the oracle\'s heal. The wall can take 100% of the oracle\'s max HP and shatters for 130% damage and a slow. Allies within 2 cells recover 100% of its heal over 4s.',
     cast(a){ const w=friends(a).sort(byHurt)[0]||a; const foe=foes(a).filter(e=>e.tgt===w).sort((p,q)=>dist(p,w)-dist(q,w))[0];
-      iceWall(a,{at:w,t2:foe,L:2,hp:1,t:7,shatter:1.3}); w.shield+=a.heal*1.5*(a.skHeal||1); V({k:'dome',x:w.x,y:w.y,c:'#bff2ff',r:.7,m:.8});
+      iceWall(a,{at:w,t2:foe,hp:1,shatter:1.3}); w.shield+=a.heal*1.5*(a.skHeal||1); V({k:'dome',x:w.x,y:w.y,c:'#bff2ff',r:.7,m:.8});
       for(const b of friends(a)) if(dist(a,b)<=2) hot(b,a.heal,4,a); V({k:'ring',x:a.x,y:a.y,r:2,c:'#bff2ff',m:.6}); }},
-  winterqueen:{name:'Glacial Fortress', mp:95, desc:'Raises two great ice walls (3.6 cells each) in front of the two most endangered allies for 8s, gives every ally 120% of her heal over 5s, and enemies within 1.5 cells of each wall have a 40% chance to Freeze for 2s. Her walls can take 120% of her max HP and shatter for 160% damage and a slow.',
+  winterqueen:{name:'Glacial Fortress', mp:95, desc:'Raises two ice walls (3 cells each) in front of the two most endangered allies for 6s, gives every ally 120% of her heal over 5s, and enemies within 1.5 cells of each wall have a 40% chance to Freeze for 2s. Her walls can take 120% of her max HP and shatter for 160% damage and a slow.',
     cast(a){ V({k:'flash',x:0,y:0,c:'#dff8ff',m:.3});
       const ws=friends(a).sort(byHurt).slice(0,2); if(ws.length<2) ws.push(a);
-      for(const w of ws){ const foe=foes(a).filter(e=>e.tgt===w).sort((p,q)=>dist(p,w)-dist(q,w))[0]; const wall=iceWall(a,{at:w,t2:foe,L:1.8,hp:1.2,t:8,shatter:1.6});
+      for(const w of ws){ const foe=foes(a).filter(e=>e.tgt===w).sort((p,q)=>dist(p,w)-dist(q,w))[0]; const wall=iceWall(a,{at:w,t2:foe,hp:1.2,shatter:1.6});
         if(wall) for(const e of foes(a)) if(segDist(e.x,e.y,wall.x1,wall.y1,wall.x2,wall.y2)<=1.5) freeze(e,.4,2); }
       for(const b of friends(a)) hot(b,a.heal*1.2,5,a); FX('strike',a.x,a.y+.3,{s:.9,tint:'#cff6ff',m:.6}); }},
   piper:{name:'Rousing Note', mp:70, desc:'Plays a quick note for the strongest-hitting ally within 3 cells: it attacks 30% faster for 4s.',
@@ -1024,7 +1024,7 @@ const SKILLS = {
       if(n===2){ for(const b of friends(a)) heal(b,b.max*.2,a); pop(a,'Snake eyes!','#ff9ad0',true); return; }
       const m=n*.3*(n===12?2:1); later(.35,()=>{ for(const e of foes(a)) if(dist(e,t)<=2) hit(a,e,m); FX('boom',t.x,t.y-.2,{s:n/6,m:.6}); if(n===12){ pop(a,'JACKPOT!','#ffe27a',true); V({k:'flash',x:0,y:0,c:'#ffd040',m:.35}); addTrauma(.4); } }); }},
   glacierwarden:{name:'Ice Wall', mp:65, desc:'Raises a wall of ice (3 cells wide) between your team and the nearest ranged enemy for 6s. Projectiles that fly into it hit the wall instead; it can take 80% of the warden\'s max HP. When it breaks or melts it shatters: 100% damage and a slow to enemies next to it. Allies within 2.5 cells recover 60% of its heal over 4s.',
-    cast(a){ iceWall(a,{L:1.5,hp:.8,shatter:1}); for(const b of friends(a)) if(dist(a,b)<=2.5) hot(b,a.heal*.6,4,a); }},
+    cast(a){ iceWall(a,{hp:.8,shatter:1}); for(const b of friends(a)) if(dist(a,b)<=2.5) hot(b,a.heal*.6,4,a); }},
   hexer:{name:'Hex', mp:60, desc:'Curses the target for 160% damage: for 4s it takes 25% more damage and gains 50% less mana.',
     cast(a,t){ hit(a,t,1.6); inflict(t,'shred',4); inflict(t,'drain',4); FX('sigil',t.x,t.y-.1,{s:.5,tint:'#a0ff60',m:.6}); FX('smoke',t.x,t.y-.3,{s:1,add:false,m:.5}); }},
   bogwitch:{name:'Mire', mp:75, desc:'Turns the ground around the target into a bog: enemies within 1.8 cells take 100% damage, are slowed for 3s and gain 50% less mana for 4s.',
@@ -1878,7 +1878,7 @@ function applySynergy(f){
       if(U[x.type].cls==='crusader'){ x.red=Math.min(.7,(x.red||0)+[0,.1,.2][lv.crusader]); if(lv.crusader>=2) x.shield+=x.max*.25; }
       x.lucky=lv.gambler>=1; x.lucky2=lv.gambler>=2;
       if(U[x.type].cls==='samurai'){ x.bushido=[0,.25,.5][lv.samurai]; x.firstCrit=lv.samurai>=2; }
-      x.hotBoost=[1,1.3,1.6][lv.frost]; x.wardPlus=0; x.wallHp=[1,1.3,1.6][lv.frost]; x.wallW=lv.frost>=2?1.25:1; x.wallChill=lv.frost>=2;
+      x.hotBoost=[1,1.3,1.6][lv.frost]; x.wardPlus=0; x.wallHp=[1,1.3,1.6][lv.frost]; x.wallChill=lv.frost>=2;
       x.sumBoost=[1,1.25,1.5][lv.summoner]; x.sumStart=lv.summoner>=2;
       x.songR=lv.bard>=1?3:2; x.songK=lv.bard>=2?1.5:1;
       x.potPsn=lv.alchemist>=2; x.necBoost=[1,1.3,1.6][lv.necro]; x.necMana=lv.necro>=2&&U[x.type].cls==='necro';
@@ -2033,9 +2033,9 @@ function iceWall(a,o={}){
   const from=o.at||a, near=(list,p)=>[...list].sort((x,y)=>dist(x,p)-dist(y,p))[0];
   const t=o.t2||near(es.filter(e=>U[e.type].range>=2),from)||near(es,from);
   const d=dist(from,t)||1, ux=(t.x-from.x)/d, uy=(t.y-from.y)/d, k=Math.min(1.6,d*.45), cx=from.x+ux*k, cy=from.y+uy*k;
-  const L=(o.L||1.3)*(a.wallW||1), hp=a.max*(o.hp||.6)*(a.wallHp||1);
+  const L=1.5, hp=a.max*(o.hp||.6)*(a.wallHp||1);   // every wall is 3 cells wide; higher levels only make it tougher
   F.walls=F.walls||[];
-  const w={team:a.team,src:a,x1:cx-uy*L,y1:cy+ux*L,x2:cx+uy*L,y2:cy-ux*L,hp,max:hp,t:(o.t||6)+(a.wallT||0),shatter:o.shatter||0};
+  const w={team:a.team,src:a,x1:cx-uy*L,y1:cy+ux*L,x2:cx+uy*L,y2:cy-ux*L,hp,max:hp,t:6,shatter:o.shatter||0};   // and lasts 6s
   w.visualBorn=F.t;
   F.walls.push(w);
   V({k:'shards',x:cx,y:cy,c:'#dff8ff',r:L,n:12,m:.5}); SND.play('ice'); return w;
