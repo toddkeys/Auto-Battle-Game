@@ -413,7 +413,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop. <b>Click any hero</b> in the Codex or the Team Plan to see its full details.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
-        <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper speeds up one ally (Rousing Note); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
+        <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper speeds up one ally (Rousing Note); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> send melee allies onto the enemy carry (its strongest back-line hero) with a shield: the 2💰 Teleporter blinks in with the nearest one and strikes the carry, the 4💰 Warp Master sends the 3 nearest through a rift that stuns where they land.</li>
         <li><b>Statuses</b>: 💫 Stun 1s · 🎯 Taunt (must attack the taunter; hits on it are reflected back) · 🤐 Silence 2s · 🌫️ Blind 2s · 🚫 Disarm 1s · 🐌 Slow · ☠️ <b>Poison</b>: damage once per second, <b>stacks up to 5</b>, lasts at least 5s and cuts healing on the target by 30% (good vs healers) · 🔥 <b>Burn</b>: fire skills, damage twice per second, refreshes instead of stacking, <b>deals double damage to shields</b> and <b>jumps to a nearby enemy</b> when the target dies (good vs shields and groups). Fire melts Frozen; freezing puts out fire. A hero can be poisoned and burning at once · 🧊 Frozen — ice skills may freeze; any direct hit shatters it. Bosses can't be frozen.</li>
         <li><b>Shop odds</b>: 2💰 heroes from round 4, 3💰 from round 8, 4💰 from round 12. Each shop Upgrade improves the odds; a fully upgraded shop late in the run rolls 1💰 heroes only 10% of the time, and each slot has a 5% extra chance to show a hero you already own (not yet ★★★). "Lock" keeps the shop for next round.</li>
         <li><b>Field slots</b>: start with 3, buy more up to 9 (6, 10, 15, 21, 28, 36 gold).</li>
@@ -483,7 +483,7 @@ const CLASSES = {
   necro:{name:'Necromancer',color:'#8a7aff', desc:['Raised dead have +30% HP and damage','Raised dead have +60% HP and damage; necromancers gain 15 mana whenever an enemy falls']},
   engineer:{name:'Engineer',color:'#d0a060', desc:['Turrets have +30% HP and damage','Turrets have +60% HP and damage; every engineer builds a second turret']},
   monk:{name:'Monk',color:'#ffcc66', desc:['Monks dodge 20% of attacks; each hit stacks +4% attack speed (max 10)','Monks dodge 35% of attacks; each hit stacks +6% attack speed (max 10)']},
-  chrono:{name:'Teleporter',color:'#7fe0e0', desc:['Team gains 15% more mana from attacks','Team gains 30% more mana from attacks']},
+  chrono:{name:'Teleporter',color:'#7fe0e0', desc:['Warped allies land with +15% more shield and +35% attack speed for 4s; each teleporter blinks to safety once when it drops below 30% HP','Warped allies land with +15% more shield and +35% attack speed for 4s; each teleporter blinks to safety once when it drops below 30% HP']},
   ninja:{name:'Ninja',color:'#e04a5a', desc:['After a skill, ninjas dodge 25% of attacks for 2s','Ninja skills deal 25% more damage; after a skill ninjas dodge 40% of attacks for 2s']},
   mimic:{name:'Mimic',color:'#5ad8a8', desc:['Mimics gain 10 mana whenever an enemy casts a skill','Mimics gain 20 mana whenever an enemy casts a skill; copied spells deal 15% more damage']},
   mesmer:{name:'Mesmer',color:'#c88aff', desc:['Enemies forced to attack their own allies take 15% more damage','Enemies forced to attack their own allies take 30% more damage']},
@@ -567,9 +567,9 @@ const UNITS = [
   // monks: dodge, and every hit makes them faster (combo)
   {id:'brawler',     name:'Brawler',      cls:'monk',org:'wildheart',     cost:1,hp:620, atk:46, range:1,as:.7, ms:2.0},
   {id:'grandmaster', name:'Worldbreaker', cls:'monk',org:'starborn',      cost:4,hp:1800,atk:135,range:1,as:.6, ms:2.0},
-  // teleporters: move allies onto the weakest enemy
-  {id:'chronomancer',name:'Teleporter',   cls:'chrono',org:'starborn',    cost:2,hp:580, atk:48, range:3,as:1.1, ms:1.4},
-  {id:'timekeeper',  name:'Warp Master',   cls:'chrono',org:'moonblood',   cost:4,hp:1100,atk:105,range:4,as:1.0, ms:1.3},
+  // teleporters: send melee allies onto the enemy carry
+  {id:'chronomancer',name:'Teleporter',   cls:'chrono',org:'starborn',    cost:2,hp:650, atk:65, range:3,as:1.1, ms:1.4},
+  {id:'timekeeper',  name:'Warp Master',   cls:'chrono',org:'moonblood',   cost:4,hp:1400,atk:135,range:4,as:1.0, ms:1.3},
   // ninjas: dashing damage dealers
   {id:'phantomblade',name:'Phantom Blade',cls:'ninja',org:'gilded',       cost:2,hp:680, atk:88, range:1,as:.65,ms:2.4},
   {id:'shadowstep',  name:'Shadowstep',   cls:'ninja',org:'moonblood',    cost:4,hp:1300,atk:175,range:1,as:.6, ms:2.5},
@@ -933,21 +933,20 @@ const SKILLS = {
   grandmaster:{name:'Palm of Heaven', mp:90, desc:'An open-palm strike: 380% damage, a 1s stun and a knockback. Then the Worldbreaker reaches full combo and dodges an extra 50% of attacks for 3s.',
     cast(a,t){ hit(a,t,3.8); stun(t); const d=dist(a,t)||1; t.x+=(t.x-a.x)/d*.8; t.y+=(t.y-a.y)/d*.8; clampOnBoard(t);
       a.combo=10; a.zen=3; FX('nova',t.x,t.y-.2,{s:1.2,tint:'#ffe27a',m:.5}); hitStop(.08); }},
-  chronomancer:{name:'Warp Partner', mp:70, desc:'Teleports one ally standing next to it (the one behind it first, otherwise any neighbour) beside the weakest enemy. With nobody next to it, it zaps the weakest enemy for 150% damage instead.',
-    cast(a){ const t=weakestFoe(a); if(!t) return;
-      const near=friends(a).filter(b=>b!==a&&dist(a,b)<=1.6), behind=b=>a.team===0?b.y-a.y:a.y-b.y;
-      const b=near.filter(x=>behind(x)>.3).sort((p,q)=>dist(a,p)-dist(a,q))[0]||near.sort((p,q)=>dist(a,p)-dist(a,q))[0];
+  chronomancer:{name:'Warp Partner', mp:55, desc:'Blinks next to the enemy carry (its strongest back-line hero) with its nearest melee ally: 320% damage and a stun on the carry, 160% to enemies beside it. The ally stays with a 15% max HP shield; the Teleporter blinks back.',
+    cast(a){ const t=carryFoe(a); if(!t) return; const b=meleeAllies(a)[0], hx=a.x, hy=a.y, base=a.team===0?Math.PI/2:-Math.PI/2;
       V({k:'ring',x:a.x,y:a.y+.3,r:.8,c:'#7fe0e0',m:.4});
-      if(!b){ V({k:'bolt',x:a.x,y:a.y-.3,x2:t.x,y2:t.y-.3,c:'#7fe0e0',m:.3}); hit(a,t,1.5); return; }
-      warpTo(b,t,a.team===0?Math.PI/2:-Math.PI/2,.8); }},
-  timekeeper:{name:'Mass Warp', mp:110, desc:'Opens a rift: every ally within 2 cells of it is teleported around the weakest enemy, and the landing deals 120% damage and stuns enemies within 1.6 cells. With nobody nearby, the rift still strikes the weakest enemy.',
-    cast(a){ const t=weakestFoe(a); if(!t) return; const grp=friends(a).filter(b=>b!==a&&dist(a,b)<=2);
+      warpTo(a,t,base,.8); for(const e of foes(a)) if(dist(e,t)<=1.2){ hit(a,e,e===t?3.2:1.6); if(e===t) stun(e); }
+      if(b){ warpTo(b,t,base+1.2,.8); warpBuff(b,a); }
+      later(.6,()=>{ if(a.hp>0) blinkTo(a,hx,hy); }); }},
+  timekeeper:{name:'Mass Warp', mp:80, desc:'Opens a rift on the enemy carry (its strongest back-line hero): the 3 nearest melee allies are teleported around it with a 15% max HP shield, and the rift deals 320% damage and stuns enemies within 1.6 cells.',
+    cast(a){ const t=carryFoe(a); if(!t) return; const grp=meleeAllies(a).slice(0,3);
       V({k:'ring',x:a.x,y:a.y+.3,r:2,c:'#7fe0e0',m:.5});
       const base=a.team===0?Math.PI/2:-Math.PI/2, step=Math.PI*2/Math.max(6,grp.length);
-      grp.forEach((b,i)=>warpTo(b,t,base+(i-(grp.length-1)/2)*step,.85));
-      const x=t.x, y=t.y;
+      grp.forEach((b,i)=>{ warpTo(b,t,base+(i-(grp.length-1)/2)*step,.85); warpBuff(b,a); });
+      const x=t.x, y=t.y, k=3.2;
       later(.12,()=>{ V({k:'ring',x,y,r:1.6,c:'#7fe0e0',m:.6}); V({k:'flash',x:0,y:0,c:'#bff6ff',m:.2}); FX('sigil',x,y-.1,{s:1,tint:'#7fe0e0',m:.6}); hitStop(.06);
-        for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.6){ hit(a,e,1.2); stun(e); } }); }},
+        for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.6){ hit(a,e,k); stun(e); } }); }},
   maskedmagus:{name:'Spell Steal', mp:60, desc:'Steals the skill of a random living enemy (bosses too, a different one than last time when possible): the victim takes 220% damage and is silenced for 2s, then the Magus casts the stolen skill as its own with 25% more damage. If no enemy has a skill to steal, blasts the target area instead.',
     cast(a,t){ mimicCast(a,t,true); }},
   mirrormage:{name:'Mirror Copy', mp:60, desc:'Copies the skill of an enemy that costs 2 gold or less — even one that has already fallen — and casts it as its own. If there is none to copy, deals 150% damage around the target and inflicts a random debuff (slow, blind, silence, armor break or wound) on everyone hit.',
@@ -2075,7 +2074,7 @@ function applySynergy(f){
       x.potPsn=lv.alchemist>=2; x.necBoost=[1,1.3,1.6][lv.necro]; x.necMana=lv.necro>=2&&U[x.type].cls==='necro';
       x.turBoost=[1,1.3,1.6][lv.engineer]; x.turrets=U[x.type].cls==='engineer'?(lv.engineer>=2?2:1):0;
       if(U[x.type].cls==='monk'){ x.dodge=[0,.2,.35][lv.monk]; x.comboStep=[.03,.04,.06][lv.monk]; }
-      x.manaMul=(x.manaMul||1)*[1,1.15,1.3][lv.chrono];
+      if(U[x.type].cls==='chrono'&&lv.chrono){ x.warpSh=.15; x.warpAS=.35; x.blinkSave=1; }
       if(U[x.type].cls==='ninja'){ x.nDodge=[0,.25,.4][lv.ninja]; x.nSkill=lv.ninja>=2?1.25:1; }
       x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.critX=[0,.4,.8][lv.gunner]; if(lv.monkey) x.dodge=(x.dodge||0)+[0,.1,.2][lv.monkey];
       if(U[x.type].cls==='mimic'){ x.mimicMp=[0,10,20][lv.mimic]; x.mimicAmp=lv.mimic>=2?.15:0; } x.mesAmp=[0,.15,.3][lv.mesmer]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
@@ -2278,8 +2277,13 @@ function inflict(u,k,s){ if(u.hp<=0||u.spin) return; s=STATUS[k].dur||s;   // sp
   if(k==='frz') SND.play('freeze');
   if(s>=(u[k]||0)) u[k+'M']=s; u[k]=Math.max(u[k]||0,s); }
 function stun(u){ inflict(u,'stun'); }
-// teleporters: the weakest living enemy, and a blink that drops a unit next to a target
-const weakestFoe=a=>foes(a).sort((p,q)=>p.hp-q.hp)[0];
+// teleporters: the enemy carry (hardest hitter, back-liners and heroes first), melee allies to send, and a blink that drops a unit next to a target
+const carryFoe=a=>{ const sc=e=>e.atk*(e.range>=2?1.5:1)*(e.summon?.3:1); return foes(a).filter(e=>!(e.ghost>0)).sort((p,q)=>sc(q)-sc(p))[0]; };
+const meleeAllies=a=>friends(a).filter(b=>b!==a&&b.range<=1&&!TOWERS[b.type]).sort((p,q)=>(p.summon?1:0)-(q.summon?1:0)||dist(a,p)-dist(a,q));
+function warpBuff(b,a){ b.shield+=b.max*(.15+(a.warpSh||0)); if(a.warpAS){ b.wAST=4; b.wAS=a.warpAS; }
+  V({k:'dome',x:b.x,y:b.y,c:'#7fe0e0',r:.6,m:.7}); pop(b,'Warp!','#7fe0e0'); }
+function blinkTo(u,x,y){ V({k:'burst',x:u.x,y:u.y,r:.6,c:'#7fe0e0'}); burst(u.x,u.y-.3,'#bff6ff',10,2.5,3,-1);
+  u.x=x; u.y=y; u.leap=null; u.moving=0; V({k:'burst',x,y,r:.6,c:'#7fe0e0'}); burst(x,y-.3,'#bff6ff',10,2.5,3,-1); SND.play('teleport'); }
 function warpTo(u,t,ang,r=.75){
   V({k:'burst',x:u.x,y:u.y,r:.6,c:'#7fe0e0'}); burst(u.x,u.y-.3,'#bff6ff',10,2.5,3,-1);
   u.x=Math.min(COLS-.5,Math.max(.5,t.x+Math.cos(ang)*r)); u.y=Math.min(ROWS-.5,Math.max(.5,t.y+Math.sin(ang)*r*.8));
@@ -2352,6 +2356,7 @@ function deal(t,dmg,crit,src){
   const sk=isMagic(src)?'mshield':'shield';   // gold shields stop physical damage, violet ones stop magic
   if(t[sk]>0){ const ab=Math.min(t[sk],dmg); t[sk]-=ab; dmg-=ab; }
   t.hp-=dmg; t.flash=1; gainMp(t,MANA_HIT);
+  if(t.blinkSave&&t.hp>0&&t.hp<t.max*.3){ t.blinkSave=0; const s=safest(t); blinkTo(t,s.x,s.y); t.tgt=null; pop(t,'Blink!','#7fe0e0',true); }   // Teleporter bonus: escape once
   if(t.thorns&&src&&src.hp>0&&src.range<=1) deal(src,dmg*t.thorns,false,null);   // Thorn Mail: no src, so it never bounces back
   if(src&&src.taunt>0&&src.tauntBy===t&&src.hp>0){ deal(src,raw,false,null); burst(src.x,src.y-.3,'#ffe27a',5,2,2,0); }   // Taunt: 100% reflected
   if(src&&src.leech&&src.hp>0){ const h=Math.min(dmg*src.leech*healMul(src),src.max-src.hp); src.hp+=h; src.hl+=h; }
@@ -2543,7 +2548,7 @@ function step(dt){
       continue; }
     if(a.hotT>0){ const h=Math.min(a.hotR*dt*healMul(a),a.max-a.hp); a.hp+=h; if(a.hotSrc) a.hotSrc.hl+=h; a.hotT-=dt;   // heal over time
       a.hotAcc=(a.hotAcc||0)+h; if((a.hotTick=(a.hotTick||0)+dt)>=.5){ if(a.hotAcc>=1) pop(a,'+'+Math.round(a.hotAcc),'#9ee8ff'); a.hotAcc=0; a.hotTick=0; } }
-    if(a.haste>0) a.haste-=dt; if(a.furyT>0) a.furyT-=dt;
+    if(a.haste>0) a.haste-=dt; if(a.furyT>0) a.furyT-=dt; if(a.wAST>0) a.wAST-=dt;
     if(a.ward>0){ a.ward-=dt; const h=Math.min(a.max*.08*dt*healMul(a),a.max-a.hp); a.hp+=h; if(a.wardSrc) a.wardSrc.hl+=h; continue; }   // encased: heals, can't act
     if(a.frz>0){ a.frz-=dt; continue; }
     if(a.stun>0){ a.stun-=dt; continue; }
@@ -2554,7 +2559,7 @@ function step(dt){
       if(a.castT<=0) releaseCast(a);
       continue;
     }
-    a.cd-=dt*a.asM*slowM*(a.haste>0?1.3:1)*(a.windT>0?1.2:1)*(1+(a.sAS||0))*(a.overT>0?(a.overK||1.6):1)*(1+(a.combo||0)*(a.comboStep||0));
+    a.cd-=dt*a.asM*slowM*(a.haste>0?1.3:1)*(a.wAST>0?1+a.wAS:1)*(a.windT>0?1.2:1)*(1+(a.sAS||0))*(a.overT>0?(a.overK||1.6):1)*(1+(a.combo||0)*(a.comboStep||0));
     if(a.heal){
       if(tryCast(a,null,true)) continue;
       const hurt=alive.filter(b=>b.team===a.team&&b.hp>0&&b.hp<b.max*.8&&dist(a,b)<=a.range+.5).sort(byHurt)[0];
