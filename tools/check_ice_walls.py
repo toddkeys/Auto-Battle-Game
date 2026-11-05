@@ -23,7 +23,8 @@ async def main():
     a.castTgt=enemy;releaseCast(a);const walls=F.walls||[];
     if(walls.length!==1)throw Error('Wrong wall count '+id);
     if(walls.some(w=>iceWallTier(w)!==j+2))throw Error('Wrong design tier '+id);
-    const w=walls[0],expected=[3,4,3.6][j];if(Math.abs(Math.hypot(w.x2-w.x1,w.y2-w.y1)-expected)>.001)throw Error('Wall width changed');
+    const w=walls[0],expected=3;if(Math.abs(Math.hypot(w.x2-w.x1,w.y2-w.y1)-expected)>.001)throw Error('Wall width changed');
+    if(w.t!==6)throw Error('Wall duration changed');
     const state=JSON.stringify([w.hp,w.t,w.x1,w.x2,w.y1,w.y2,w.shatter]);drawIceWall(w);
     if(state!==JSON.stringify([w.hp,w.t,w.x1,w.x2,w.y1,w.y2,w.shatter]))throw Error('Rendering changed wall state');
     const cx=(w.x1+w.x2)/2,cy=(w.y1+w.y2)/2,dx=w.x2-w.x1,dy=w.y2-w.y1,d=Math.hypot(dx,dy),nx=-dy/d,ny=dx/d;

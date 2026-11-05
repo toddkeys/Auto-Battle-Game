@@ -148,8 +148,8 @@ native-media fallback with Web Audio unavailable.
 `assets/vfx/ice_walls.js` renders the 2-gold Glacier Warden's frosted rampart,
 3-gold Frost Oracle's tall rune prisms, and 4-gold Winter Queen's crowned bastion.
 Damage adds branching cracks; walls rise into place and fade as they expire.
-Snowmender (1 gold) keeps its existing healing skill. Wall counts, width, HP,
-collision, damage, slow, freeze and lifetime are unchanged. `build_game.py` embeds
+Snowmender (1 gold) keeps its existing healing skill. All three raise one wall, 3 cells wide for 6 seconds; higher tiers keep their
+stronger HP, shielding and shatter effects. `build_game.py` embeds
 this renderer into the generated HTML.
 
 ```bash
@@ -159,3 +159,41 @@ python tools/check_ice_walls.py
 This exercises all three actual caster skills, confirms their wall widths and
 counts, checks rendering does not mutate wall state, and verifies enemy shots
 are blocked while friendly shots pass through.
+
+## Mana feedback and expanded rewards
+
+Mana restoration now lights the mana bar blue instead of adding floating mana
+numbers. The glow covers attacks, damage received, mana auras, cleansing and
+Night Reaper's refund, and fades between fights. Damage and gold numbers remain.
+
+Boss rewards draw up to three blessings that are below the three-stack cap.
+Maxed blessings never take a card slot. Once every blessing is maxed, the reward
+screen offers **Continue without a blessing**, so the next round stays playable.
+Daily-mode choices use the run seed.
+
+Eight new blessings add regeneration (Living Roots), crit (True Aim), movement
+(Trailblazers), lifesteal (Crimson Pact), reflection (Briar Oath), healing
+(Gentle Hands), starting physical shields (First Light), and attack mana
+(Patient Study).
+
+Six new items enter the existing loot pools, with normal enchanting and sub-stats:
+
+| Item | Rarity | Effect at +0 |
+| --- | --- | --- |
+| Dawn Buckler | Common | Starting physical shield: 22% max HP |
+| Runebound Grimoire | Common | +20% skill damage, +15% skill healing |
+| Heartwood Pendant | Common | +12% max HP and healing given |
+| Duelist Sigil | Rare | +10% dodge, +8% crit; total dodge capped at 65% |
+| Chrono Seal | Rare | +15% starting mana, block the first status effect |
+| Storm Core | Rare | +30% attack speed for 3 seconds after casting |
+
+Storm Core refreshes without stacking, expires during movement/channeling, and
+can be dispelled. Pilfer removes the new equipment bonuses too.
+
+```bash
+python tools/check_progression.py
+```
+
+Checks partial/full blessing exhaustion, double-click protection, the actual boss
+reward transition and next battle, new blessing stacks, loot pools, item
+equipping/enchanting/combining/stripping, Storm Core cooldowns, and mana feedback.

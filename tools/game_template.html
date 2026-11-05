@@ -100,8 +100,10 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 .lbtab.on{border-color:var(--gold);color:var(--gold)}
 #cards{position:fixed;inset:0;z-index:50;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(30,18,8,.75),rgba(0,0,0,.88))}
 #cards[hidden]{display:none}
-.cardsbox{text-align:center}.cardsbox h2{margin:0;font:400 52px var(--pixel);color:var(--gold);text-shadow:0 3px 0 #7a4a10,0 6px 0 var(--ink)}
+.cardsbox{width:min(760px,calc(100vw - 32px));text-align:center}.cardsbox h2{margin:0;font:400 clamp(32px,7vw,52px) var(--pixel);color:var(--gold);text-shadow:0 3px 0 #7a4a10,0 6px 0 var(--ink)}
 .cardsbox p{color:var(--muted);margin:6px 0 22px}
+#bBlessSkip{max-width:100%;white-space:normal;line-height:1.15}
+#bBlessSkip[hidden]{display:none}
 .cardrow{display:flex;gap:22px;justify-content:center}
 .bless{width:220px;min-height:300px;padding:22px 16px;border:3px solid var(--ink);border-radius:12px;cursor:pointer;color:var(--text);font:inherit;
   background:radial-gradient(ellipse at 50% 25%,rgba(255,220,130,.25),transparent 60%),linear-gradient(180deg,#4a321e,#1e130b);
@@ -445,7 +447,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 <div id="modes" class="overlay" hidden><div class="sumbox wide" id="modesbox"></div></div>
 <div id="event" class="overlay" hidden><div class="sumbox wide" id="eventbox"></div></div>
 <div id="codex" class="overlay" hidden><div class="sumbox codexbox"><h2>Hero Codex</h2><p id="codexCount"></p><div class="cxpre"><button class="b mkreset" id="codexPlan">📋 Open Team Plan — drag heroes side by side, save presets</button></div><div class="codexgrid" id="codexGrid"></div><button class="b go" id="codexClose">Close</button></div></div>
-<div id="cards" hidden><div class="cardsbox"><h2>Choose a blessing</h2><p>The boss is down! Pick one blessing for the rest of the run.</p><div class="cardrow" id="cardrow"></div></div></div>
+<div id="cards" hidden><div class="cardsbox"><h2 id="blessTitle">Choose a blessing</h2><p id="blessNote">The boss is down! Pick one blessing for the rest of the run.</p><div class="cardrow" id="cardrow"></div><button class="b go" id="bBlessSkip" hidden>Continue without a blessing</button></div></div>
 <input type="file" id="file" accept="image/*" hidden>
 <div id="cropModal" hidden>
   <div class="mbox">
@@ -688,6 +690,12 @@ const ITEMS = {
   gauntlet:{name:'Spellblade Gauntlet',icon:'🧤', rare:1, desc:k=>`After casting its skill, the next ${Math.round(3*k)} attacks deal +60% damage`, apply:(x,k)=>{ x.spellblade=Math.max(x.spellblade,Math.round(3*k)); }},
   spellward:{name:'Spellward Charm',icon:'🧿', desc:k=>`Start battle with a magic shield worth ${25*k}% of max HP (blocks magic damage)`, apply:(x,k)=>{ x.mshield+=x.max*.25*k; }},
   coin:{name:'Lucky Coin',      icon:'🪙', rare:1, desc:k=>`+${2*k} gold when you win a battle with this hero still standing`, apply:(x,k)=>{ x.coin+=2*k; }},
+  buckler:{name:'Dawn Buckler',icon:'🔰',desc:k=>`Start battle with a physical shield worth ${Math.round(22*k)}% of max HP`,apply:(x,k)=>{ x.shield+=x.max*.22*k; }},
+  grimoire:{name:'Runebound Grimoire',icon:'📖',desc:k=>`+${Math.round(20*k)}% skill damage and +${Math.round(15*k)}% skill healing`,apply:(x,k)=>{ x.skPow*=1+.2*k; x.skHeal*=1+.15*k; }},
+  heartwood:{name:'Heartwood Pendant',icon:'🌳',desc:k=>`+${Math.round(12*k)}% max HP and +${Math.round(12*k)}% healing given`,apply:(x,k)=>{ x.max*=1+.12*k; x.hp=x.hpLag=x.max; x.healOut+=.12*k; }},
+  duelist:{name:'Duelist Sigil',icon:'⚜️',rare:1,desc:k=>`+${Math.round(10*k)}% dodge (total capped at 65%) and +${Math.round(8*k)}% crit chance`,apply:(x,k)=>{ x.dodge=Math.min(.65,(x.dodge||0)+.1*k); x.crit+=.08*k; }},
+  hourglass:{name:'Chrono Seal',icon:'⌛',rare:1,desc:k=>`Start with +${Math.round(15*k)}% mana and ignore the first status effect each battle`,apply:(x,k)=>{ x.mp=Math.min(x.mpMax*.99,x.mp+x.mpMax*.15*k); x.cloak+=1; }},
+  stormcore:{name:'Storm Core',icon:'🌩️',rare:1,desc:k=>`After casting, gain +${Math.round(30*k)}% attack speed for 3s (refreshes, does not stack)`,apply:(x,k)=>{ x.quickcastK=Math.max(x.quickcastK,.3*k); }},
   scroll:{name:'Unbinding Scroll',icon:'📜', desc:()=>'Drag onto a hero to take its item off (the scroll is used up)', use:true},
 };
 // an item is 'key' or 'key:level'; level 1 = +0 ... level 6 = +5. Power grows a little less after +2.
@@ -706,7 +714,7 @@ const SUBS={
   heal:{d:t=>`+${6*t}% healing given`,f:(x,t)=>{ x.healOut+=.06*t; }},
 };
 const ITEM_SUB={sword:'crit',plate:'red',ring:'as',boots:'dmg',fang:'hp',gem:'dmg',thorns:'red',charm:'hp',crystal:'mana',axe:'crit',siphon:'as',wound:'leech',
-  frost:'mana',phoenix:'hp',cloak:'red',gauntlet:'as',spellward:'regen',coin:'crit',censer:'heal',font:'mana',bell:'hp',banner:'dmg'};
+  frost:'mana',phoenix:'hp',cloak:'red',gauntlet:'as',spellward:'regen',coin:'crit',censer:'heal',font:'mana',bell:'hp',banner:'dmg',buckler:'hp',grimoire:'mana',heartwood:'heal',duelist:'crit',hourglass:'regen',stormcore:'as'};
 const subOf=(k,lv=ILV(k))=>lv>=4&&ITEM_SUB[k.split(':')[0]]?{s:SUBS[ITEM_SUB[k.split(':')[0]]],t:lv-3}:null;
 const INAME=k=>IT(k).name+(ILV(k)>1?` +${ILV(k)-1}`:''), IDESC=k=>IT(k).desc(IK(k));
 const MAX_ILV=6;   // +5
@@ -723,6 +731,14 @@ const BLESSINGS={
   edge:{name:'Keen Edge',icon:'⚔️',desc:'Your heroes deal 12% more damage',total:n=>`+${Math.round((1.12**n-1)*100)}% damage`,hero:x=>{ x.dmgM*=1.12; }},
   runes:{name:'Warding Runes',icon:'🔯',desc:'Your heroes start battle with a magic shield worth 12% of max HP',total:n=>`magic shield worth ${12*n}% of max HP`,hero:x=>{ x.mshield+=x.max*.12; }},
   wind:{name:'Second Wind',icon:'🌬️',desc:'Once per battle, a hero that drops below 30% HP heals 25%',total:n=>`below 30% HP, heal ${25*n}% once per battle`,hero:x=>{ x.wind=(x.wind||0)+.25; }},
+  renewal:{name:'Living Roots',icon:'🌿',desc:'Your heroes regenerate 0.35% max HP per second',total:n=>`regenerate ${(0.35*n).toFixed(2)}% max HP per second`,hero:x=>{ x.regen+=.0035; }},
+  precision:{name:'True Aim',icon:'🎯',desc:'Your heroes gain +6% crit chance',total:n=>`+${6*n}% crit chance`,hero:x=>{ x.crit+=.06; }},
+  pursuit:{name:'Trailblazers',icon:'🥾',desc:'Your heroes move 10% faster',total:n=>`+${Math.round((1.1**n-1)*100)}% move speed`,hero:x=>{ x.ms*=1.1; }},
+  hunger:{name:'Crimson Pact',icon:'🦇',desc:'Your heroes heal for 3.5% of damage dealt',total:n=>`heal for ${(3.5*n).toFixed(1)}% of damage dealt`,hero:x=>{ x.leech+=.035; }},
+  retribution:{name:'Briar Oath',icon:'🌹',desc:'Melee attackers take 8% of the damage they deal back',total:n=>`reflect ${8*n}% of melee damage taken`,hero:x=>{ x.thorns+=.08; }},
+  mending:{name:'Gentle Hands',icon:'👐',desc:'Your heroes give 10% more healing and healing over time',total:n=>`+${10*n}% healing given`,hero:x=>{ x.healOut+=.1; }},
+  bastion:{name:'First Light',icon:'🌅',desc:'Your heroes start battle with a physical shield worth 10% of max HP',total:n=>`physical shield worth ${10*n}% of max HP`,hero:x=>{ x.shield+=x.max*.1; }},
+  meditation:{name:'Patient Study',icon:'📚',desc:'Your heroes gain +2 mana per attack',total:n=>`+${2*n} mana per attack`,hero:x=>{ x.manaAtk+=2; }},
   bounty:{name:'Bounty',icon:'💰',desc:'+2 gold every round',total:n=>`+${2*n} gold every round`,now:()=>{ S.bounty=(S.bounty||0)+2; }},
   treasure:{name:'Treasure Map',icon:'🗺️',desc:'Get a rare item right now',total:n=>`${n} rare item${n>1?'s':''} gained`,now:()=>{ S.inv.push(pick(RARE)); }},
   merc:{name:'Mercenary',icon:'🎖️',desc:'A random 4-gold hero joins your bench now',total:n=>`${n} hero${n>1?'es':''} recruited`,now:()=>{ const i=freeBench(); if(i<0){ S.gold+=8; return msg('Bench full: took 8 gold instead'); }
@@ -730,12 +746,20 @@ const BLESSINGS={
 };
 const BLESS_MAX=3;   // a blessing stacks up to x3
 const blessOwned=k=>S.buffs.filter(x=>x===k).length;
+const availableBlessings=()=>Object.keys(BLESSINGS).filter(k=>blessOwned(k)<BLESS_MAX);
 function offerBlessings(){
-  let keys=Object.keys(BLESSINGS).sort(()=>Math.random()-.5).slice(0,3);
-  if(keys.every(k=>blessOwned(k)>=BLESS_MAX)){ const open=Object.keys(BLESSINGS).filter(k=>blessOwned(k)<BLESS_MAX); if(open.length) keys[0]=open[Math.floor(Math.random()*open.length)]; }   // always at least one you can take
-  $('#cardrow').innerHTML=keys.map(k=>{ const b=BLESSINGS[k], n=blessOwned(k), maxed=n>=BLESS_MAX;
-    return `<button class="bless ${maxed?'maxed':''}" data-k="${k}" ${maxed?'disabled':''}><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>
-      <div class="bs">${maxed?`<b class="mx">MAXED ×${BLESS_MAX}</b><br>${b.total(n)}`:n?`<b>Stacks!</b> You have ×${n} → ×${n+1}:<br>${b.total(n+1)}`:`Stacks up to ×${BLESS_MAX}`}</div></button>`; }).join('');
+  const keys=seeded('blessings:'+S.round+':'+S.buffs.length,()=>{
+    const pool=availableBlessings();
+    for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+    return pool.slice(0,3);
+  });
+  $('#blessTitle').textContent=keys.length?'Choose a blessing':'All blessings mastered';
+  $('#blessNote').textContent=keys.length?'The boss is down! Pick one blessing for the rest of the run.':'All blessings are maxed. Continue without taking another blessing.';
+  $('#bBlessSkip').hidden=keys.length>0;
+  $('#cardrow').innerHTML=keys.map(k=>{ const b=BLESSINGS[k],n=blessOwned(k);
+    return `<button class="bless" data-k="${k}"><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>
+      <div class="bs">${n?`<b>Stacks!</b> You have ×${n} → ×${n+1}:<br>${b.total(n+1)}`:`Stacks up to ×${BLESS_MAX}`}</div></button>`;
+  }).join('');
   $('#cards').hidden=false;
 }
 
@@ -874,7 +898,7 @@ const SKILLS = {
   nightreaper:{name:'Reap', mp:70, desc:'Strikes for 280% damage. A target left under 30% HP (bosses: 15%) is executed, and the Reaper gets half its mana back.',
     cast(a,t){ hit(a,t,2.8,true); V({k:'slash',x:t.x,y:t.y,c:'#ff5276',dir:a.face});
       if(t.hp>0&&t.hp<t.max*(U[t.type].boss?.15:.3)){ a.dd+=t.hp; t.dtk+=t.hp; t.hp=0; pop(t,'Executed','#ff5276',true); burst(t.x,t.y,'#ff5276',14,3,3,2); hitStop(.08); }
-      if(t.hp<=0) a.mp=a.mpMax*.5; }},
+      if(t.hp<=0){ const beforeMana=a.mp; a.mp=a.mpMax*.5; manaGlow(a,beforeMana); } }},
   voidsage:{name:'Void Chain', mp:90, desc:'Lightning jumps between up to 6 enemies (3 cells per jump): 260% damage, 15% less each jump, a 2s silence, and each one is ⚡ Shocked (a 0.4s mini-stun).',
     cast(a,t){ const hitSet=new Set(); let from=a, cur=t, m=2.6;
       for(let i=0;i<6&&cur;i++){ hitSet.add(cur); const f0=from, c0=cur, m0=m;
@@ -1866,7 +1890,7 @@ function mkF(type,star,cx,cy,team,mult=1){
   return {type,star,team,x:cx+.5,y:cy+.5,hp:b.hp*m,max:b.hp*m,atk:b.atk*m,heal:(b.heal||0)*m,range:b.range,as:b.as,ms:b.ms,
     splash:b.splash||0,cd:Math.random()*.5,tgt:null,red:0,crit:0,dmgM:1,asM:1,regen:0,lunge:0,flash:0,face:1,
     mp:0,mpMax:SKILLS[type].mp,skPow:1,skHeal:1,stun:0,shield:0,mshield:0,psn:null,brn:null,glow:0,
-    atkT:0,castT:0,castTgt:null,kx:0,ky:0,hpLag:b.hp*m,dieT:0,dead:false,walk:0,moving:0,ph:Math.random()*6.28,
+    atkT:0,castT:0,castTgt:null,kx:0,ky:0,hpLag:b.hp*m,mg:0,quickcastK:0,quickcastT:0,dieT:0,dead:false,walk:0,moving:0,ph:Math.random()*6.28,
     dd:0,dtk:0,hl:0,healOut:0,fontK:0,bellK:0,bannerK:0,thorns:0,manaAtk:0,siphon:0,wound:0,shred:0,drain:0,wnd:0,exec:0,frostOn:0,phoenix:0,cloak:0,spellblade:0,sb:0,coin:0,frz:0,sil:0,blind:0,slow:0,spawnT:0,leapDelay:0,leap:null,leapP:0};
 }
 // duplicates count once: 2 Swordsmen = 1 Warrior. 2 different units = tier 1, 3 = tier 2
@@ -1968,7 +1992,7 @@ function startFight(){
     if(S.mod==='glass'&&x.team===0){ x.dmgM*=1.3; x.max*=.75; x.hp=x.hpLag=x.max; }
     if(S.mod==='frenzy'){ x.asM*=1.25; x.mp=Math.max(x.mp,x.mpMax*.3); } }
   for(const x of f) if(x.team===0) for(const k of S.buffs) if(BLESSINGS[k].hero) BLESSINGS[k].hero(x);   // blessings
-  const ITEM_STATS=['mshield','atk','max','hp','asM','ms','leech','crit','thorns','regen','manaAtk','exec','frostOn','phoenix','cloak','spellblade','coin','siphon','wound','red','dmgM','healOut','fontK','bellK','bannerK'];
+  const ITEM_STATS=['shield','mshield','skPow','skHeal','dodge','quickcastK','atk','max','hp','asM','ms','leech','crit','thorns','regen','manaAtk','exec','frostOn','phoenix','cloak','spellblade','coin','siphon','wound','red','dmgM','healOut','fontK','bellK','bannerK'];
   f.forEach((x,i)=>{ const before=Object.fromEntries(ITEM_STATS.map(k=>[k,x[k]||0])); for(const k of x.items||[]){ IT(k).apply(x,IK(k)); const sb=subOf(k); if(sb) sb.s.f(x,sb.t); }
     x.itemDelta=Object.fromEntries(ITEM_STATS.map(k=>[k,(x[k]||0)-before[k]]).filter(([,v])=>v));   // what the items added, so Pilfer can take it back
     x.spawnT=.3+(i%9)*.04; if(U[x.type].leap) x.leapDelay=.2; });
@@ -2013,7 +2037,7 @@ const byHurt=(p,q)=>p.hp/p.max-q.hp/q.max;
 const V=o=>{ o.m=o.m||.4; if(o.t===undefined) o.t=o.m; o.s=o.s??(Math.random()*1e4|0); S.fight.vfx.push(o); };
 let CASTER=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
 const later=(t,fn)=>S.fight.timers.push({t,fn,c:CASTER});
-function pop(u,txt,c,big){ if(typeof txt==='string'&&!/^[+\d]/.test(txt)) return popIcon(u,wordIcon(txt),c);   // words show as icons; numbers stay numbers
+function pop(u,txt,c,big){ if(typeof txt==='string'&&/^\+.*\b(?:mana|mp)\b/i.test(txt)){ if(u.hp>0)u.mg=.4; return; } if(typeof txt==='string'&&!/^[+\d]/.test(txt)) return popIcon(u,wordIcon(txt),c);   // words show as icons; numbers stay numbers
   S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?1.1:.7,txt,c,big}); trimFx(); }
 // every word pop-up as an icon (matched by its first word; a text that starts with a symbol uses that symbol)
 const WORD_ICONS={Dispelled:'🚫',Warp:'🌀',Blink:'🌀',Thawed:'♨️',Stripped:'✋',Snake:'🎲',Shatter:'💥',Second:'🌬️',Risen:'🧟',Rhythm:'🎵',Reborn:'🕊️',
@@ -2025,7 +2049,7 @@ function wordIcon(txt){
   const first=[...txt][0]; if(first.codePointAt(0)>0x2000) return first;   // already starts with a symbol (cards, notes)
   return WORD_ICONS[txt.split(/[^A-Za-z]/)[0]]||'❗'; }
 // damage and heal numbers: rapid hits on the same unit add up in one number instead of stacking new ones
-function popNum(u,v,c,pre=''){ const F=S.fight, f=F.fx.find(f=>f.u===u&&f.c===c&&f.t0-f.t<.35);
+function popNum(u,v,c,pre=''){ if(/\b(?:mana|mp)\b/i.test(pre)){ if(u.hp>0)u.mg=.4; return; } const F=S.fight, f=F.fx.find(f=>f.u===u&&f.c===c&&f.t0-f.t<.35);
   if(f){ f.num+=v; f.txt=pre+Math.round(f.num); return; }   // only during a number's first 0.35s, so a steady stream still shows new numbers
   F.fx.push({x:u.x,y:u.y-.35,t:.7,t0:.7,num:v,txt:pre+Math.round(v),c,u}); trimFx(); }
 function trimFx(){ const fx=S.fight.fx; while(fx.length>30){ const i=fx.findIndex(f=>!f.big&&!f.crit&&!f.icon); if(i<0) break; fx.splice(i,1); } }   // at most 30 on screen: the oldest small numbers go first
@@ -2054,7 +2078,8 @@ const STATUS={tstop:{label:'Time Stopped',c:'#7fe0e0',icon:'⏳',tint:'#5ad8e8'}
   wnd:{label:'Wounded',c:'#e04050',icon:'🩸',tint:'#a01020'},          // heals and regenerates 50% less
   crs:{label:'Mesmerized',c:'#d0a0ff',icon:'🌀',tint:'#b070ff'}};       // forced to attack one of its own allies          // heals and regenerates 50% less
 // all mana gain goes through here: Mana Drained and the Occultist bonus cut it
-const gainMp=(u,amt)=>{ u.mp=Math.min(u.mpMax,u.mp+amt*(u.drain>0?.5:1)*(1-(u.manaCut||0))); };
+function manaGlow(u,before){ const gained=u.mp-before; if(gained>0&&u.hp>0&&u.mpMax<1e9) u.mg=Math.max(u.mg||0,Math.min(.4,.1+gained*.016)); }
+const gainMp=(u,amt)=>{ const before=u.mp; u.mp=Math.min(u.mpMax,u.mp+amt*(u.drain>0?.5:1)*(1-(u.manaCut||0))); manaGlow(u,before); };
 const healMul=u=>(u.wnd>0?.5:1)*(u.psn?.7:1);   // Wounded halves healing, poison cuts it by 30%
 const MAGIC_CLS={mimic:1,mesmer:1,magic:1,holy:1,occultist:1,summoner:1,frost:1,gambler:1,bard:1,alchemist:1,necro:1,chrono:1,gravity:1,druid:1}, MAGIC_TYPES={wisp:1,drake:1,lich:1,shroomkin:1};
 const isMagic=src=>!!src&&(MAGIC_CLS[U[src.type].cls]||MAGIC_TYPES[src.type]);
@@ -2115,7 +2140,7 @@ function hot(u,total,secs,src){ if(u.hp<=0) return; const k=src?(src.hotBoost||1
 function ward(u,secs,src){ if(u.hp<=0) return; secs+=(src&&src.wardPlus)||0; u.ward=Math.max(u.ward||0,secs); u.wardM=u.ward; u.wardSrc=src;
   pop(u,'Ice Ward','#dff8ff',true); SND.play('freeze'); FX('nova',u.x,u.y-.3,{s:1,tint:'#cff6ff',m:.5}); }
 // strip an enemy's buffs: shields, Quicksilver charges, Spellblade charges
-function dispel(u){ if(u.hp<=0) return; u.haste=0; u.hotT=0; u.furyT=0; if(u.mshield>1){ u.mshield=0; pop(u,'Dispelled','#d0a0ff'); } if(u.shield>1||u.cloak>0||u.sb>0){ pop(u,'Dispelled','#d0a0ff'); burst(u.x,u.y-.3,'#d0a0ff',10,3,3,-1); } u.shield=0; u.cloak=0; u.sb=0; }   // can still move and cast, but not attack   // can't act at all, but any direct damage shatters it
+function dispel(u){ if(u.hp<=0) return; u.haste=0; u.quickcastT=0; u.hotT=0; u.furyT=0; if(u.mshield>1){ u.mshield=0; pop(u,'Dispelled','#d0a0ff'); } if(u.shield>1||u.cloak>0||u.sb>0){ pop(u,'Dispelled','#d0a0ff'); burst(u.x,u.y-.3,'#d0a0ff',10,3,3,-1); } u.shield=0; u.cloak=0; u.sb=0; }   // can still move and cast, but not attack   // can't act at all, but any direct damage shatters it
 // a Berserker starting to spin throws off its debuffs (it is immune until the spin ends)
 function spinStart(a){ for(const k of ['stun','sil','blind','slow','dis','shred','drain','wnd','shock','root','frz','taunt','crs']) if(a[k]>0) a[k]=0; a.psn=null; a.brn=null; a.tauntBy=null; }
 function inflict(u,k,s){ if(u.hp<=0||u.spin) return; s=STATUS[k].dur||s;   // spinning Berserkers shrug off every debuff
@@ -2138,7 +2163,7 @@ function warpTo(u,t,ang,r=.75){
   V({k:'burst',x:u.x,y:u.y,r:.6,c:'#7fe0e0'}); burst(u.x,u.y-.3,'#bff6ff',10,2.5,3,-1); SND.play('teleport'); }
 // take a fighter's item away for this battle: undo exactly what the item added (see itemDelta in startFight)
 function strip(u){ if(u.hp<=0||!u.items||!u.items.length||!u.itemDelta) return;
-  const r=u.hp/u.max; for(const [k,v] of Object.entries(u.itemDelta)) u[k]-=v; u.hp=Math.min(u.max,Math.max(1,r*u.max)); u.hpLag=u.hp;
+  const r=u.hp/u.max; for(const [k,v] of Object.entries(u.itemDelta)) u[k]-=v; u.hp=Math.min(u.max,Math.max(1,r*u.max)); u.hpLag=u.hp; u.shield=Math.max(0,u.shield);u.mshield=Math.max(0,u.mshield);
   pop(u,'Stripped '+u.items.map(k=>IT(k).icon).join(''),'#ffc080',true); burst(u.x,u.y-.4,'#ffd080',10,3,3,3); u.items=[]; u.itemDelta=null; }
 // ice: a chance to Freeze (bosses are immune). Returns true when it took hold.
 function freeze(u,chance,s){ if(u.hp<=0||U[u.type].boss||Math.random()>=chance) return false; const had=u.cloak>0; inflict(u,'frz',s);
@@ -2162,8 +2187,8 @@ function poison(u,dps,s,src,lbl='Poisoned',c='#8be06a'){ if(u.hp<=0||u.spin) ret
   if(!p){ pop(u,lbl,c); burst(u.x,u.y-.3,c,8,2,3,-1); u.psn={dps:per,n:1,t:dur,T:dur,src,acc:0}; return; }
   p.n=Math.min(PSN_MAX,p.n+1); p.dps=Math.max(p.dps,per); p.t=p.T=Math.max(p.t,dur); p.src=src||p.src; pop(u,`Poison ×${p.n}`,c); }
 // holy cleanse: removes every status and restores 15% mana
-function cleanse(u){ const had=u.stun>0||u.sil>0||u.blind>0||u.slow>0||u.frz>0||u.dis>0||u.shred>0||u.drain>0||u.wnd>0||u.psn;
-  u.stun=u.sil=u.blind=u.slow=u.frz=u.dis=u.shred=u.drain=u.wnd=u.shock=u.root=0; if(u.hp>0) u.mp=Math.min(u.mpMax,u.mp+u.mpMax*.15); u.psn=null; u.brn=null; if(had) pop(u,'Cleansed','#bfffe0'); }
+function cleanse(u){ const beforeMana=u.mp; const had=u.stun>0||u.sil>0||u.blind>0||u.slow>0||u.frz>0||u.dis>0||u.shred>0||u.drain>0||u.wnd>0||u.psn;
+  u.stun=u.sil=u.blind=u.slow=u.frz=u.dis=u.shred=u.drain=u.wnd=u.shock=u.root=0; if(u.hp>0) u.mp=Math.min(u.mpMax,u.mp+u.mpMax*.15); manaGlow(u,beforeMana); u.psn=null; u.brn=null; if(had) pop(u,'Cleansed','#bfffe0'); }
 // hit-stop: freeze the battle for a split second on big hits (rate-limited so it never feels laggy)
 function hitStop(s){ const F=S.fight; if(s>=.07) SND.play('boom'); if(F.t-F.lastStop>.3){ F.stop=Math.max(F.stop,s); F.lastStop=F.t; } }
 // particles: x/y in cells, g = gravity (negative floats upward)
@@ -2320,6 +2345,7 @@ function releaseCast(a){
   else SKILLS[a.type].cast(a,t);
   FXS=1; CASTER=null;
   if(a.bellK){ for(const b of friends(a)) if(dist(a,b)<=2){ b.shield+=b.max*.08*a.bellK; V({k:'dome',x:b.x,y:b.y,c:'#ffe27a',r:.55,m:.5}); } SND.play('shield'); }   // Warding Bell
+  if(a.quickcastK>0)a.quickcastT=3;
   if(a.castShield) a.shield+=a.max*a.castShield;   // Warrior 3-star
   if(a.nDodge) a.nDodgeT=2;   // Ninja bonus
 }
@@ -2355,6 +2381,7 @@ function step(dt){
     if(a.tstop>0){ a.tstop-=dt;   // time stopped: frozen, damage held back
       if(a.tstop<=0&&a.tsBank>0){ const b=a.tsBank*1.2; a.tsBank=0; deal(a,b,true,a.tsSrc); FX('strike',a.x,a.y+.3,{s:.7,tint:'#7fe0e0',m:.45}); }
       continue; }
+    if(a.quickcastT>0) a.quickcastT=Math.max(0,a.quickcastT-dt);
     if(a.sMp) gainMp(a,a.sMp*dt); if(a.overT>0) a.overT-=dt; if(a.zen>0) a.zen-=dt;
     if(a.root>0) a.root-=dt; if(a.gT>0) a.gT-=dt; if(a.windT>0) a.windT-=dt; if(a.nDodgeT>0) a.nDodgeT-=dt; if(a.ghost>0&&!a.blinkQ) a.ghost-=dt;
     if(a.pullTo){ const P=a.pullTo, d=Math.hypot(P.x-a.x,P.y-a.y), mv=Math.min(d,8*dt); if(d>.01){ a.x+=(P.x-a.x)/d*mv; a.y+=(P.y-a.y)/d*mv; } if((P.t-=dt)<=0) a.pullTo=null; }
@@ -2405,7 +2432,7 @@ function step(dt){
       if(a.castT<=0) releaseCast(a);
       continue;
     }
-    a.cd-=dt*a.asM*slowM*(a.haste>0?1.3:1)*(a.wAST>0?1+a.wAS:1)*(a.windT>0?1.2:1)*(1+(a.sAS||0))*(a.overT>0?(a.overK||1.6):1)*(1+(a.combo||0)*(a.comboStep||0));
+    a.cd-=dt*a.asM*slowM*(a.haste>0?1.3:1)*(a.quickcastT>0?1+a.quickcastK:1)*(a.wAST>0?1+a.wAS:1)*(a.windT>0?1.2:1)*(1+(a.sAS||0))*(a.overT>0?(a.overK||1.6):1)*(1+(a.combo||0)*(a.comboStep||0));
     if(a.heal){
       if(tryCast(a,null,true)) continue;
       const hurt=alive.filter(b=>b.team===a.team&&b.hp>0&&b.hp<b.max*.8&&dist(a,b)<=a.range+.5).sort(byHurt)[0];
@@ -2477,6 +2504,7 @@ function tickFx(dt){
       BOSS_ENRAGE[a.type](a);
     }
   }
+  for(const a of F.f)if(a.mg>0)a.mg=Math.max(0,a.mg-dt);
   for(const p of F.parts){ p.life-=dt; p.vy+=p.g*dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.vx*=Math.exp(-dt*3); }
   F.parts=F.parts.filter(p=>p.life>0);
   for(const f of F.fx) f.t-=dt; F.fx=F.fx.filter(f=>f.t>0);
@@ -2883,6 +2911,7 @@ function drawUnit(type,star,px,py,o={}){
   if(o.org&&ORIGINS[b.org]) drawIcon(ORIGINS[b.org].icon,px+sw+8,py-41,12);   // origin badge
   if(o.hp!==undefined){
     if(o.hg>0){ ctx.fillStyle=`rgba(124,252,154,${Math.min(1,o.hg*2)*.85})`; ctx.fillRect(px-24,py-38,48,12); }   // being healed: a green glow around the bar (no heal numbers)
+    if(o.mg>0){ ctx.fillStyle=`rgba(94,187,255,${Math.min(.6,o.mg*1.5)})`; ctx.fillRect(px-24,py-33,48,7); }
     ctx.fillStyle='#000'; ctx.fillRect(px-22,py-36,44,8);
     ctx.fillStyle='#fff6d0'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hpLag),5);   // recent damage drains away
     ctx.fillStyle=o.team===1?'#ff5a5a':'#4fdc6a'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hp),5);
@@ -3086,7 +3115,7 @@ function render(){
     ctx.restore();
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
-    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,hg:a.hg,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
+    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,hg:a.hg,mg:a.mg,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
       ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.mkEmp>0?.35:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
@@ -3298,8 +3327,9 @@ $('#shop').addEventListener('pointercancel',()=>{ if(shopDrag&&shopDrag.ghost) s
 $('#shop').addEventListener('mouseover',e=>{ const b=e.target.closest('.su'); const id=b?b.dataset.id:null; if(id!==hoverId){ hoverId=id; renderInfo(); } });
 $('#shop').addEventListener('mouseleave',()=>{ hoverId=null; renderInfo(); });
 // pick a blessing card
-$('#cardrow').addEventListener('click',e=>{ const c=e.target.closest('.bless'); if(!c||c.disabled||blessOwned(c.dataset.k)>=BLESS_MAX) return; const b=BLESSINGS[c.dataset.k];
+$('#cardrow').addEventListener('click',e=>{ const c=e.target.closest('.bless'); if($('#cards').hidden||!c||c.disabled||!BLESSINGS[c.dataset.k]||blessOwned(c.dataset.k)>=BLESS_MAX) return; const b=BLESSINGS[c.dataset.k];
   S.buffs.push(c.dataset.k); if(b.now) b.now(); $('#cards').hidden=true; SND.play('star'); msg(`${b.icon} ${b.name}: ${b.desc}`); render(); renderUI(); });
+$('#bBlessSkip').onclick=()=>{ if($('#cards').hidden||availableBlessings().length) return; $('#cards').hidden=true; render(); renderUI(); };
 $('#bBig').onclick=buyBigShop;
 $('#bLock').onclick=()=>{ S.locked=!S.locked; msg(S.locked?'Shop locked for the next round (lock again after that to keep it)':'Shop unlocked'); renderUI(); };
 // items: drag one onto a hero (equip / enchant) or onto the same item (combine)
