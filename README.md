@@ -270,3 +270,45 @@ python tools/check_mastery_rewards.py --preview /tmp/mastery-rewards.png
 Checks reward amounts, HP caps/full-HP replacement, duplicate claims, free/paid
 rolling at zero gold, shop locks, credit expiry, skipping, restarts, Daily seeds,
 the real boss reward transition, next-battle progression and phone layout.
+
+## Late-round rendering performance
+
+Untinted, opaque articulated heroes now draw their limbs directly onto the board.
+This avoids repeatedly reading/copying a shared scratch canvas between heroes.
+Status tints, translucent spawns, ghosts and deaths use separate per-unit surfaces
+so their compositing stays isolated. Those surfaces use weak object keys and are
+released with their fighters; poses still update every frame.
+
+`build_game.py` embeds tight source rectangles for every rig layer, including
+expression frames, with transparent sampling margins. Drawing skips the empty
+padding while retaining the original pivots and body proportions. Older rigs
+without rectangle metadata still use the full-frame path. Fusion keeps its paired
+auras, rings, partner weapon and cape; the constant whole-body colour wash is
+removed to let fused teams use the direct path too.
+
+```bash
+python tools/build_game.py
+python tools/check_performance.py
+# Compare with a previously generated version on the same worker/browser:
+python tools/check_performance.py --baseline /tmp/before.html --output /tmp/performance.json
+```
+
+The check covers 440 rig states, verifies cropped/full-frame rendering and
+isolated tint output, then benchmarks deterministic round 15/30/60 fights with
+nine heroes, summons and a full fused-team scenario. Benchmark fighters receive
+extra HP only within the test to keep the workload alive. With `--baseline`, it
+also requires exact matching combat state after the same simulation steps.
+
+Sample on this cloud worker, headless Chromium, 120 frames per scenario,
+compared with `69de6e8` (CPU time for simulation plus rendering, not an FPS promise):
+
+| Scenario | Before mean | After mean | CPU reduction |
+| --- | ---: | ---: | ---: |
+| Round 15 | 20.4 ms | 5.5 ms | 73% |
+| Round 30 | 17.8 ms | 5.6 ms | 69% |
+| Round 30, fused team | 25.1 ms | 6.8 ms | 73% |
+| Round 60 | 18.0 ms | 4.3 ms | 76% |
+
+Frame-gap p95 on this worker fell from 50–67 ms to roughly 33 ms. Real frame rates
+depend on the browser's graphics backend and hardware; rerun the comparison on
+the same machine when investigating another performance issue.

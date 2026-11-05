@@ -1180,7 +1180,7 @@ function setSprite(id,src,faceLeft,rig){
       let top=c.height,bottom=0; for(let y=0;y<c.height;y++) for(let x=0;x<c.width;x++) if(a[(y*c.width+x)*4+3]>10){ top=Math.min(top,y); bottom=Math.max(bottom,y+1); }
       if(SPR[id]&&SPR[id].img===im) SPR[id].bounds={top,bottom,height:Math.max(1,bottom-top)};
       render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
-    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56,roster:!!rig.roster}; } }   // custom images have no rig: they animate as one piece
+    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,rects:rig.rects,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56,roster:!!rig.roster}; } }   // custom images have no rig: they animate as one piece
   else delete SPR[id];
 }
 /*DEFAULT_SPRITES*/
@@ -2843,6 +2843,16 @@ function gripShaft(R,G){ const a=R.armR.r, w=R.weapon.r, c=Math.cos, s=Math.sin;
 // so glow/flash overlays tint the figure once instead of once per overlapping piece
 const RIG=document.createElement('canvas'); RIG.width=168*RES; RIG.height=162*RES;
 const rg=RIG.getContext('2d');
+// A shared canvas changed between every hero forces drawImage to flush/copy it.
+// Stable per-unit surfaces let the browser queue the whole frame together.
+// Weak keys release surfaces with their fighters/bench units after the round.
+const RIG_SURFACES=new WeakMap();
+function rigSurface(key){
+  if(!key)return null;let surface=RIG_SURFACES.get(key);
+  if(!surface){const canvas=document.createElement('canvas');canvas.width=RIG.width;canvas.height=RIG.height;
+    surface={canvas,ctx:canvas.getContext('2d')};RIG_SURFACES.set(key,surface);}
+  return surface;
+}
 // the face to show right now (heroes have one face layer per expression, see build_sprites.py)
 function exprOf(o){
   if(o.die!==undefined) return 'ko'; if(o.ward>0) return 'blind'; if(o.frz>0) return 'shock'; if(o.stun>0) return 'dizzy'; if(o.flash>.45) return 'hurt';
@@ -2850,16 +2860,20 @@ function exprOf(o){
   if(o.psn) return 'sick'; if(o.cheer) return 'happy'; if(o.hp!==undefined&&o.hp<.25) return 'hurt'; return null;
 }
 // one rig layer: frames are fw x 54 design pixels (fw is 56 unless a hand-made picture is wider), stored k x bigger
-function rigLayer(r,i,p){ const fw=r.fw||56, k=r.k||1; rg.drawImage(r.img,i*fw*k,0,fw*k,54*k,-p[0]-(fw-56)/2,-p[1],fw,54); }
-// Shoulder -> elbow -> wrist. The hand and weapon share this transform.
-function gripTransform(rig,R,target){
-  const a=R.armR||{x:0,y:0,r:0}, b=R.body||{x:0,y:0}, pa=rig.piv.armR, ph=target;
-  rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y);if(a.r)rg.rotate(a.r);rg.scale(a.sx||1,a.sy||1);
-  if(rig.piv.foreR){const f=R.foreR||{x:0,y:0,r:0},pe=rig.piv.foreR;rg.translate(pe[0]-pa[0]+f.x,pe[1]-pa[1]+f.y);if(f.r)rg.rotate(f.r);rg.translate(ph[0]-pe[0],ph[1]-pe[1]);}
-  else rg.translate(ph[0]-pa[0],ph[1]-pa[1]);
+function rigLayer(r,i,p,g=rg){ const fw=r.fw||56,k=r.k||1,rect=r.rects&&r.rects[i];
+  if(rect){const [x,y,w,h]=rect;if(w&&h)g.drawImage(r.img,i*fw*k+x,y,w,h,-p[0]-(fw-56)/2+x/k,-p[1]+y/k,w/k,h/k);}
+  else g.drawImage(r.img,i*fw*k,0,fw*k,54*k,-p[0]-(fw-56)/2,-p[1],fw,54);
 }
-function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose weapon and cape replace the lead's
-  const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=!!rig.art;   // layers are k x detail: crisp for pixel sprites, smooth for hand-made pictures
+// Shoulder -> elbow -> wrist. The hand and weapon share this transform.
+function gripTransform(rig,R,target,g=rg){
+  const a=R.armR||{x:0,y:0,r:0}, b=R.body||{x:0,y:0}, pa=rig.piv.armR, ph=target;
+  g.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y);if(a.r)g.rotate(a.r);g.scale(a.sx||1,a.sy||1);
+  if(rig.piv.foreR){const f=R.foreR||{x:0,y:0,r:0},pe=rig.piv.foreR;g.translate(pe[0]-pa[0]+f.x,pe[1]-pa[1]+f.y);if(f.r)g.rotate(f.r);g.translate(ph[0]-pe[0],ph[1]-pe[1]);}
+  else g.translate(ph[0]-pa[0],ph[1]-pa[1]);
+}
+function buildRig(rig,R,tints,expr,mix,target){   // mix: a fused partner's rig, whose weapon and cape replace the lead's
+  const brush=target?target.ctx:rg;
+  const b=R.body||{x:0,y:0,r:0}; if(!target||!target.direct){brush.setTransform(RES,0,0,RES,0,0);brush.clearRect(0,0,168,162);} brush.imageSmoothingEnabled=!!rig.art;   // layers are k x detail: crisp for pixel sprites, smooth for hand-made pictures
   let order=rig.layers.map((g,i)=>i);
   if(R.front&&rig.piv.weapon){   // weapon held in front of the body: blade, then the hand gripping it, go just under the head
     const mv=order.filter(i=>rig.layers[i]==='weapon'||rig.layers[i]==='armR').sort((x,y)=>(rig.layers[x]==='armR')-(rig.layers[y]==='armR'));
@@ -2867,27 +2881,28 @@ function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose 
   const mixW=mix&&mix.img.naturalWidth&&mix.piv.weapon?mix.layers.map((g,i)=>g==='weapon'?i:-1).filter(i=>i>=0):[];
   const mixC=mix&&mix.img.naturalWidth?mix.layers.map((g,i)=>g==='cape'?i:-1).filter(i=>i>=0):[];
   if(mixC.length){ const j=R.cape||b, p=rig.piv.cape||rig.piv.body, pm=mix.piv.cape||mix.piv.body;   // partner's cape goes behind everything
-    for(const i of mixC){ rg.save(); rg.translate(56+p[0]+j.x+b.x,54+p[1]+j.y+b.y); if(j.r) rg.rotate(j.r); rigLayer(mix,i,pm); rg.restore(); } }
+    for(const i of mixC){ brush.save(); brush.translate(56+p[0]+j.x+b.x,54+p[1]+j.y+b.y); if(j.r) brush.rotate(j.r); rigLayer(mix,i,pm,brush); brush.restore(); } }
   let mixDone=false;
   order.forEach(i=>{ const g=rig.layers[i];
     if(g==='weapon'&&mixW.length){ if(mixDone) return; mixDone=true;   // the partner's weapon in the lead's hand
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon, pm=mix.piv.weapon;
-      for(const k of mixW){ rg.save(); gripTransform(rig,R,ph); if(w.r) rg.rotate(w.r);
-        rigLayer(mix,k,pm); rg.restore(); }
+      for(const k of mixW){ brush.save(); gripTransform(rig,R,ph,brush); if(w.r) brush.rotate(w.r);
+        rigLayer(mix,k,pm,brush); brush.restore(); }
       return; }
     if(g==='weapon'&&rig.piv.weapon){   // shoulder -> arm turn -> wrist -> weapon turn
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon;
-      rg.save(); gripTransform(rig,R,ph); if(w.r) rg.rotate(w.r);
-      rigLayer(rig,i,ph); rg.restore(); return; }
-    if(g==='foreR'&&rig.piv.foreR){rg.save();gripTransform(rig,R,rig.piv.foreR);rigLayer(rig,i,rig.piv.foreR);rg.restore();return;}
+      brush.save(); gripTransform(rig,R,ph,brush); if(w.r) brush.rotate(w.r);
+      rigLayer(rig,i,ph,brush); brush.restore(); return; }
+    if(g==='foreR'&&rig.piv.foreR){brush.save();gripTransform(rig,R,rig.piv.foreR,brush);rigLayer(rig,i,rig.piv.foreR,brush);brush.restore();return;}
     const j=R[g]||b, p=rig.piv[g]||rig.piv.body, ox=j.x+(LOOSE[g]?0:b.x), oy=j.y+(LOOSE[g]?0:b.y);
-    rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r); if(j.s) rg.scale(j.s,j.s);rg.scale(j.sx||1,j.sy||1);
+    brush.save(); brush.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) brush.rotate(j.r); if(j.s) brush.scale(j.s,j.s);brush.scale(j.sx||1,j.sy||1);
     const src=i===rig.faceLayer&&expr&&rig.expr?rig.expr[expr]??i:i;
-    rigLayer(rig,src,p); rg.restore();
+    rigLayer(rig,src,p,brush); brush.restore();
   });
-  if(tints.length){ rg.globalCompositeOperation='source-atop';
-    for(const [c,a] of tints){ rg.globalAlpha=a; rg.fillStyle=c; rg.fillRect(0,0,168,162); }
-    rg.globalCompositeOperation='source-over'; rg.globalAlpha=1; }
+  if(tints.length){ brush.globalCompositeOperation='source-atop';
+    for(const [c,a] of tints){ brush.globalAlpha=a; brush.fillStyle=c; brush.fillRect(0,0,168,162); }
+    brush.globalCompositeOperation='source-over'; brush.globalAlpha=1; }
+  return target?target.canvas:RIG;
 }
 // which statuses tint the unit right now, pulsing so it reads as "an effect", not a palette swap
 function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,blind:.42,slow:.3,psn:.26,brn:.3,frz:.5,dis:.3,shred:.28,drain:.3,wnd:.28,ward:.4};
@@ -2951,9 +2966,14 @@ function drawUnit(type,star,px,py,o={}){
     const flip=o.face!==undefined&&((o.face<0)!==!!sp.faceLeft);
     ctx.translate(px+P.dx,py+26+P.dy-P.lift); ctx.rotate(P.rot); ctx.scale(flip?-P.sx:P.sx,P.sy);
     ctx.translate(0,(im.naturalHeight-bounds.bottom)*(rig?54*u/im.naturalHeight:s));
-    const fuseTint=o.fuse?[[colorOf(o.fuse),.1+.08*Math.sin(ANIM*2.2+(o.ph||0))]]:[];   // a soft shimmer in the partner's class colour
-    if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
-    const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
+    // The paired auras/rings, weapon and cape show fusion without recolouring
+    // every pixel of every fused hero on every frame.
+    const joints=rig&&rigPose(o,type,b),tints=statusTints(o),expr=exprOf(o),mix=o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig;
+    // Untinted limbs can draw straight to the board: no canvas readback/upload per hero.
+    // Tinting still uses an isolated surface so it never colours the arena or other units.
+    const direct=rig&&!tints.length&&P.alpha>=1,rigImage=rig&&!direct?buildRig(rig,joints,tints,expr,mix,rigSurface(o.ref||o.rigKey)):null;
+    const draw=()=>{if(direct){ctx.save();ctx.scale(u,u);ctx.translate(-84,-108);buildRig(rig,joints,[],expr,mix,{ctx,direct:true});ctx.restore();}
+      else if(rig)ctx.drawImage(rigImage,-w/2-w,-h-h,w*3,h*3);else ctx.drawImage(im,-w/2,-h,w,h);};
     ctx.imageSmoothingEnabled=!!sp.art||(!rig&&im.naturalHeight>130);   // hand-made pictures (and big custom images) scale smoothly; pixel sprites stay crisp
     if(!calmMotion&&o.moving&&(type==='nightreaper'||type==='shadowstep')&&!o.ghost){
       ctx.save(); for(let i=2;i>0;i--){ctx.globalAlpha=P.alpha*.07*(3-i);ctx.translate((o.face<0?1:-1)*5,-.5);draw();}ctx.restore(); }
@@ -3156,15 +3176,15 @@ function render(){
   for(const u of S.units){
     if(S.phase!=='prep'&&S.phase!=='over'&&u.loc.w==='board') continue;
     const px=u.loc.w==='board'?u.loc.cx*CELL+32:u.loc.i*CELL+32, py=u.loc.w==='board'?u.loc.cy*CELL+32:BENCH_Y+32;
-    if(dragging&&dragging.u===u){ drawUnit(u.type,u.star,px,py,{team:0,ph:u.uid*1.7,ghost:1}); continue; }
-    drawUnit(u.type,u.star,px,py,{team:0,sel:u.uid===S.sel,ph:u.uid*1.7,items:u.items,org:1,fuse:u.fuse});
+    if(dragging&&dragging.u===u){ drawUnit(u.type,u.star,px,py,{team:0,ph:u.uid*1.7,rigKey:u,ghost:1}); continue; }
+    drawUnit(u.type,u.star,px,py,{team:0,sel:u.uid===S.sel,ph:u.uid*1.7,rigKey:u,items:u.items,org:1,fuse:u.fuse});
   }
   if(itemDrag&&itemDrag.moved&&itemDrag.over){   // where a dragged item will land
     const l=itemDrag.over, u=S.units.find(v=>sameLoc(v.loc,l)), x=l.w==='board'?l.cx*CELL:l.i*CELL, y=l.w==='board'?l.cy*CELL:BENCH_Y;
     ctx.strokeStyle=u?'rgba(255,215,90,.9)':'rgba(255,120,120,.6)'; ctx.lineWidth=2; ctx.strokeRect(x+2,y+2,CELL-4,CELL-4);
     if(u){ ctx.fillStyle='rgba(255,215,90,.18)'; ctx.fillRect(x+2,y+2,CELL-4,CELL-4); }
   }
-  if(dragging) drawUnit(dragging.u.type,dragging.u.star,dragging.pos.x,dragging.pos.y-10,{team:0,sel:true,ph:dragging.u.uid*1.7});
+  if(dragging) drawUnit(dragging.u.type,dragging.u.star,dragging.pos.x,dragging.pos.y-10,{team:0,sel:true,ph:dragging.u.uid*1.7,rigKey:dragging.u});
   if(S.phase==='prep'){
     ctx.fillStyle='rgba(255,250,235,.55)'; ctx.font="12px system-ui"; ctx.textAlign='center';
     ctx.fillText(roundKind(S.round)==='pvp'?'Enemy zone':KIND_LABEL[roundKind(S.round)],W/2,BOARD_H/4);
