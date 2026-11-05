@@ -18,7 +18,7 @@ K = 'k/OGG/'                      # Kenney RPG sounds, CC0
 SFX = {
     # combat
     'hit1': (R + 'blade_01.ogg', .5, 0), 'hit2': (R + 'blade_02.ogg', .5, 0), 'hit3': (K + 'knifeSlice.ogg', .5, 0),
-    'crit': ([K + 'chop.ogg', R + 'item_gem_03.ogg'], .6, 3),   # heavy chop + bright metallic ring 'shoot': (A + 'battle/swing2.wav', .4, -4), 'zapshot': (P + 'zap2.ogg', .5, -4),
+    'crit': (os.path.join(OUT, 'src', 'crit.wav'), .6, 0),   # user's pick, kept in assets/audio/src (absolute path, so SRC is ignored) 'shoot': (A + 'battle/swing2.wav', .4, -4), 'zapshot': (P + 'zap2.ogg', .5, -4),
     'cast': (R + 'spell_01.ogg', .8, -3), 'skill': (A + 'battle/magic1.wav', 1.2, 0),
     'hdie': (A + 'inventory/armor-light.wav', .8, 0), 'mdie': (R + 'creature_die_01.ogg', 1.0, 0),
     'shatter': (R + 'item_gem_03.ogg', .7, 2), 'freeze': (P + 'freeze2.ogg', 1.0, 0),

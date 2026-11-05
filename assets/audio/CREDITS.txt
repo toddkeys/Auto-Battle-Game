@@ -21,5 +21,8 @@ Sound effects
 - "50 RPG sound effects" by Kenney (www.kenney.nl) — CC0
   https://opengameart.org/content/50-rpg-sound-effects
 
+- crit.ogg: "Critical & Aspd 190" sound effect from Ragnarok Online (Gravity Co.), supplied by the
+  game's owner (source: src/crit.wav). Not openly licensed, unlike the rest of this list.
+
 Hero/boss signature remixes: skills/*.ogg; see skills/CREDITS.txt and
 skills/profiles.json for sources, modifications and CC BY-SA 3.0 attribution.
