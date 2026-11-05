@@ -9,6 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, '..')
 tpl = open(os.path.join(HERE, 'game_template.html'), encoding='utf8').read()
 
+USE_BACK = False   # back views are off: every hero just turns left and right
 data = {}
 for cid in re.findall(r"\{id:'(\w+)'", tpl):
     with open(os.path.join(ROOT, 'assets', 'units', cid + '.png'), 'rb') as f:
@@ -17,7 +18,7 @@ for cid in re.findall(r"\{id:'(\w+)'", tpl):
     if os.path.exists(os.path.join(ROOT, 'assets', 'art', cid + '.png')):
         data[cid]['art'] = True   # hand-made picture: drawn smoothly, not as crisp pixels
     back = os.path.join(ROOT, 'assets', 'art', cid + '_back.png')
-    if os.path.exists(back):   # a hand-made back view, shown while the hero faces away
+    if USE_BACK and os.path.exists(back):   # a hand-made back view, shown while the hero faces away
         with open(back, 'rb') as f:
             data[cid]['back'] = 'data:image/png;base64,' + base64.b64encode(f.read()).decode()
     rig = os.path.join(ROOT, 'assets', 'rig', cid)
