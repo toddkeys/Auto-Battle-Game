@@ -409,7 +409,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li>The 4💰 <b>Gearmaster</b> builds <b>Arc Towers</b> instead of turrets: their shots chain lightning to 2 more enemies. It starts every battle with one built, and its skill Storm Foundry builds more and supercharges them.</li>
         <li><b>🔫 Gunslingers</b>: the 2💰 Gunslinger fans 4 quick shots that can each crit; the 4💰 Deadshot snipes the farthest enemy with a piercing bullet. Their class bonus makes the whole team's critical hits hit harder. The 4💰 <b>Gearmaster</b> is the top Engineer: it builds two turrets at once and overclocks them.</li>
         <li><b>🪝 Grapplers</b> hook the enemy's back line and drag it in: the 2💰 Harpooner hooks the farthest enemy, the 4💰 Anchor Brute hooks the two farthest. Hooked enemies are stunned for 1s, and with the class bonus they take more damage for 3s. Bosses can't be dragged.</li>
-        <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
+        <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%), <b>alternates both skills</b> and can hold <b>2 items</b> (both heroes keep theirs). Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
         <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop. <b>Click any hero</b> in the Codex or the Team Plan to see its full details.</li>
@@ -1619,26 +1619,28 @@ const onBoard=()=>S.units.filter(u=>u.loc.w==='board');
 const roundKind=r=>r%5===0?(r>=15?'boss':'monster'):'pvp';
 const KIND_LABEL={pvp:'⚔ Battle',monster:'👾 Monster round (item drop)',boss:'💀 Boss round (2 item drops)'};
 const MAX_ITEMS=1;   // one item per hero
+const itemSlots=u=>u.fuse?2:MAX_ITEMS;   // a fused hero carries both heroes' gear
 // ====== fusion (late game): two 3-star heroes of different classes become one hero with both classes, origins and skills ======
 const FUSE_COST=100, FUSE_ROUND=15;
 const typesOf=u=>u.fuse?[u.type,u.fuse]:[u.type];   // what a hero counts as for class/origin bonuses
 const canTryFuse=(a,b)=>a&&b&&a!==b&&a.star===3&&b.star===3&&!a.fuse&&!b.fuse&&U[a.type].cls!==U[b.type].cls&&U[a.type].cost<5&&U[b.type].cost<5;
-function fuseError(){ if(S.round<FUSE_ROUND) return `Fusion unlocks at round ${FUSE_ROUND}`; if(S.gold<FUSE_COST) return `Fusion costs ${FUSE_COST} gold`; return null; }
+function fuseError(){ if(S.round<FUSE_ROUND) return `Fusion unlocks at round ${FUSE_ROUND}`; if(S.gold<FUSE_COST) return `Not enough gold to fuse: it costs ${FUSE_COST} gold, you have ${S.gold}`; return null; }
 const defaultLead=(a,b)=>U[a.type].cost>U[b.type].cost?a:b;   // the pricier hero, or the one dropped onto on a tie
 function fuse(a,b,leadUnit=defaultLead(a,b)){   // a is dragged onto b; the lead gives the body, range, basic attack and first skill
   const lead=leadUnit, other=lead===a?b:a, items=[...b.items,...a.items];
-  const lt=lead.type, ot=other.type; b.type=lt; b.fuse=ot;   // read both types before b changes b.star=3; b.items=items.slice(0,MAX_ITEMS); S.inv.push(...items.slice(MAX_ITEMS));
+  const lt=lead.type, ot=other.type; b.type=lt; b.fuse=ot;   // read both types before b changes
+  b.star=3; b.items=items.slice(0,itemSlots(b)); S.inv.push(...items.slice(itemSlots(b)));
   S.units=S.units.filter(v=>v!==a); S.gold-=FUSE_COST; S.sel=b.uid;
   S.ufx.push({k:'star',uid:b.uid,t:1.1,m:1.1}); SND.play('star'); msg(`⚭ Fused ${U[b.type].name} + ${U[b.fuse].name}: both classes, both origins, both skills`);
 }
 function askFuse(e,a,b){
-  const err=fuseError(), c=$('#confirm'); let lead=defaultLead(a,b);
+  const err=fuseError(), c=$('#confirm'); let lead=defaultLead(a,b); if(err) msg('⚭ '+err);
   const leadBtn=u=>`<button class="b fl ${u===lead?'on':''}" data-lead="${u===a?'a':'b'}"><span class="th">${thumbHTML(u.type,30)}</span>${U[u.type].name}</button>`;
   const draw=()=>{ const other=lead===a?b:a;
     c.innerHTML=`<div>⚭ Fuse <b>${U[a.type].name} ★★★</b> + <b>${U[b.type].name} ★★★</b>${err?'':` for <b>${FUSE_COST} gold</b>`}?</div>
     ${err?`<div style="font-size:13px;margin-top:4px;max-width:320px;color:#ff9a80">${err}</div>`:
       `<div class="fuselead">Lead: ${leadBtn(a)}${leadBtn(b)}</div>
-       <div style="font-size:12px;margin-top:4px;max-width:330px">Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), skills alternate.</div>`}
+       <div style="font-size:12px;margin-top:4px;max-width:330px">Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), skills alternate, holds 2 items.</div>`}
     <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`; };
   draw(); c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
   c.onclick=ev=>{ const l=ev.target.closest('[data-lead]'); if(l){ lead=l.dataset.lead==='a'?a:b; draw(); return; }
@@ -1659,14 +1661,14 @@ function giveItem(u,i){
     if(!u.items.length) return msg(`${U[u.type].name} has no item to take off`);
     S.inv.splice(i,1); S.inv.push(...u.items); msg(`Took ${u.items.map(x=>IT(x).icon).join(' ')} off ${U[u.type].name}`); u.items=[]; SND.play('equip'); return;
   }
-  const held=u.items[0];
-  if(held&&IT(held)===IT(k)){   // same item: enchant
+  const j=u.items.findIndex(h=>IT(h)===IT(k)), held=u.items[j];
+  if(j>=0){   // same item: enchant
     if(ILV(held)>=MAX_ILV) return msg(`${INAME(held)} is already fully enchanted`);
     if(ILV(held)+ILV(k)>MAX_ILV) return msg(`Together they would go past +${MAX_ILV-1} — use a smaller one`);
-    u.items[0]=held.split(':')[0]+':'+(ILV(held)+ILV(k)); S.inv.splice(i,1); SND.play('star');
-    return msg(`✨ ${U[u.type].name}'s ${INAME(u.items[0])} is enchanted!`);
+    u.items[j]=held.split(':')[0]+':'+(ILV(held)+ILV(k)); S.inv.splice(i,1); SND.play('star');
+    return msg(`✨ ${U[u.type].name}'s ${INAME(u.items[j])} is enchanted!`);
   }
-  if(held) return msg(`${U[u.type].name} already holds ${IT(held).icon} — drop the same item to enchant it, or use 📜 to take it off`);
+  if(u.items.length>=itemSlots(u)) return msg(`${U[u.type].name} already holds ${u.items.map(h=>IT(h).icon).join(' ')} — drop the same item to enchant it, or use 📜 to take ${u.items.length>1?'them':'it'} off`);
   u.items.push(k); S.inv.splice(i,1); SND.play('equip'); msg(`${U[u.type].name} equipped ${IT(k).icon} ${INAME(k)}`);
 }
 // drop inventory item i on inventory item j: two of the same combine into an enchanted one
@@ -2835,7 +2837,8 @@ function drawUnit(type,star,px,py,o={}){
   if(o.die!==undefined||o.spawn>1) return;
   px+=P.dx*.5;
   if(o.items&&o.items.length){ ctx.font='10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    o.items.forEach((k,i)=>{ const x=px+(i-(o.items.length-1)/2)*12; ctx.fillText(IT(k).icon,x,py+31);
+    const gap=o.items.some(k=>ILV(k)>1)?22:12;   // room for a '+N' tag beside an enchanted item
+    o.items.forEach((k,i)=>{ const x=px+(i-(o.items.length-1)/2)*gap; ctx.fillText(IT(k).icon,x,py+31);
       if(ILV(k)>1){ ctx.font="13px 'Jersey 10',system-ui"; ctx.fillStyle='#ffe27a'; ctx.fillText('+'+(ILV(k)-1),x+9,py+29); ctx.font='10px system-ui'; } }); ctx.textBaseline='alphabetic'; }
   py+=oy;
   if(o.shield>0){ ctx.strokeStyle='rgba(255,226,122,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(px,py,24,30,0,0,Math.PI*2); ctx.stroke(); }   // physical shield: gold
@@ -3147,7 +3150,7 @@ function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
     <div class="sk">${sk.mp<1e9?`<b>${sk.names?sk.names.join(' / '):sk.name}</b> <span class="mp">${Math.round(sk.mp*((starPerk(u.cls,star)||{}).mana||1))} mana</span><br>${sk.desc}`:'No skill — fights until the battle ends.'}</div>`+
     (u.cost>=1&&u.cost<5&&CLASS_STAR[u.cls]?`<div class="stl">${['Base',...CLASS_STAR[u.cls].map(p=>p[0])].map((t,i)=>`<div class="${i<star?'on':''}">${i===star?'<b>Next:</b> ':''}${'★'.repeat(i+1)} ${t}</div>`).join('')}</div>`:'')+
     (fuse?`<div class="sk">⚭ <b>Fused with ${U[fuse].name}</b> · <span style="color:${colorOf(fuse)}">${CLASSES[U[fuse].cls].name}</span> · ${ORIGINS[U[fuse].org].icon} ${ORIGINS[U[fuse].org].name}<br>
-      <b>${SKILLS[fuse].name}</b> <span class="mp">${SKILLS[fuse].mp} mana</span><br>${SKILLS[fuse].desc}<br><i>Counts as both classes and origins; the two skills alternate.</i></div>`:'')+
+      <b>${SKILLS[fuse].name}</b> <span class="mp">${SKILLS[fuse].mp} mana</span><br>${SKILLS[fuse].desc}<br><i>Counts as both classes and origins; the two skills alternate; holds 2 items.</i></div>`:'')+
     (items&&items.length?`<div class="held">Holding: ${items.map(k=>`<span class="hi" data-item="${k}">${IT(k).icon} ${INAME(k)}</span>`).join(' ')}</div>`:'');
 }
 const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare?' <span class="rare">RARE</span>':''}<div>${IDESC(k)}</div>${subOf(k)?`<div class="sub">Sub-stat: ${subOf(k).s.d(subOf(k).t)}</div>`:''}${IT(k).use?'':ILV(k)<MAX_ILV?`<div class="next">Next +${ILV(k)}: ${IT(k).desc(IK_TAB[ILV(k)])}${subOf(k,ILV(k)+1)?` · sub-stat ${subOf(k,ILV(k)+1).s.d(subOf(k,ILV(k)+1).t)}`:ILV(k)+1<4&&ITEM_SUB[k.split(':')[0]]?` · sub-stat unlocks at +3`:''}</div><div class="ench">Combine with another ${IT(k).name} to enchant it</div>`:'<div class="ench">Fully enchanted</div>'}<div class="ench">Sells for ${itemValue(k)} gold (drag to the shop or right-click)</div></div>`;
