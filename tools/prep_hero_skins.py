@@ -12,7 +12,18 @@ CELLS = [('stonemonkey',0,294),('wukong',294,592),('eclipsewitch',592,883),
          ('voidsage',883,1177),('chieftain',1177,1544),
          ('grandmaster',1544,1867),('shadowstep',1867,2172)]
 
+def prep_holy_skins():
+    for cid,left in [('aegispaladin',0),('starwarden',887)]:
+        dest=ROOT/'assets/art'/f'{cid}.png'
+        subprocess.run(['magick',str(ROOT/'assets/art/src/holy_skins_atlas.png'),
+                        '-crop',f'887x887+{left}+0','+repage','-channel','A','-threshold','8%',
+                        '+channel','-trim','+repage','-resize','x162',str(dest)],check=True)
+        shutil.copyfile(dest,ROOT/'assets/units'/f'{cid}.png')
+        art_rig.build(cid,str(ROOT/'assets/art'),str(ROOT/'assets/rig'))
+        print('Prepared',cid)
+
 def main():
+    prep_holy_skins()
     for cid,left,right in CELLS:
         dest=ROOT/'assets/art'/f'{cid}.png'
         subprocess.run(['magick',str(ROOT/'assets/art/src/hero_skins_atlas.png'),

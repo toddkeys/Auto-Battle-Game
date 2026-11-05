@@ -137,14 +137,50 @@ _SKIN_PARTS = {
                 'armR': ([(12,61),(32,61),(37,88),(19,102),(103,149),(97,153),(7,106),(5,92)],(27,64)),
                 'armL': ([(66,54),(80,60),(90,81),(81,88),(67,74)],(67,57))},
 }
+_SKIN_PARTS.update({
+ 'aegispaladin': {
+  'head': ([(59,0),(112,0),(132,37),(113,54),(78,52),(58,38)],(94,51)),
+  'armR': ([(69,67),(81,67),(81,75),(71,88),(66,96),(60,95),(66,81)],(78,68)),
+  'armL': ([(117,57),(140,46),(162,66),(160,100),(151,127),(131,104),(121,86)],(124,66)),
+  'weapon': ([(0,156),(45,103),(45,89),(57,88),(60,97),(69,101),(61,108),(56,106),(3,162)],(63,94)),
+ },
+ 'starwarden': {
+  'head': ([(63,15),(115,12),(124,51),(108,63),(82,62),(63,48)],(96,61)),
+  'armR': ([(80,65),(91,66),(90,75),(82,85),(71,88),(66,83),(69,72)],(87,69)),
+  'armL': ([(109,70),(119,72),(126,79),(131,80),(133,88),(122,92),(116,84)],(115,70)),
+  'weapon': ([(0,48),(39,43),(64,60),(61,70),(173,85),(173,98),(61,80),(54,88),(18,94),(0,74)],(73,76)),
+ },
+})
+
+_SKIN_PARTS['nightreaper']={
+ 'head': ([(34,0),(87,0),(86,38),(68,50),(45,47),(33,29)],(60,48)),
+ 'armR': ([(38,60),(49,65),(41,82),(34,94),(16,116),(0,119),(17,98),(20,84)],(44,63)),
+ 'armL': ([(78,60),(89,65),(98,89),(94,105),(83,118),(71,120),(85,102),(82,89)],(78,63)),
+}
+
 for _cid, _parts in _SKIN_PARTS.items():
-    ART_RIGS[_cid] = {'order':['body','head','armL','armR'], 'nofill':['armR','armL'],
+    ART_RIGS[_cid] = {'order':['body','head',*(['weapon'] if 'weapon' in _parts else []),'armL','armR'], 'nofill':[name for name in ('armR','armL','weapon') if name in _parts],
                      'parts':{name:{'poly':poly,'piv':piv} for name,(poly,piv) in _parts.items()}}
+
+# Boss heads and heavy limbs are cut relative to their own new artwork.
+_BOSS_HEADS={
+ 'golem':(.06,.06,.49,.36), 'lich':(.34,.02,.75,.37),
+ 'wyrm':(.01,.24,.58,.65), 'thornmother':(.32,.12,.72,.46),
+ 'stormdjinn':(.27,.02,.78,.36), 'colossus':(.25,.08,.64,.36),
+}
+for _cid in _BOSS_HEADS: ART_RIGS[_cid]={}
 
 
 def build(cid, art_dir, rig_dir):
     spec = ART_RIGS[cid]
     pic = Image.open(os.path.join(art_dir, cid + '.png')).convert('RGBA')
+    if cid in _BOSS_HEADS:
+        x0,y0,x1,y1=_BOSS_HEADS[cid]; w,h=pic.size
+        parts={'head':{'poly':[(x0*w,y0*h),(x1*w,y0*h),(x1*w,y1*h),(x0*w,y1*h)],'piv':((x0+x1)*w/2,y1*h)}}
+        if cid in ('golem','colossus'):
+            for name,lo,hi in [('armR',.01,.3),('armL',.72,.99)]:
+                parts[name]={'poly':[(lo*w,.38*h),(hi*w,.38*h),(hi*w,.8*h),(lo*w,.8*h)],'piv':((lo+hi)*w/2,.4*h)}
+        spec={'parts':parts,'order':['body',*parts],'nofill':list(parts)}
     cw = max(W, -(-pic.width // K) * K)   # a picture wider than the frame gets a wider frame (fw), so nothing is clipped
     fw = cw // K
     canvas = Image.new('RGBA', (cw, H), (0, 0, 0, 0))

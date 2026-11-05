@@ -853,8 +853,8 @@ const SKILLS = {
       FX('strike',d.x,d.y+.35,{s:.9,tint:'#ffe27a',m:.7}); Object.assign(d,{hp:d.max*.4,hpLag:d.max*.4,dead:false,dieT:0,reborn:true,spawnT:.3,stun:0,sil:0,blind:0,slow:0,psn:null,brn:null,mp:0,castT:0,tgt:null,leap:null,leapDelay:0});
       a.hl+=d.hp; pop(d,'Reborn!','#ffe27a',true); V({k:'pillar',x:d.x,y:d.y+.35,c:'#ffd27a',m:.6}); V({k:'ring',x:d.x,y:d.y+.3,r:.9,c:'#ffe27a'}); hitStop(.08); }},
   nightreaper:{name:'Reap', mp:70, desc:'Strikes for 280% damage. A target left under 30% HP (bosses: 15%) is executed, and the Reaper gets half its mana back.',
-    cast(a,t){ hit(a,t,2.8,true); V({k:'slash',x:t.x,y:t.y,c:'#5ee08a',dir:a.face});
-      if(t.hp>0&&t.hp<t.max*(U[t.type].boss?.15:.3)){ a.dd+=t.hp; t.dtk+=t.hp; t.hp=0; pop(t,'Executed','#5ee08a',true); burst(t.x,t.y,'#5ee08a',14,3,3,2); hitStop(.08); }
+    cast(a,t){ hit(a,t,2.8,true); V({k:'slash',x:t.x,y:t.y,c:'#ff5276',dir:a.face});
+      if(t.hp>0&&t.hp<t.max*(U[t.type].boss?.15:.3)){ a.dd+=t.hp; t.dtk+=t.hp; t.hp=0; pop(t,'Executed','#ff5276',true); burst(t.x,t.y,'#ff5276',14,3,3,2); hitStop(.08); }
       if(t.hp<=0) a.mp=a.mpMax*.5; }},
   voidsage:{name:'Void Chain', mp:90, desc:'Lightning jumps between up to 6 enemies (3 cells per jump): 260% damage, 15% less each jump, a 2s silence, and each one is ⚡ Shocked (a 0.4s mini-stun).',
     cast(a,t){ const hitSet=new Set(); let from=a, cur=t, m=2.6;
@@ -1121,6 +1121,18 @@ for(const [id,v] of Object.entries(readStore())) setSprite(id,v.src,v.faceLeft);
 const calmMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;   // also turns off screen shake
 const RIVER_Y=new Float32Array(W/2);   // river centre line (game pixels) for every 2-pixel column, filled by makeBG
 const BG = makeBG();
+/*ARENA_ART*/
+const ARENA=new Image(); ARENA.src=ARENA_SRC;
+const BOSS_PALETTES={golem:'#e4b74f',lich:'#79dcff',wyrm:'#ff704b',thornmother:'#99e67c',stormdjinn:'#c49aff',colossus:'#6fffe5'};
+function drawSanctuary(){
+  if(!ARENA.naturalWidth) return;
+  ctx.save(); ctx.imageSmoothingEnabled=true; ctx.drawImage(ARENA,0,0,W,BOARD_H);
+  // An understated border keeps the playable cells clear of the scenery.
+  ctx.strokeStyle='rgba(222,200,151,.35)'; ctx.lineWidth=1; ctx.strokeRect(5,5,W-10,BOARD_H-10);
+  const boss=S.fight&&S.fight.f.find(a=>a.team===1&&U[a.type].boss&&a.hp>0);
+  if(boss){ ctx.globalAlpha=.1; ctx.fillStyle=BOSS_PALETTES[boss.type]||'#a092cc'; ctx.fillRect(0,0,W,BOARD_H); }
+  ctx.restore();
+}
 function makeBG(){
   const s=2, w=W/s, h=H/s, bh=BOARD_H/s, by=(BENCH_Y-4)/s;
   const lo=document.createElement('canvas'); lo.width=w; lo.height=h;
@@ -1218,9 +1230,12 @@ function drawAmbient(){
   const T=calmMotion?0:ANIM;
   ctx.save(); ctx.globalAlpha=.07;
   for(const [o,y,sp] of [[0,40,9],[420,260,7],[760,420,8]]){ const x=((T*sp+o)%(W+320))-320; ctx.drawImage(CLOUD,x,y-90); }
-  for(let i=0;i<26;i++){ const x=((i*41.3+T*(14+i%4*5))%W), y=RIVER_Y[(x/2)|0]+((i*13)%9-4)*1.6, a=.35+.35*Math.sin(T*4+i*1.7);   // glints drifting downstream
+  for(let i=0;i<(ARENA.naturalWidth?0:26);i++){ const x=((i*41.3+T*(14+i%4*5))%W), y=RIVER_Y[(x/2)|0]+((i*13)%9-4)*1.6, a=.35+.35*Math.sin(T*4+i*1.7);   // glints drifting downstream
     if(a<=0) continue; ctx.globalAlpha=a; ctx.fillStyle='#f4fcff'; ctx.fillRect(x|0,y|0,4+(i%3)*2,2); }
-  ctx.globalAlpha=.85;
+  for(let i=0;i<18;i++){ const x=(i*79.7+Math.sin(T*.25+i)*18+W)%W, y=(i*53.1-T*(2+i%3)+BOARD_H*100)%BOARD_H;
+    ctx.globalAlpha=.15+.3*(.5+.5*Math.sin(T*1.4+i*2)); ctx.fillStyle=i%3?'#ffe6a1':'#b4e6ff';
+    ctx.beginPath(); ctx.arc(x,y,i%4===0?1.7:1,0,Math.PI*2); ctx.fill(); }
+  ctx.globalAlpha=.6;
   for(let i=0;i<10;i++){ const sx=(i*137.5)%W, sy=(i*89.3)%BOARD_H, x=(sx+T*(10+i%3*4))%W, y=(sy+T*(6+i%4*2)+Math.sin(T*1.3+i)*6)%BOARD_H;
     ctx.save(); ctx.translate(x,y); ctx.rotate(T*2+i); ctx.fillStyle=i%3?'#ffd6e4':'#fffaf0'; ctx.fillRect(-2,-1,4,2); ctx.restore(); }
   ctx.restore();
@@ -2188,7 +2203,7 @@ const SKILL_FX={
   starwarden:a=>{ FX('geyser',a.x,a.y+.3,{s:1.1,tint:'#ffe27a',m:.7}); V({k:'dome',x:a.x,y:a.y,c:'#ffe27a',r:.75,m:.9}); V({k:'shards',x:a.x,y:a.y,c:'#fff3a0',r:2.5,n:10}); },
   stormranger:a=>{ const c=densest(a,2); if(c) V({k:'reticle',x:c.x,y:c.y,c:'#ffe45a',m:.45}); },
   dawnoracle:a=>{ FX('geyser',a.x,a.y+.3,{s:1.4,tint:'#ffd27a',m:.8}); V({k:'flash',x:0,y:0,c:'#ffe0a0',m:.35}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffd27a',r:2.6,m:1.1}); },
-  nightreaper:(a,t)=>{ V({k:'arc',x:t.x,y:t.y,c:'#5ee08a',r:1.7,dir:a.face,m:.45}); FX('slash',t.x,t.y-.25,{s:1.1,tint:'#40ff90',flip:a.face<0,m:.5}); FX('smoke',t.x,t.y-.2,{s:1.2,add:false,m:.6}); },
+  nightreaper:(a,t)=>{ V({k:'arc',x:t.x,y:t.y,c:'#ff5276',r:1.7,dir:a.face,m:.45}); FX('slash',t.x,t.y-.25,{s:1.1,tint:'#ff365e',flip:a.face<0,m:.5}); FX('smoke',t.x,t.y-.2,{s:1.2,add:false,m:.6}); },
   voidsage:a=>{ V({k:'rays',x:a.x,y:a.y+.3,c:'#b070ff',r:1.4,m:.6}); FX('spark',a.x,a.y-.5,{s:1.2,tint:'#c080ff',m:.6}); },
 };
 const bigCaster=x=>U[x.type].cost>=3||U[x.type].boss;   // these dim the field while they charge
@@ -2199,7 +2214,10 @@ function releaseCast(a){
   if(a.star===3){ FXS=1.3; V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.6,m:.8}); V({k:'ring',x:a.x,y:a.y,r:1.1,c:'#fff3c0',m:.6}); burst(a.x,a.y-.4,'#ffe9a0',18,3.5,3,-2); }   // 3 stars: a golden flourish
   for(const m of S.fight.f) if(m.mimicMp&&m.team!==a.team&&m.hp>0) gainMp(m,m.mimicMp);   // Mimic class bonus
   CASTER=a; SND.play(SKILL_SND[a.type]||'skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
-  burst(a.x,a.y-.3,colorOf(a.type),10,3,3,0);
+  const accent=a.type==='nightreaper'?'#ff5276':BOSS_PALETTES[a.type]||colorOf(a.type);
+  V({k:'sigilBloom',x:a.x,y:a.y+.2,c:accent,r:U[a.type].boss?1.3:.75,m:.65});
+  if(t&&!(a.heal>0)) V({k:'impactBloom',x:t.x,y:t.y-.2,c:accent,r:U[a.type].boss?1.1:.65,m:.42});
+  burst(a.x,a.y-.3,accent,10,3,3,0);
   V({k:'pillar',x:a.x,y:a.y+.35,c:colorOf(a.type),m:.4});   // light pillar on release
   const skId=a.fuse&&(a.fAlt=(a.fAlt||0)+1)%2===0?a.fuse:a.type;   // fused heroes alternate their two skills
   if(a.fuse) pop(a,'⚭','#ffe27a');
@@ -2426,6 +2444,7 @@ function pose(o,b,rigged){
     if(b.range<=1){ dy+=3*q; sx*=1+.05*q; sy*=1-.05*q; } else lift+=8*q;   // melee crouches to wind up; casters float
     rot+=Math.sin(ANIM*45)*.03; }
   if(o.spin>0){ rot+=Math.sin(ANIM*18)*.09; lift+=Math.abs(Math.sin(ANIM*18))*2; }   // keep the silhouette solid during the whirlwind
+  if(rigged&&o.moving&&!o.spin){ const stride=Math.sin((o.walk||0)*5); lift+=Math.abs(stride)*2; rot+=stride*.025; }
   if(o.leapP){ lift+=Math.sin(o.leapP*Math.PI)*48; rot+=face*.35*Math.sin(o.leapP*Math.PI); }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); lift+=q*q*90; alpha*=o.spawn>1?0:1-q*.5; }
   if(o.cheer) lift+=Math.abs(Math.sin(ANIM*7+(o.ph||0)))*10;
@@ -2438,7 +2457,7 @@ function pose(o,b,rigged){
 // attack style per unit: how the arms move on a basic attack
 const CLS_ANIM={mimic:'staff',mesmer:'staff',monkey:'slash',gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
 const MON_ANIM={chieftain:'artsword',shadowstep:'artkatana',eclipsewitch:'arthalberd',voidsage:'artstaff',grandmaster:'artpunch',aegispaladin:'artsword',starwarden:'arthalberd',stonemonkey:'artsword',wukong:'arthalberd',thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',arctower:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
-const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
+const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'reaper':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
 function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=ks[i]; if(p<=p1){ const q=(p-p0)/(p1-p0); return v0+(v1-v0)*(i===ks.length-1?easeInOut(q):easeOut(q)); } } return ks[ks.length-1][1]; }
 // overhead sword cut, angles in radians from the rest pose: the arm lifts the hand above the shoulder while the blade
@@ -2459,12 +2478,18 @@ function beats(p,wind,hit){ return p<.35?wind*easeOut(p/.35) : p<.55?wind+(hit-w
 // joint offsets for this frame: {group:{x,y,r}} in sprite pixels / radians. The sprite faces left, so forward = -x.
 // Arm rotation: armR negative = raise, armL positive = raise.
 function rigPose(o,type,b){
-  if(o.frz>0) return {};   // frozen solid: every piece stays at rest
+  if(o.frz>0) return {head:{x:0,y:0,r:0,s:HERO_HEAD_SCALE[type]||1}};   // freeze the pose, keeping the hero's art-directed proportions
   const t=ANIM+(o.ph||0), br=Math.sin(t*3.2), st=animOf(type,b), R={};
   const J=(x=0,y=0,r=0)=>({x,y,r});
   R.body=J(0,br*.5); R.head=J(0,br*.35,Math.sin(t*1.3)*.03); R.cape=J(0,0,Math.sin(t*1.9)*.05);
   R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
   R.wingL=J(); R.wingR=J();
+  if(st==='reaper'){
+    R.armR.r=-.15+br*.04; R.armL.r=.15-br*.04;
+    const q=o.rel>0?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
+    if(q>=0){ const slash=beats(q,.65,-.85); R.armR.r+=slash; R.armL.r-=slash*.75; R.body.x+=beats(q,1,-1.8); R.head.r-=slash*.06; }
+    if(o.cast>0){ const q=1-o.cast/CAST_T; R.armR.r-=q*.5; R.armL.r+=q*.5; R.body.y+=q; }
+  }
   if(st==='bat'){ const f=Math.sin(t*14); R.wingL.r=f*.45; R.wingR.r=-f*.45; R.body.y=Math.sin(t*14+1.2)*1.4; }
   if(st==='slash'||st==='spear'){   // guard stance: weapon held in front of the body, pointing forward; it eases out of the guard to attack
     const g=o.rel>0||o.atkT>0?0:guardOf(o); R.front=1;   // swings and thrusts carry their own guard start/end
@@ -2550,12 +2575,19 @@ function rigPose(o,type,b){
   if(o.spin>0){ const sweep=Math.sin(t*18); R.front=1; R.body.r=sweep*.1; R.head.r=-sweep*.06;
     R.armR.r=-.6+sweep*.55; R.weapon.r=-.8+sweep*1.1; R.armL.r=.5-sweep*.35;
     R.cape.r+=sweep*.2; R.legL.r=sweep*.15; R.legR.r=-sweep*.15; }
+  if(SPR[type]&&SPR[type].art){
+    R.head.s=HERO_HEAD_SCALE[type]||1;
+    if(o.moving&&!o.spin){ const stride=Math.sin((o.walk||0)*5); R.body.y-=Math.abs(stride)*.8; R.head.r-=stride*.025;
+      R.cape.r+=Math.sin(t*8)*.12; R.armL.r+=stride*.08; }
+    if(o.cast>0){ const q=Math.sin((1-o.cast/CAST_T)*Math.PI); R.head.y-=q*.6; R.cape.r+=Math.sin(t*9)*.08*q; }
+    if(o.rel>0){ const q=Math.sin((1-o.rel/REL_T)*Math.PI); R.body.x-=q*.7; R.cape.r+=q*.12; }
+  }
   if(st==='arthalberd'&&GRIPS[type]) gripShaft(R,GRIPS[type]);   // two-handed: the back hand stays on the shaft whatever the front hand does
   return R;
 }
 const LOOSE={legL:1,legR:1,fx:1,body:1};
 // two-handed weapons in hand-made art: where the front hand's shoulder and wrist are, and where the back hand grips the shaft (design pixels)
-const GRIPS={eclipsewitch:{sh:[21.17,20.67],wr:[15.17,20],hand:[29.83,31.33]},starwarden:{sh:[22.5,28.67],wr:[18.5,33.33],hand:[34.5,33]},wukong:{sh:[16.83,32.67],wr:[7.83,34.33],hand:[37.5,30.67]}};
+const GRIPS={eclipsewitch:{sh:[21.17,20.67],wr:[15.17,20],hand:[29.83,31.33]},starwarden:{sh:[37.33,23.33],wr:[23.33,25.33],hand:[41,28]},wukong:{sh:[16.83,32.67],wr:[7.83,34.33],hand:[37.5,30.67]}};
 function gripShaft(R,G){ const a=R.armR.r, w=R.weapon.r, c=Math.cos, s=Math.sin;
   const vx=G.wr[0]-G.sh[0], vy=G.wr[1]-G.sh[1], wx=G.sh[0]+vx*c(a)-vy*s(a)+R.armR.x, wy=G.sh[1]+vx*s(a)+vy*c(a)+R.armR.y;   // where the front hand is now
   const dx=G.hand[0]-G.wr[0], dy=G.hand[1]-G.wr[1], t=a+w, px=wx+dx*c(t)-dy*s(t), py=wy+dx*s(t)+dy*c(t);   // that point of the shaft, turned with it
@@ -2594,7 +2626,7 @@ function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose 
       rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
       rigLayer(rig,i,ph); rg.restore(); return; }
     const j=R[g]||b, p=rig.piv[g]||rig.piv.body, ox=j.x+(LOOSE[g]?0:b.x), oy=j.y+(LOOSE[g]?0:b.y);
-    rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r);
+    rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r); if(j.s) rg.scale(j.s,j.s);
     const src=i===rig.faceLayer&&expr&&rig.expr?rig.expr[expr]??i:i;
     rigLayer(rig,src,p); rg.restore();
   });
@@ -2605,8 +2637,19 @@ function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose 
 // which statuses tint the unit right now, pulsing so it reads as "an effect", not a palette swap
 function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,blind:.42,slow:.3,psn:.26,brn:.3,frz:.5,dis:.3,shred:.28,drain:.3,wnd:.28,ward:.4};
   A.root=.3; A.shock=.45; A.tstop=.45; const t=Object.keys(A).filter(k=>k==='psn'||k==='brn'?o[k]:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
+// Art-directed size corrections, reviewed side by side in the actual renderer.
+// Hair, hats, weapons and capes are not a reliable guide to perceived body size.
+const HERO_HEAD_SCALE={starwarden:1.2,nightreaper:1.35,voidsage:1.3,aegispaladin:1.18,grandmaster:1.25,shadowstep:1.15,stonemonkey:1.2,wukong:1.18,eclipsewitch:1.25,chieftain:1.25};
+const HERO_VISUAL_SCALE={
+  mage:1.08,wizard:1.05,lordknight:1.05,highwizard:1.04,shogun:1.04,
+  winterqueen:1.08,doomherald:1.08,maskedmagus:1.1,puppeteer:1.13,
+  rimedragoness:1.08,bonelord:1.06,phantomblade:1.05,
+  starwarden:1,nightreaper:.98,voidsage:1.04,aegispaladin:1,
+  grandmaster:.98,shadowstep:1,stonemonkey:.97,wukong:.96,
+  eclipsewitch:1,chieftain:.98,
+};
 function drawUnit(type,star,px,py,o={}){
-  const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.boss?(b.scale||1):1, oy=-54*(sc-1);
+  const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.boss?(b.scale||1):(HERO_VISUAL_SCALE[type]||1), oy=-54*(sc-1);
   ctx.save(); ctx.globalAlpha=P.alpha;
   const sh=Math.max(.3,1-P.lift/30)*sc;
   ctx.save(); ctx.translate(px+P.dx,py+22); ctx.scale(1,.36);   // soft ground shadow
@@ -2614,6 +2657,10 @@ function drawUnit(type,star,px,py,o={}){
   ctx.fillStyle=gsh; ctx.beginPath(); ctx.arc(0,0,22*sh,0,Math.PI*2); ctx.fill(); ctx.restore();
   ctx.strokeStyle=o.team===1?'rgba(255,96,86,.8)':'rgba(110,184,255,.8)'; ctx.lineWidth=1.5;   // thin team ring at the feet
   ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,17*sh,6*sh,0,0,Math.PI*2); ctx.stroke();
+  if(b.boss&&o.die===undefined){ ctx.save(); ctx.strokeStyle=BOSS_PALETTES[type]||'#cfb674'; ctx.globalAlpha=P.alpha*.5;
+    ctx.lineWidth=1.5; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,26*sc,9*sc,0,0,Math.PI*2); ctx.stroke();
+    for(let i=0;i<6;i++){ const a=i*Math.PI/3+(calmMotion?0:ANIM*.18); const x=px+P.dx+Math.cos(a)*29*sc,y=py+22+Math.sin(a)*10*sc;
+      ctx.fillStyle=ctx.strokeStyle; ctx.fillRect(x-1,y-1,2,2); } ctx.restore(); }
   if(o.sel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,20*sh,7*sh,0,0,Math.PI*2); ctx.stroke(); }
   if(o.fuse&&!o.ghost&&o.die===undefined){   // fused: a soft glow of both class colours behind the hero
     const k=.22+.08*Math.sin(ANIM*2.6+(o.ph||0)), cy=py+2;
@@ -2641,7 +2688,7 @@ function drawUnit(type,star,px,py,o={}){
     ctx.fillStyle=col; ctx.globalAlpha=P.alpha*g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,26,10,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
   if(sp&&sp.img.naturalWidth){
     const im=sp.img, bounds=sp.bounds||{bottom:im.naturalHeight,height:im.naturalHeight}, s=54/bounds.height*sc, u=rig?im.naturalHeight/bounds.height*sc:0;
-    const w=rig?56*u:im.naturalWidth*s, h=rig?54*u:im.naturalHeight*s;   // all heroes share a 54px visible height; bosses retain their larger scale
+    const w=rig?56*u:im.naturalWidth*s, h=rig?54*u:im.naturalHeight*s;   // optical corrections balance body size across different art styles; bosses stay larger
     const flip=o.face!==undefined&&((o.face<0)!==!!sp.faceLeft);
     ctx.translate(px+P.dx,py+26+P.dy-P.lift); ctx.rotate(P.rot); ctx.scale(flip?-P.sx:P.sx,P.sy);
     ctx.translate(0,(im.naturalHeight-bounds.bottom)*(rig?54*u/im.naturalHeight:s));
@@ -2649,6 +2696,8 @@ function drawUnit(type,star,px,py,o={}){
     if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
     ctx.imageSmoothingEnabled=!!sp.art||(!rig&&im.naturalHeight>130);   // hand-made pictures (and big custom images) scale smoothly; pixel sprites stay crisp
+    if(!calmMotion&&o.moving&&(type==='nightreaper'||type==='shadowstep')&&!o.ghost){
+      ctx.save(); for(let i=2;i>0;i--){ctx.globalAlpha=P.alpha*.07*(3-i);ctx.translate((o.face<0?1:-1)*5,-.5);draw();}ctx.restore(); }
     draw();   // outlines are baked into the sprites (no per-frame filter: it was costly on the GPU)
     if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
     if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.45,o.cast>0?.12+.08*Math.sin(ANIM*30):0); draw(); }   // soft, so the face still reads
@@ -2724,7 +2773,20 @@ const FX=(fx,x,y,o={})=>V({k:'anim',fx,x,y,s:(o.s||1)*FXS,m:o.m||.55,tint:o.tint
 function drawVfx(v){
   const p=1-v.t/v.m, x=v.x*CELL, y=v.y*CELL;
   ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,v.t/v.m*1.5));
-  if(v.k==='ring'){ const e=.3+.7*easeOut(p); ctx.strokeStyle=v.c; ctx.lineWidth=5*(1-p)+1; ctx.beginPath(); ctx.ellipse(x,y,v.r*CELL*e,v.r*CELL*e*.6,0,0,Math.PI*2); ctx.stroke();
+  if(v.k==='sigilBloom'){
+    const e=easeOut(p), r=v.r*CELL*(.45+.65*e); ctx.translate(x,y); ctx.scale(1,.42);
+    ctx.globalAlpha*=Math.sin(Math.PI*p)*.65; ctx.strokeStyle=v.c; ctx.lineWidth=2*(1-p)+.5;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke(); ctx.rotate(calmMotion?0:p*.6);
+    ctx.beginPath(); for(let i=0;i<6;i++){ const a=i*Math.PI/3; ctx.moveTo(Math.cos(a)*r*.78,Math.sin(a)*r*.78); ctx.lineTo(Math.cos(a)*r*.96,Math.sin(a)*r*.96); } ctx.stroke();
+    ctx.strokeStyle='#fff3d9'; ctx.globalAlpha*=.6; ctx.beginPath(); ctx.arc(0,0,r*.7,-p*2,-p*2+Math.PI*1.3); ctx.stroke();
+  }
+  else if(v.k==='impactBloom'){
+    const e=easeOut(p), r=v.r*CELL; ctx.translate(x,y); ctx.globalAlpha*=.8;
+    ctx.strokeStyle=v.c; ctx.lineWidth=3*(1-p)+.5;
+    for(let i=0;i<8;i++){ const a=i*Math.PI/4+v.s; ctx.beginPath(); ctx.moveTo(Math.cos(a)*r*e*.4,Math.sin(a)*r*e*.4); ctx.lineTo(Math.cos(a)*r*(.25+e),Math.sin(a)*r*(.25+e)); ctx.stroke(); }
+    ctx.fillStyle='#fff6de'; ctx.beginPath(); const q=9*(1-p); ctx.moveTo(0,-q*2);ctx.lineTo(q*.4,0);ctx.lineTo(0,q*2);ctx.lineTo(-q*.4,0);ctx.closePath();ctx.fill();
+  }
+  else if(v.k==='ring'){ const e=.3+.7*easeOut(p); ctx.strokeStyle=v.c; ctx.lineWidth=5*(1-p)+1; ctx.beginPath(); ctx.ellipse(x,y,v.r*CELL*e,v.r*CELL*e*.6,0,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle=v.c; ctx.globalAlpha*=.15; ctx.fill(); }
   else if(v.k==='rune'){ const fade=Math.min(1,v.t/.25,(v.m-v.t)/.12), rx=v.r*CELL, ry=rx*.5, spin=ANIM*2.5;
     ctx.globalAlpha=fade*.9; ctx.strokeStyle=v.c; ctx.lineWidth=2;
@@ -2797,7 +2859,7 @@ function drawVfx(v){
 }
 function render(){
   ctx.setTransform(RES,0,0,RES,0,0); ctx.clearRect(0,0,W,H);
-  ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); drawAmbient();
+  ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); drawSanctuary(); drawAmbient();
   if(S.fight&&S.fight.holes) for(const h of S.fight.holes){ const x=h.x*CELL, y=h.y*CELL, R=h.r*CELL, k=Math.min(1,(h.T-h.t)*4,h.t*4);   // black hole
     const g=ctx.createRadialGradient(x,y,0,x,y,R); g.addColorStop(0,`rgba(0,0,0,${.95*k})`); g.addColorStop(.35,`rgba(40,10,70,${.7*k})`); g.addColorStop(1,'rgba(90,40,160,0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(x,y,R,R*.7,0,0,Math.PI*2); ctx.fill();
@@ -2859,7 +2921,7 @@ function render(){
     const F=S.fight;
     ctx.save();
     if(trauma>0){ const k=trauma*trauma, t=ANIM*30; ctx.translate(7*k*Math.sin(t*1.7),5*k*Math.sin(t*2.3)); }
-    const UNDER=['ring','meteor','charge','rune','quake','rays'];
+    const UNDER=['ring','meteor','charge','rune','quake','rays','sigilBloom'];
     for(const w of F.walls||[]){ const n=7, fade=Math.min(1,w.t/.4), hpk=w.hp/w.max;   // Ice Wall: a row of ice blocks, cracking as it weakens
       for(let i=0;i<n;i++){ const q=(i+.5)/n, x=(w.x1+(w.x2-w.x1)*q)*CELL, y=(w.y1+(w.y2-w.y1)*q)*CELL, h=28+(i%2)*6;
         ctx.globalAlpha=.75*fade; ctx.fillStyle=hpk>.5?'#bfefff':'#9fd8f0'; ctx.fillRect(x-7,y-h+8,14,h);

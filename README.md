@@ -22,11 +22,13 @@ python tools/build_game.py      # embed sprites into ro-autobattler.html
 
 ## Coordinated hero skins
 
-The seven reworked skins live in `assets/art/src/hero_skins_atlas.png`:
+The first seven reworked skins live in `assets/art/src/hero_skins_atlas.png`:
 Wukong (`stonemonkey`), Mythic Wukong (`wukong`), Eclipse Witch (`eclipsewitch`),
 Stormweaver (`voidsage`), Crimson Ravager/Berserker (`chieftain`),
 Worldbreaker (`grandmaster`), and Shadowstep (`shadowstep`). Gameplay names,
-classes, and stats are unchanged. Only front artwork is used, mirrored for facing.
+classes, and stats are unchanged. Paladin (`aegispaladin`) and Crimson Valkyrie
+(`starwarden`) use the matching `assets/art/src/holy_skins_atlas.png`. Only front
+artwork is used, mirrored for facing.
 
 To extract the skins, copy them into the unit assets, rebuild their animation rigs,
 and embed them into the game (requires ImageMagick plus the Python dependencies above):
@@ -39,3 +41,28 @@ python tools/build_game.py
 The atlas cell boundaries are in `tools/prep_hero_skins.py`; the matching animation
 piece polygons are in `_SKIN_PARTS` in `tools/art_rig.py`. Adjust both when replacing
 the atlas. The full sprite build also uses these rig definitions for these heroes.
+
+## Sanctuary visual upgrade
+
+Night Reaper and the six boss skins are extracted from
+`assets/art/src/nightreaper_bosses_atlas.png`. Their animation pieces are defined
+in `tools/art_rig.py`. The sanctuary battlefield is `assets/scenery/sanctuary.jpg`;
+`build_game.py` embeds it with the sprites so the generated HTML still works
+without a server (audio remains in the checked-in assets directory).
+
+```bash
+python tools/prep_boss_skins.py
+python tools/build_game.py
+```
+
+The renderer adds class-colored casting sigils, radial impact bursts, crimson
+Night Reaper effects, boss ground markings, floating motes, and assassin trails.
+Reduced-motion mode freezes ambient drift and disables the new assassin trails.
+The background has a quiet playable center and an existing meadow fallback while
+its embedded image loads. This update changes presentation, not combat stats or skills.
+
+Hero size is art-directed in `HERO_VISUAL_SCALE` and `HERO_HEAD_SCALE` in the game
+template. These were tuned against side-by-side renders of the full hero roster;
+heads, body presence, large hats and weapons are balanced visually rather than
+forcing every image into the same outer bounding box. Feet stay anchored and
+health bars follow the adjusted size. Bosses retain their separate larger scale.

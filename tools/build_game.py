@@ -32,6 +32,9 @@ for f in sorted(os.listdir(os.path.join(ROOT, 'assets', 'vfx'))):
 block += ('\n// skill effect animations (CC0, see assets/vfx/CREDITS.txt), built by tools/build_vfx.py\n'
           'const VFX_DATA = ' + json.dumps(vfx) + ';')
 out = tpl.replace('/*DEFAULT_SPRITES*/', block, 1)
+with open(os.path.join(ROOT,'assets','scenery','sanctuary.jpg'),'rb') as f:
+    arena='data:image/jpeg;base64,'+base64.b64encode(f.read()).decode()
+out=out.replace('/*ARENA_ART*/','const ARENA_SRC = '+json.dumps(arena)+';',1)
 path = os.path.join(ROOT, 'ro-autobattler.html')
 open(path, 'w', encoding='utf8', newline='\n').write(out)
 print(f'built ro-autobattler.html with {len(data)} sprites ({len(out) // 1024} KB)')
