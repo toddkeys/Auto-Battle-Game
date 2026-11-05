@@ -26,3 +26,7 @@ Sound effects
 
 Hero/boss signature remixes: skills/*.ogg; see skills/CREDITS.txt and
 skills/profiles.json for sources, modifications and CC BY-SA 3.0 attribution.
+
+Safari/iPad alternatives: adjacent .m4a effect files are AAC encodings of the
+credited .ogg files with the same basename, with a limiter and encoding headroom.
+Their source attribution and licenses are unchanged. Build: tools/build_safari_audio.py.

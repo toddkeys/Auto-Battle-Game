@@ -1,6 +1,6 @@
 Hero and boss skill signature remixes
 
-All .ogg files in this directory are remixes of the shipped SFX named in
+All .ogg and .m4a files in this directory are remixes of the shipped SFX named in
 profiles.json (the sources field). Remixes: pitch shifts, equalization,
 layering, timing, fades and two-pass loudness matching by this project's
 contributors. Rebuild with tools/build_signature_audio.py.
@@ -20,3 +20,6 @@ These signature remixes are distributed under CC BY-SA 3.0:
 https://creativecommons.org/licenses/by-sa/3.0/
 Original CC0 ingredients remain CC0. See ../CREDITS.txt for the original
 file-to-pack attribution. Music and the original SFX have not been replaced.
+
+AAC alternatives are encoded from these same remixes with reconstruction
+headroom by tools/build_safari_audio.py; the same attribution and license apply.

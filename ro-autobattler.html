@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Auto Battler</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,8 +19,8 @@ body{margin:0;overflow:hidden;color:var(--text);font:15px/1.4 var(--body);
 body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18;   /* plank grain */
   background:repeating-linear-gradient(90deg,transparent 0 118px,rgba(0,0,0,.55) 118px 120px),
              repeating-linear-gradient(0deg,rgba(255,220,160,.03) 0 2px,transparent 2px 7px)}
-.game{position:relative;display:grid;grid-template-columns:300px auto 400px;gap:18px;justify-content:center;height:100vh;padding:14px 18px}
-.col{display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:2px 6px 8px 2px}   /* the scrollbar's room is always kept: hovering a hero with a long skill text used to pop a scrollbar in, narrow the shop under the cursor and make it shake */
+.game{position:relative;display:grid;grid-template-columns:300px minmax(0,1fr) 400px;gap:18px;justify-content:center;height:100vh;padding:14px 18px}
+.col{min-width:0;display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:2px 6px 8px 2px}   /* the scrollbar's room is always kept: hovering a hero with a long skill text used to pop a scrollbar in, narrow the shop under the cursor and make it shake */
 .col::-webkit-scrollbar{width:10px}.col::-webkit-scrollbar-thumb{background:var(--brass-lo);border:2px solid var(--oak3);border-radius:6px}
 .col::-webkit-scrollbar-track{background:rgba(0,0,0,.25);border-radius:6px}
 .center{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:10px;min-height:0}
@@ -245,7 +245,8 @@ button.go{display:block;width:100%;margin-top:10px}
   font:400 19px/1 var(--pixel);color:#3a2000;background:radial-gradient(circle at 35% 30%,#fff6b8,#f2b733 55%,#a8700f)}
 .shop.locked .su{box-shadow:inset 0 0 0 2px var(--fc),0 0 0 2px var(--gold),0 3px 0 var(--ink)}
 .card.sellzone{box-shadow:inset 0 0 0 3px #ff6a5a,0 0 26px rgba(255,90,70,.6)}
-.card.sellzone h3::after{content:'Drop to sell';font:400 18px var(--pixel);color:#8a1a10}
+.card.sellready::after{content:'Drop anywhere in Shop to sell';position:absolute;inset:0;z-index:12;pointer-events:none;display:grid;place-items:center;padding:16px;text-align:center;border:3px dashed #ffb0a0;border-radius:7px;background:rgba(45,12,8,.6);font:400 26px var(--pixel);color:#fff0dc;text-shadow:0 2px 2px #000}
+.card.sellzone::after{background:rgba(120,28,16,.65);border-color:#fff0dc}
 /* unit info */
 #info{min-height:150px;color:var(--muted);font-size:14px}
 #info .fz{font-size:12px;color:#ffe27a;margin:-1px 0 2px}
@@ -333,16 +334,31 @@ details summary::before{content:'▸ ';color:var(--brass)}details[open] summary:
 .row{display:flex;gap:6px;flex-wrap:wrap}
 label{user-select:none}
 select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radius:4px;padding:3px}
-@media (max-width:1400px){.game{grid-template-columns:260px auto 360px;gap:12px;padding:10px}.logo .t{font-size:38px}
+@media (max-width:1400px){.game{grid-template-columns:260px minmax(0,1fr) 360px;gap:12px;padding:10px}.logo .t{font-size:38px}
   .actions button.b{font-size:16px;padding:6px 4px 7px}button.go{font-size:26px}}
 @media (max-width:1400px){#meter th{font-size:14px}#meter td{padding:2px 3px;font-size:12px}}
-@media (max-width:1250px){.game{grid-template-columns:230px auto 310px;gap:10px;padding:8px}.col{zoom:.88}.hud{padding:6px 10px;gap:6px 10px}
+@media (max-width:1250px){.game{grid-template-columns:230px minmax(0,1fr) 310px;gap:10px;padding:8px}.col{zoom:.88}.hud{padding:6px 10px;gap:6px 10px}
   .crest{width:54px;height:58px}.crest .num{font-size:28px}.next{font-size:12px}.hudbtns .b{font-size:13px;padding:3px 7px 4px}.snd input[type=range]{width:64px}}
-@media (max-width:1000px){.game{grid-template-columns:200px auto 270px}.col{zoom:.78}}
-@media (min-width:2200px){.game{grid-template-columns:375px auto 500px}.col{zoom:1.25}}
+@media (max-width:1000px){.game{grid-template-columns:200px minmax(0,1fr) 270px}.col{zoom:.78}}
+@media (min-width:2200px){.game{grid-template-columns:375px minmax(0,1fr) 500px}.col{zoom:1.25}}
 @media (prefers-reduced-motion:reduce){.card,button.go,.items .it.rare{animation:none}}
-@media(max-width:960px){body{overflow:auto}.game{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr) 270px}.center{grid-column:1;grid-row:1;min-width:0}.right{grid-column:2;grid-row:1}.left{grid-column:1/3;grid-row:2;display:grid;grid-template-columns:1fr 1fr;overflow:visible}.col{zoom:1;overflow:visible}.board{max-width:100%}}
+@media(max-width:960px){body{overflow:auto}.game{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr) 270px}.center{grid-column:1;grid-row:1;min-width:0}.right{grid-column:2;grid-row:1}.left{grid-column:1/3;grid-row:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible}.col{zoom:1;overflow:visible}.board{max-width:100%}}
 @media(max-width:600px){.game{display:flex;flex-direction:column;padding:8px}.center{order:0}.right{order:1}.left{order:2;display:flex}.sumbox{max-height:94vh;overflow:auto}.modegrid{grid-template-columns:1fr}.mode .md{min-height:0}.mode{padding:12px}.mode .mi{font-size:22px}.hudbtns{flex-wrap:wrap}.cardrow{flex-direction:column}.cardsbox{max-height:94vh;overflow:auto}.bless{width:100%;min-height:0}}
+
+
+@supports(height:100dvh){.game{height:100dvh} @media(max-width:960px){.game{height:auto;min-height:100dvh}}}
+.sumbox{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain}
+.cardsbox{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow:auto;overscroll-behavior:contain}
+#summary{padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));min-height:0;overflow:hidden}
+#summary .run-summary{display:flex;flex-direction:column;width:min(520px,100%);max-height:100%;padding:0;overflow:hidden;min-height:0}
+.sumhead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #7a5626;flex-shrink:0}
+.sumhead h2{font-size:clamp(28px,5vw,42px);margin:0;flex:1;text-align:left}
+.sumhead button{min-height:44px;min-width:76px;font-size:18px}
+.sumcontent{overflow:auto;min-height:0;padding:16px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.sumactions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 16px;border-top:1px solid #7a5626;flex-shrink:0;background:#281b11}
+.sumactions .b{width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;min-height:44px;font-size:20px;margin:0}
+#planner{max-width:100vw;max-height:100vh;max-height:100dvh}
+#heroCard,.itemcard{max-height:88vh;max-height:88dvh}
 
 button,.hi,.bl,.cx,.pt,.pc{touch-action:manipulation}
 .touch-help{display:none;font-size:12px;color:var(--muted);margin:6px 0 0}
@@ -1350,18 +1366,32 @@ document.addEventListener('pointerup',e=>{if(directTouch(e)&&e.isPrimary!==false
 },true);
 document.addEventListener('click',e=>{const t=lastButtonTap;if(t&&touchInput&&e.detail>0&&touchButton(e.target)&&performance.now()-t.at<750&&(t.b===e.target.closest('button')||Math.hypot(e.clientX-t.x,e.clientY-t.y)<28)){e.preventDefault();e.stopImmediatePropagation();}},true);
 const capturePointer=(el,e)=>{try{el.setPointerCapture(e.pointerId);}catch(err){}};
-function positionMenu(c,e){c.style.left=Math.max(8,Math.min(innerWidth-c.offsetWidth-8,e.clientX+8))+'px';c.style.top=Math.max(8,Math.min(innerHeight-c.offsetHeight-8,e.clientY+8))+'px';}
+function positionMenu(c,e){const r=e.target&&e.target.getBoundingClientRect(),p=e.clientX||e.clientY?e:touchInput&&lastButtonTap?lastButtonTap:{clientX:r?r.left+r.width/2:innerWidth/2,clientY:r?r.bottom:innerHeight/2};
+  c.style.left=Math.max(8,Math.min(innerWidth-c.offsetWidth-8,p.clientX+8))+'px';c.style.top=Math.max(8,Math.min(innerHeight-c.offsetHeight-8,p.clientY+8))+'px';}
+
 
 const RES=2;   // backing pixels per game pixel: matches the 2x HD sprites exactly (the page scales the canvas crisply); 3 cost 2.25x the drawing on big screens
 cv.width=W*RES; cv.height=H*RES;
 function fitBoard(){
-  const hud=$('.hud'), center=$('.center'); if(!hud||!center) return;
-  const availW=center.getBoundingClientRect().width-12, availH=innerHeight-hud.offsetHeight-90;
-  const h=Math.max(180,Math.min(Math.max(250,availH),availW*H/W)); cv.style.height=h+'px'; }
+  const hud=$('.hud'),center=$('.center'),board=$('.board');if(!hud||!center||!board)return;
+  const style=getComputedStyle(board),frame=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight)+parseFloat(style.borderLeftWidth)+parseFloat(style.borderRightWidth);
+  const availW=Math.max(1,center.clientWidth-frame),vh=window.visualViewport&&visualViewport.scale===1?visualViewport.height:innerHeight;
+  const availH=Math.max(220,vh-hud.getBoundingClientRect().height-90),h=Math.min(availH,availW*H/W);
+  // Set BOTH dimensions. A max-width clamp on width alone stretched the field after rotation.
+  cv.style.width=(h*W/H)+'px';cv.style.height=h+'px';
+}
+let layoutFrame=0,layoutWidth=innerWidth,layoutHeight=innerHeight;
+function scheduleLayout(){if(layoutFrame)return;layoutFrame=requestAnimationFrame(()=>{layoutFrame=0;
+  const rotated=layoutWidth!==innerWidth||layoutHeight!==innerHeight;layoutWidth=innerWidth;layoutHeight=innerHeight;
+  if(rotated){cancelGestures();buttonTap=null;hideBubble();$('#confirm').hidden=true;}
+  fitBoard();
+});}
+addEventListener('resize',scheduleLayout);
+addEventListener('orientationchange',()=>{scheduleLayout();setTimeout(scheduleLayout,120);setTimeout(scheduleLayout,350);});
+if(window.visualViewport)visualViewport.addEventListener('resize',scheduleLayout);
+if(window.ResizeObserver){const ro=new ResizeObserver(scheduleLayout);ro.observe($('.hud'));ro.observe($('.center'));}
+fitBoard();addEventListener('load',scheduleLayout);if(document.fonts)document.fonts.ready.then(scheduleLayout);
 
-addEventListener('resize',fitBoard);
-if(window.ResizeObserver) new ResizeObserver(fitBoard).observe(document.querySelector('.hud'));
-fitBoard(); addEventListener('load',fitBoard); if(document.fonts) document.fonts.ready.then(fitBoard);
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 // ====== sprites ======
@@ -1626,7 +1656,23 @@ const SND=(()=>{
   const clamp=v=>Math.max(0,Math.min(1,Number(v)||0));
   let ready=false,musVol=.5,sfxVol=.7,want='prep',context=null,master=null,analyser=null;
   let voices=[],serial=0,rng=0x41c64e6d,focusPriority=0,dropped=0;
-  const last=new Map(),bound=new WeakMap(),pool=new Map();
+  const last=new Map(),bound=new WeakMap(),pool=new Map(),buffers=new Map();
+  const oggSupported=!!new Audio().canPlayType('audio/ogg; codecs="vorbis"');
+  const audioFile=file=>!oggSupported?file.replace(/\.ogg$/,'.m4a'):file;
+  let loadFailures=0;
+  function decoded(file){
+    const selected=audioFile(file);if(buffers.has(selected)){const b=buffers.get(selected);buffers.delete(selected);buffers.set(selected,b);return b;}
+    const task=(async()=>{const alternatives=[selected,selected.endsWith('.ogg')?selected.replace(/\.ogg$/,'.m4a'):selected.replace(/\.m4a$/,'.ogg')];
+      for(const url of alternatives)try{const res=await fetch(url);if(!res.ok)continue;return await context.decodeAudioData(await res.arrayBuffer());}catch(e){}
+      loadFailures++;return null;
+    })();task.then(buffer=>{if(!buffer&&buffers.get(selected)===task)buffers.delete(selected);});buffers.set(selected,task);while(buffers.size>48)buffers.delete(buffers.keys().next().value);return task;
+  }
+  function resumeContext(){if(!context||context.state==='running'||context.state==='closed')return;
+    context.resume().catch(()=>{});
+    // iOS may need an actual source started inside touchend, not just resume().
+    try{const source=context.createBufferSource();source.buffer=context.createBuffer(1,1,context.sampleRate);source.connect(context.destination);source.start();source.onended=()=>source.disconnect();}catch(e){}
+  }
+
   const MAX_VOICES=10,MAX_POOL=3,SFX_VOL=.72,MUSIC_VOL=.42;
   const LIMIT={basic:3,support:2,cast:1,skill:3,critical:2,boss:2,ui:2,result:1};
   const CHANNEL_GAP={basic:.065,support:.24,cast:.16,critical:.09,boss:.12,ui:.04};
@@ -1648,13 +1694,16 @@ const SND=(()=>{
     }catch(e){return null;}
   }
   function init(){
-    if(ready){if(context?.state==='suspended')context.resume().catch(()=>{});return;}ready=true;
+    // Safari otherwise may keep Web Audio in the silent-switch ambient session.
+    try{if(navigator.audioSession&&navigator.audioSession.type!=='playback')navigator.audioSession.type='playback';}catch(e){}
+    if(ready){resumeContext();return;}ready=true;
     // Local-file audio uses native media volumes, without CORS-dependent routing.
     if(location.protocol==='http:'||location.protocol==='https:')try{
       const AC=window.AudioContext||window.webkitAudioContext;if(AC){context=new AC();master=context.createGain();master.gain.value=.85;
         const compressor=context.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=6;compressor.ratio.value=12;compressor.attack.value=.003;compressor.release.value=.14;
         analyser=context.createAnalyser();analyser.fftSize=1024;master.connect(compressor);compressor.connect(analyser);analyser.connect(context.destination);
-        for(const m of Object.values(music))attach(m);context.resume().catch(()=>{});}
+        for(const m of Object.values(music))attach(m);resumeContext();
+        for(const key of ['click','buy','sell','hit1','hit2','hit3','shoot','cast'])decoded('assets/audio/sfx/'+key+'.ogg');}
     }catch(e){context=null;master=null;analyser=null;}
   }
   function describe(k){
@@ -1664,11 +1713,11 @@ const SND=(()=>{
       gain:VOLUME[k]??.65,gap:GAPS[k]??.12,focus:channel==='boss'?.45:channel==='critical'?.15:channel==='skill'?.18:channel==='result'?.3:0,duration:channel==='result'?2.5:channel==='basic'?.6:1.7};
   }
   function stop(v){
-    if(!voices.includes(v))return;
-    voices=voices.filter(x=>x!==v);v.a.pause();try{v.a.currentTime=0;}catch(e){}
-    const link=bound.get(v.a);if(link)link.gain.gain.setValueAtTime(0,context.currentTime);else v.a.volume=0;
+    if(!voices.includes(v))return;voices=voices.filter(x=>x!==v);
+    if(v.node){try{v.node.stop();}catch(e){}v.node.disconnect();if(v.panner)v.panner.disconnect();v.gain.disconnect();}
+    if(v.a){v.a.pause();try{v.a.currentTime=0;}catch(e){}const link=bound.get(v.a);if(link)link.gain.gain.setValueAtTime(0,context.currentTime);else v.a.volume=0;}
   }
-  function reap(){const now=performance.now()/1000;for(const v of [...voices])if(v.a.ended||(v.started&&v.a.paused)||now>v.expires)stop(v);}
+  function reap(){const now=performance.now()/1000;for(const v of [...voices])if((v.a&&(v.a.ended||(v.started&&v.a.paused)))||now>v.expires)stop(v);}
   function channelGain(channel){
     if(focusPriority>=4)return {basic:.25,support:.4,cast:.4,skill:.7,critical:.85}[channel]??1;
     if(focusPriority>=3)return {basic:.4,support:.55,cast:.5,skill:.85}[channel]??1;
@@ -1678,7 +1727,7 @@ const SND=(()=>{
     const density=v.channel==='ui'||v.channel==='result'?1:1/Math.sqrt(Math.max(1,combat/3));
     return clamp(SFX_VOL*sfxVol*v.meta.gain*channelGain(v.channel)*density);
   }
-  function level(v,value){const link=bound.get(v.a);if(link)link.gain.gain.setTargetAtTime(value,context.currentTime,.012);else v.a.volume=clamp(value);}
+  function level(v,value){if(v.gain){v.gain.gain.setTargetAtTime(value,context.currentTime,.012);return;}if(!v.a)return;const link=bound.get(v.a);if(link)link.gain.gain.setTargetAtTime(value,context.currentTime,.012);else v.a.volume=clamp(value);}
   function play(k,options={}){
     if(!ready||!sfxVol)return false;reap();const now=performance.now()/1000,meta=describe(k);if(!meta)return false;
     const channel=options.channel||meta.channel,priority=options.priority??meta.priority;
@@ -1688,16 +1737,25 @@ const SND=(()=>{
     if(full){const candidates=(same.length>=(LIMIT[channel]||2)?same:voices).filter(v=>v.priority<priority).sort((a,b)=>a.priority-b.priority||a.serial-b.serial);
       if(!candidates.length){dropped++;return false;}stop(candidates[0]);}
     let file=meta.file;if(k==='hit')file='assets/audio/sfx/hit'+(1+(random()*3|0))+'.ogg';
-    let clips=pool.get(file);if(!clips){clips=[];pool.set(file,clips);}
-    let a=clips.find(x=>!voices.some(v=>v.a===x));if(!a){if(clips.length>=MAX_POOL){dropped++;return false;}a=new Audio(file);a.preload='auto';clips.push(a);}
-    const pan=Number.isFinite(options.x)?Math.max(-.35,Math.min(.35,(options.x/8-.5)*.7)):0,link=attach(a,pan);
-    if(link?.panner)link.panner.pan.setValueAtTime(pan,context.currentTime);
-    const v={a,k,channel,priority,meta,serial:serial++,started:false,expires:now+meta.duration+.65,focusUntil:now+(meta.focus||0),level:0};
-    voices.push(v);last.set(k,now);last.set('group:'+channel,now);focusPriority=Math.max(focusPriority,meta.focus?priority:0);
-    v.level=target(v);level(v,v.level);try{a.currentTime=0;}catch(e){}
-    if(context?.state==='suspended')context.resume().catch(()=>{});
+    const pan=Number.isFinite(options.x)?Math.max(-.35,Math.min(.35,(options.x/8-.5)*.7)):0;
+    const v={a:null,node:null,gain:null,panner:null,k,channel,priority,meta,serial:serial++,started:false,expires:now+meta.duration+.65,focusUntil:now+(meta.focus||0),level:0};
+    voices.push(v);last.set(k,now);last.set('group:'+channel,now);focusPriority=Math.max(focusPriority,meta.focus?priority:0);v.level=target(v);
+    if(context){
+      // Buffer sources share the unlocked context: each battle sound needs no new
+      // HTMLMediaElement.play() permission on Safari. Decode/cache once per file.
+      resumeContext();decoded(file).then(buffer=>{if(!buffer){stop(v);return;}if(!voices.includes(v)||!sfxVol)return;
+        const node=context.createBufferSource(),gain=context.createGain(),panner=context.createStereoPanner?context.createStereoPanner():null;
+        node.buffer=buffer;gain.gain.value=v.level;if(panner){panner.pan.value=pan;node.connect(panner);panner.connect(gain);}else node.connect(gain);gain.connect(master);
+        Object.assign(v,{node,gain,panner,started:true,expires:performance.now()/1000+buffer.duration+.2});node.onended=()=>stop(v);node.start();
+      }).catch(()=>stop(v));return true;
+    }
+    // Keep local-file and no-Web-Audio playback, with a Safari-compatible codec.
+    file=audioFile(file);let clips=pool.get(file);if(!clips){clips=[];pool.set(file,clips);}
+    let a=clips.find(x=>!voices.some(v=>v.a===x));if(!a){if(clips.length>=MAX_POOL){dropped++;stop(v);return false;}a=new Audio(file);a.preload='auto';clips.push(a);}
+    v.a=a;level(v,v.level);try{a.currentTime=0;}catch(e){}
     a.play().then(()=>{v.started=true;}).catch(()=>{stop(v);});return true;
   }
+
   function update(dt){
     reap();const now=performance.now()/1000;focusPriority=voices.reduce((n,v)=>v.focusUntil>now?Math.max(n,v.priority):n,0);
     for(const v of voices){const to=target(v);v.level+=(to-v.level)*Math.min(1,dt*(to<v.level?35:9));level(v,v.level);}
@@ -1717,7 +1775,7 @@ const SND=(()=>{
     setSfx(v){sfxVol=clamp(v);save();if(!sfxVol)reset();},
     get musVol(){return musVol;},get sfxVol(){return sfxVol;},get musicOn(){return musVol>0;},
     inspect(){let peak=0;if(analyser){const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);for(const n of samples)peak=Math.max(peak,Math.abs(n));}
-      return {ready,context:context?.state||'media',active:voices.length,focus:focusPriority,dropped,peak,musicLevel:music[want]._level,voices:voices.map(v=>({key:v.k,channel:v.channel,priority:v.priority,level:v.level,playing:!v.a.paused&&!v.a.ended}))};}
+      return {ready,codec:oggSupported?'ogg':'aac',decodedFiles:buffers.size,loadFailures,context:context?.state||'media',active:voices.length,focus:focusPriority,dropped,peak,musicLevel:music[want]._level,voices:voices.map(v=>({key:v.k,channel:v.channel,priority:v.priority,level:v.level,playing:v.node? v.started : !!v.a&&!v.a.paused&&!v.a.ended}))};}
   };
 })();
 
@@ -1726,7 +1784,8 @@ const SKILL_SND={maskedmagus:'teleport',mirrormage:'teleport',puppeteer:'curse',
   thief:'steal',assassin:'flurry',assassincross:'teleport',mage:'fire',wizard:'ice',highwizard:'fire',starwarden:'bash',stormranger:'arrows',dawnoracle:'bless',
   nightreaper:'curse',voidsage:'zap',bulwark:'bash',templar:'teleport',aegispaladin:'bless',spiritcaller:'summon',beastmaster:'summon',stonebinder:'quake',
   starcaller:'summon',cardshark:'reroll',fortuneteller:'star',highroller:'boom',glacierwarden:'ice',ronin:'steal',kensei:'flurry',shogun:'bash',snowmender:'heal',frostoracle:'ice',winterqueen:'freeze',hexer:'curse',bogwitch:'poison',doomherald:'curse',mossling:'slime',shroomkin:'poison',emberbat:'fire',golem:'quake',lich:'ice',wyrm:'flame'};
-addEventListener('pointerdown',()=>{ SND.init(); },{once:true});
+// Retry on trusted release/keyboard gestures too: iOS may reject pointerdown unlock.
+for(const event of ['pointerdown','pointerup','touchend','keydown'])addEventListener(event,()=>SND.init(),{capture:true,passive:true});
 
 // ====== game state ======
 let S, speed=1, last=0, msgTimer, hoverId=null, shopDrag=null, shopDragged=false;
@@ -2075,8 +2134,9 @@ function lbTable(list,mine){
 const lbHead=m=>`<h3>Leaderboard · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
 async function lbRunOver(){   // after a run: show the board, plus a name box when the run made the top 10
   const el=$('#lb'); if(!el) return;
-  const mode=S.mode, board=boardId(mode), sc={round:S.round,bosses:S.bosses};
+  const run=S,mode=S.mode, board=boardId(mode), sc={round:S.round,bosses:S.bosses};
   let list; try{ list=await lbFetch(board); }catch(e){ el.innerHTML=lbHead(mode)+"<p>Couldn't reach the leaderboard.</p>"; return; }
+  if(S!==run||!el.isConnected||$('#summary').hidden)return;
   if(!qualifies(list,sc)){ el.innerHTML=lbHead(mode)+lbTable(list); return; }
   let saved=''; try{ saved=localStorage.getItem('ab_lb_name')||''; }catch(e){}
   el.innerHTML=lbHead(mode)+`<div class="lbform"><b>You made the top 10!</b><input id="lbName" maxlength="16" placeholder="Your name" value="${esc(saved)}"><button class="b go" id="lbSend">Submit</button></div>`+lbTable(list);
@@ -2108,15 +2168,15 @@ function showSummary(){
   const top=m=>Object.entries(m).sort((a,b)=>b[1]-a[1])[0];
   const tc=top(S.clsUse), to=top(S.orgUse);
   if(rec) try{ localStorage.setItem(bestKey(S.mode),JSON.stringify({round:S.round,bosses:S.bosses,date:new Date().toISOString().slice(0,10)})); }catch(e){}
-  $('#summary').innerHTML=`<div class="sumbox">${rec?'<div class="newrec">🏆 New record!</div>':''}<h2>Run over</h2><p>${{normal:'⚔ Normal',daily:'📅 Daily Challenge '+today(),hard:'💀 Hard'+(S.mod?' · '+MODIFIERS[S.mod].icon+' '+MODIFIERS[S.mod].name:'')}[S.mode]}</p>
+  $('#summary').innerHTML=`<div class="sumbox run-summary" role="dialog" aria-modal="true" aria-labelledby="sumTitle"><div class="sumhead"><h2 id="sumTitle">Run over</h2><button class="b" id="sumClose" aria-label="Close run summary">✕ Close</button></div><div class="sumcontent">${rec?'<div class="newrec">🏆 New record!</div>':''}<p>${{normal:'⚔ Normal',daily:'📅 Daily Challenge '+today(),hard:'💀 Hard'+(S.mod?' · '+MODIFIERS[S.mod].icon+' '+MODIFIERS[S.mod].name:'')}[S.mode]}</p>
     <div class="sumgrid"><div><span>Reached</span><b>Round ${S.round}</b></div><div><span>Best</span><b>${rec?'Round '+S.round:'Round '+best.round}</b></div>
     <div><span>Bosses beaten</span><b>${S.bosses}</b></div><div><span>Blessings</span><b>${S.buffs.length}</b></div>
     <div><span>Main class</span><b style="color:${tc?CLASSES[tc[0]]?.color:''}">${tc&&CLASSES[tc[0]]?CLASSES[tc[0]].name:'–'}</b></div>
     <div><span>Main origin</span><b>${to&&ORIGINS[to[0]]?ORIGINS[to[0]].icon+' '+ORIGINS[to[0]].name:'–'}</b></div></div>
     ${!rec&&best?`<p>Your best is round ${best.round}${best.date?` (${best.date})`:''} — ${best.round-S.round} more to beat it.</p>`:''}
     <div id="lb" class="lb">Loading top 10…</div>
-    <button class="b go" id="bAgain">⚔ Play again</button><button class="b" id="bOther" style="margin-top:8px;width:100%">☰ Other runs · Codex</button></div>`;
-  $('#summary').hidden=false; $('#bAgain').onclick=()=>{ newGame(S.mode,S.mode==='hard'?S.mod:undefined); }; $('#bOther').onclick=()=>{ $('#summary').hidden=true; openModes(); };
+    </div><div class="sumactions"><button class="b go" id="bAgain">⚔ Play again</button><button class="b" id="bOther">☰ Other runs</button></div></div>`;
+  $('#summary').hidden=false;$('#sumClose').onclick=()=>{$('#summary').hidden=true;openModes();}; $('#bAgain').onclick=()=>{ newGame(S.mode,S.mode==='hard'?S.mod:undefined); }; $('#bOther').onclick=()=>{ $('#summary').hidden=true; openModes(); };
   if(rec) SND.play('star');
   lbRunOver();
 }
@@ -2308,6 +2368,10 @@ function clickCell(l){
 // press on a unit and drag it to a cell; a press without moving still works as a click
 let dragU=null,canvasTap=null;
 const shopCard=document.getElementById('shop').closest('.card');
+function isShopDrop(e){const r=shopCard.getBoundingClientRect(),x=e.clientX,y=e.clientY;
+  return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom&&document.elementsFromPoint(x,y).some(el=>el===shopCard||shopCard.contains(el));
+}
+
 function inspectFighter(e,touch){
   const l=cellAt(e);hoverId=null;
   if(l&&l.w==='bench'){const u=S.units.find(v=>sameLoc(v.loc,l));S.inspect=null;S.sel=u?u.uid:null;renderInfo();render();if(touch&&u)openHeroCard(u.type,{uid:u.uid});return;}
@@ -2332,6 +2396,7 @@ cv.addEventListener('pointerdown',e=>{
 });
 // small "Sell X for N gold?" popup at the cursor
 function askSell(e,what,gold,onYes){
+  if(touchInput){$('#confirm').hidden=true;onYes();return;}
   const c=$('#confirm'); c.innerHTML=`<div>Sell <b>${what}</b> for <b>${gold} gold</b>?</div><div class="row"><button class="b" data-yes>Sell</button><button class="b" data-no>Cancel</button></div>`;
   c.hidden=false;positionMenu(c,e);
   c.onclick=ev=>{ if(ev.target.closest('[data-yes]')) onYes(); if(ev.target.closest('button')) c.hidden=true; };
@@ -2365,9 +2430,9 @@ addEventListener('keydown',e=>{ if(e.key==='Escape'&&!(S&&S.fight&&S.fight.pause
 cv.addEventListener('pointermove',e=>{
   if(canvasTap&&canvasTap.pointerId===e.pointerId&&Math.hypot(e.clientX-canvasTap.x,e.clientY-canvasTap.y)>9)canvasTap.moved=true;
   if(!dragU||dragU.pointerId!==e.pointerId)return;
-  if(!dragU.moved&&Math.hypot(e.clientX-dragU.x0,e.clientY-dragU.y0)>8){dragU.moved=true;msg(`Drop on the shop to sell for ${sellValue(dragU.u)} gold`);}
+  if(!dragU.moved&&Math.hypot(e.clientX-dragU.x0,e.clientY-dragU.y0)>8){dragU.moved=true;shopCard.classList.add('sellready');msg(`Drop on the shop to sell for ${sellValue(dragU.u)} gold`);}
   dragU.clientX=e.clientX;dragU.clientY=e.clientY;dragU.pos=canvasPos(e);dragU.over=cellAt(e);
-  const r=shopCard.getBoundingClientRect();dragU.sell=dragU.moved&&e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+  dragU.sell=dragU.moved&&isShopDrop(e);
   shopCard.classList.toggle('sellzone',dragU.sell);
 });
 cv.addEventListener('pointerup',e=>{
@@ -2376,14 +2441,14 @@ cv.addEventListener('pointerup',e=>{
     else if(S.phase==='prep'){const l=cellAt(e);if(!applyTouchCell(e,l)){if(l)clickCell(l);else S.sel=null;render();renderUI();}}return;
   }
   if(!dragU||dragU.pointerId!==e.pointerId)return;
-  const d=dragU;dragU=null;shopCard.classList.remove('sellzone');if(S.phase!=='prep'||!S.units.includes(d.u))return;
-  if(d.moved&&d.sell){sellUnit(d.u);return;}
+  const d=dragU;dragU=null;shopCard.classList.remove('sellzone','sellready');if(S.phase!=='prep'||!S.units.includes(d.u))return;
+  if(d.moved&&isShopDrop(e)){sellUnit(d.u);return;}
   if(d.moved){const l=cellAt(e),tgt=l&&S.units.find(v=>sameLoc(v.loc,l));if(canTryFuse(d.u,tgt)){askFuse(e,d.u,tgt);render();renderUI();return;}place(d.u,l);S.sel=null;}
   else if(d.touch){S.sel=d.u.uid;S.selItem=null;hoverId=null;openHeroCard(d.u.type,{uid:d.u.uid});}
   else{hoverId=null;clickCell(d.u.loc);}render();renderUI();
 });
 for(const type of ['pointercancel','lostpointercapture'])cv.addEventListener(type,e=>{
-  if(dragU&&dragU.pointerId===e.pointerId)dragU=null;if(canvasTap&&canvasTap.pointerId===e.pointerId)canvasTap=null;shopCard.classList.remove('sellzone');
+  if(dragU&&dragU.pointerId===e.pointerId)dragU=null;if(canvasTap&&canvasTap.pointerId===e.pointerId)canvasTap=null;shopCard.classList.remove('sellzone','sellready');
 });
 // Keep native page scrolling on empty ground; reserve a drag that starts on a hero.
 cv.addEventListener('touchstart',e=>{const l=cellAt(e.touches[0]);if(e.touches.length===1&&S.phase==='prep'&&l&&S.units.some(v=>sameLoc(v.loc,l)))e.preventDefault();},{passive:false});
@@ -4029,7 +4094,7 @@ $('#synAll').onclick=()=>{ synAll=!synAll; try{ localStorage.setItem('ab_synall'
 // A tap opens persistent details; a drag buys directly into a friendly cell.
 function cancelGestures(){
   if(shopDrag&&shopDrag.ghost)shopDrag.ghost.remove();if(itemDrag&&itemDrag.ghost)itemDrag.ghost.remove();
-  shopDrag=null;itemDrag=null;dragU=null;canvasTap=null;if(typeof shopCard!=='undefined')shopCard.classList.remove('sellzone');
+  shopDrag=null;itemDrag=null;dragU=null;canvasTap=null;if(typeof shopCard!=='undefined')shopCard.classList.remove('sellzone','sellready');
 }
 addEventListener('blur',cancelGestures);addEventListener('visibilitychange',()=>{if(document.hidden)cancelGestures();});
 $('#shop').addEventListener('contextmenu',e=>{const b=e.target.closest('.su');if(!b)return;e.preventDefault();if(touchInput)return;
@@ -4081,17 +4146,17 @@ $('#items').addEventListener('pointerdown',e=>{const b=e.target.closest('.it');i
   itemDrag={i:+b.dataset.i,key:S.inv[+b.dataset.i],pointerId:e.pointerId,touch:directTouch(e),clientX:e.clientX,clientY:e.clientY,x0:e.clientX,y0:e.clientY,moved:false,ghost:null,over:null};capturePointer(b,e);
 });
 $('#items').addEventListener('pointermove',e=>{const d=itemDrag;if(!d||d.pointerId!==e.pointerId)return;d.clientX=e.clientX;d.clientY=e.clientY;
-  if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>8){d.moved=true;d.ghost=document.createElement('div');d.ghost.className='dragghost';d.ghost.textContent=IT(d.key).icon;document.body.appendChild(d.ghost);hideBubble();}
-  if(d.moved){d.ghost.style.left=e.clientX+'px';d.ghost.style.top=e.clientY+'px';d.over=cellAt(e);const r=shopCard.getBoundingClientRect();d.sell=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;shopCard.classList.toggle('sellzone',d.sell);}
+  if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>8){d.moved=true;shopCard.classList.add('sellready');d.ghost=document.createElement('div');d.ghost.className='dragghost';d.ghost.textContent=IT(d.key).icon;document.body.appendChild(d.ghost);hideBubble();}
+  if(d.moved){d.ghost.style.left=e.clientX+'px';d.ghost.style.top=e.clientY+'px';d.over=cellAt(e);d.sell=isShopDrop(e);shopCard.classList.toggle('sellzone',d.sell);}
 });
-$('#items').addEventListener('pointerup',e=>{const d=itemDrag;if(!d||d.pointerId!==e.pointerId)return;itemDrag=null;if(d.ghost)d.ghost.remove();shopCard.classList.remove('sellzone');
+$('#items').addEventListener('pointerup',e=>{const d=itemDrag;if(!d||d.pointerId!==e.pointerId)return;itemDrag=null;if(d.ghost)d.ghost.remove();shopCard.classList.remove('sellzone','sellready');
   if(S.inv[d.i]!==d.key)return;if(!d.moved){if(!combineTouchItem(d.i)&&d.touch)openItemCard(d.i);return;}
   const onItem=document.elementFromPoint(e.clientX,e.clientY)?.closest('#items .it');
   if(onItem){combineItems(d.i,+onItem.dataset.i);renderUI();return;}
   if(S.phase!=='prep')return msg('During battle you can combine bag items; equip and sell between rounds');
-  if(d.sell)return sellItem(d.i);const l=cellAt(e),u=l&&S.units.find(v=>sameLoc(v.loc,l));if(!u)return msg('Drop the item on one of your heroes');giveItem(u,d.i);render();renderUI();
+  if(isShopDrop(e))return sellItem(d.i);const l=cellAt(e),u=l&&S.units.find(v=>sameLoc(v.loc,l));if(!u)return msg('Drop the item on one of your heroes');giveItem(u,d.i);render();renderUI();
 });
-for(const type of ['pointercancel','lostpointercapture'])$('#items').addEventListener(type,e=>{if(itemDrag&&itemDrag.pointerId===e.pointerId){if(itemDrag.ghost)itemDrag.ghost.remove();itemDrag=null;shopCard.classList.remove('sellzone');}});
+for(const type of ['pointercancel','lostpointercapture'])$('#items').addEventListener(type,e=>{if(itemDrag&&itemDrag.pointerId===e.pointerId){if(itemDrag.ghost)itemDrag.ghost.remove();itemDrag=null;shopCard.classList.remove('sellzone','sellready');}});
 // Edge scrolling makes long cross-panel drags usable on smaller tablets/phones.
 function updateDragScroll(dt){const d=shopDrag&&shopDrag.moved?shopDrag:itemDrag&&itemDrag.moved?itemDrag:dragU&&dragU.moved?dragU:null;
   if(!d||!d.touch)return;const x=d.clientX,y=d.clientY,hit=document.elementFromPoint(x,y),col=hit&&hit.closest('.col');

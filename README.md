@@ -400,7 +400,7 @@ can still be inspected. Desktop click-to-buy and right-click controls remain.
 
 Tap an owned hero for its actual star level and equipment; use **Move / swap /
 fuse** then tap a destination, or drag it. The detail card also provides **Sell**
-with confirmation. Fighters and bosses can be inspected during combat.
+immediately on touch screens; mouse sales retain confirmation. Fighters and bosses can be inspected during combat.
 
 Tap a bag item for its description and equip/enchant, combine, reroll or sell
 actions. Equip/use-scroll asks for a hero; combine asks for another matching bag
@@ -482,3 +482,44 @@ barriers, reactive interceptions, bounded soul sharing/focus, arrow misses and
 wall collisions, boss control caps and real combat ticks for all new/reworked
 skills. Visual and motion checks dynamically cover the full roster; the touch
 suite continues to cover tablet landscape/portrait and phone controls.
+
+
+## iPad selling, rotation, audio and run-over fixes
+
+Touch **Sell** actions now sell immediately; fusion keeps its confirmation.
+Dragging a hero or bag item accepts the entire Shop panel, including cards, odds
+and buttons. A large overlay shows the drop area without changing layout. The
+release position is checked again, so scrolling while dragging cannot leave a
+stale sell target. Cancelled/interrupted drags still cannot sell.
+
+Board fitting sets both dimensions at the original aspect ratio. Resize,
+orientation, visual viewport and HUD/container changes schedule a fresh fit;
+rotation cancels active drags and removes temporary highlights. The Pages entry
+also declares the device viewport. Run-over uses a scrollable content area with
+an always-visible Close header and Play again / Other runs footer, regardless of
+whether a score qualifies for the top ten or leaderboard loading succeeds.
+
+Effects on HTTP(S) use decoded Web Audio buffers, sharing the context unlocked
+by a real touch/keyboard gesture. This avoids needing a separate media autoplay
+permission for each delayed combat effect. Resume is retried on touch release;
+Safari's playback audio session is requested where supported. The decoded-file
+LRU holds at most 48 entries and the existing ten-voice/priority limits remain.
+Browsers without Ogg/Vorbis support select AAC `.m4a` alternatives; a decode
+failure also tries the alternate codec. Native media remains the local-file /
+no-Web-Audio fallback. AAC encoding includes a limiter and reconstruction
+headroom, preserving the original sound attributions and remix license.
+
+```bash
+python tools/build_safari_audio.py
+python tools/build_game.py
+python tools/check_ipad_regressions.py --preview /tmp/ipad-run-over.png
+python tools/check_touch_controls.py
+python tools/check_audio.py
+```
+
+The audio builders refresh AAC alternatives when an effect changes. The iPad
+regression check uses native touch input, rotates a running page repeatedly,
+sells into three different Shop areas and checks full non-top-ten dialogs. It
+also decodes all 141 AAC effects and checks audible output while Ogg support is
+absent and HTML sound-effect playback is denied. These Chromium checks exercise
+Safari's codec/autoplay constraints; they do not constitute physical iPad testing.

@@ -3,7 +3,23 @@ const SND=(()=>{
   const clamp=v=>Math.max(0,Math.min(1,Number(v)||0));
   let ready=false,musVol=.5,sfxVol=.7,want='prep',context=null,master=null,analyser=null;
   let voices=[],serial=0,rng=0x41c64e6d,focusPriority=0,dropped=0;
-  const last=new Map(),bound=new WeakMap(),pool=new Map();
+  const last=new Map(),bound=new WeakMap(),pool=new Map(),buffers=new Map();
+  const oggSupported=!!new Audio().canPlayType('audio/ogg; codecs="vorbis"');
+  const audioFile=file=>!oggSupported?file.replace(/\.ogg$/,'.m4a'):file;
+  let loadFailures=0;
+  function decoded(file){
+    const selected=audioFile(file);if(buffers.has(selected)){const b=buffers.get(selected);buffers.delete(selected);buffers.set(selected,b);return b;}
+    const task=(async()=>{const alternatives=[selected,selected.endsWith('.ogg')?selected.replace(/\.ogg$/,'.m4a'):selected.replace(/\.m4a$/,'.ogg')];
+      for(const url of alternatives)try{const res=await fetch(url);if(!res.ok)continue;return await context.decodeAudioData(await res.arrayBuffer());}catch(e){}
+      loadFailures++;return null;
+    })();task.then(buffer=>{if(!buffer&&buffers.get(selected)===task)buffers.delete(selected);});buffers.set(selected,task);while(buffers.size>48)buffers.delete(buffers.keys().next().value);return task;
+  }
+  function resumeContext(){if(!context||context.state==='running'||context.state==='closed')return;
+    context.resume().catch(()=>{});
+    // iOS may need an actual source started inside touchend, not just resume().
+    try{const source=context.createBufferSource();source.buffer=context.createBuffer(1,1,context.sampleRate);source.connect(context.destination);source.start();source.onended=()=>source.disconnect();}catch(e){}
+  }
+
   const MAX_VOICES=10,MAX_POOL=3,SFX_VOL=.72,MUSIC_VOL=.42;
   const LIMIT={basic:3,support:2,cast:1,skill:3,critical:2,boss:2,ui:2,result:1};
   const CHANNEL_GAP={basic:.065,support:.24,cast:.16,critical:.09,boss:.12,ui:.04};
@@ -25,13 +41,16 @@ const SND=(()=>{
     }catch(e){return null;}
   }
   function init(){
-    if(ready){if(context?.state==='suspended')context.resume().catch(()=>{});return;}ready=true;
+    // Safari otherwise may keep Web Audio in the silent-switch ambient session.
+    try{if(navigator.audioSession&&navigator.audioSession.type!=='playback')navigator.audioSession.type='playback';}catch(e){}
+    if(ready){resumeContext();return;}ready=true;
     // Local-file audio uses native media volumes, without CORS-dependent routing.
     if(location.protocol==='http:'||location.protocol==='https:')try{
       const AC=window.AudioContext||window.webkitAudioContext;if(AC){context=new AC();master=context.createGain();master.gain.value=.85;
         const compressor=context.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=6;compressor.ratio.value=12;compressor.attack.value=.003;compressor.release.value=.14;
         analyser=context.createAnalyser();analyser.fftSize=1024;master.connect(compressor);compressor.connect(analyser);analyser.connect(context.destination);
-        for(const m of Object.values(music))attach(m);context.resume().catch(()=>{});}
+        for(const m of Object.values(music))attach(m);resumeContext();
+        for(const key of ['click','buy','sell','hit1','hit2','hit3','shoot','cast'])decoded('assets/audio/sfx/'+key+'.ogg');}
     }catch(e){context=null;master=null;analyser=null;}
   }
   function describe(k){
@@ -41,11 +60,11 @@ const SND=(()=>{
       gain:VOLUME[k]??.65,gap:GAPS[k]??.12,focus:channel==='boss'?.45:channel==='critical'?.15:channel==='skill'?.18:channel==='result'?.3:0,duration:channel==='result'?2.5:channel==='basic'?.6:1.7};
   }
   function stop(v){
-    if(!voices.includes(v))return;
-    voices=voices.filter(x=>x!==v);v.a.pause();try{v.a.currentTime=0;}catch(e){}
-    const link=bound.get(v.a);if(link)link.gain.gain.setValueAtTime(0,context.currentTime);else v.a.volume=0;
+    if(!voices.includes(v))return;voices=voices.filter(x=>x!==v);
+    if(v.node){try{v.node.stop();}catch(e){}v.node.disconnect();if(v.panner)v.panner.disconnect();v.gain.disconnect();}
+    if(v.a){v.a.pause();try{v.a.currentTime=0;}catch(e){}const link=bound.get(v.a);if(link)link.gain.gain.setValueAtTime(0,context.currentTime);else v.a.volume=0;}
   }
-  function reap(){const now=performance.now()/1000;for(const v of [...voices])if(v.a.ended||(v.started&&v.a.paused)||now>v.expires)stop(v);}
+  function reap(){const now=performance.now()/1000;for(const v of [...voices])if((v.a&&(v.a.ended||(v.started&&v.a.paused)))||now>v.expires)stop(v);}
   function channelGain(channel){
     if(focusPriority>=4)return {basic:.25,support:.4,cast:.4,skill:.7,critical:.85}[channel]??1;
     if(focusPriority>=3)return {basic:.4,support:.55,cast:.5,skill:.85}[channel]??1;
@@ -55,7 +74,7 @@ const SND=(()=>{
     const density=v.channel==='ui'||v.channel==='result'?1:1/Math.sqrt(Math.max(1,combat/3));
     return clamp(SFX_VOL*sfxVol*v.meta.gain*channelGain(v.channel)*density);
   }
-  function level(v,value){const link=bound.get(v.a);if(link)link.gain.gain.setTargetAtTime(value,context.currentTime,.012);else v.a.volume=clamp(value);}
+  function level(v,value){if(v.gain){v.gain.gain.setTargetAtTime(value,context.currentTime,.012);return;}if(!v.a)return;const link=bound.get(v.a);if(link)link.gain.gain.setTargetAtTime(value,context.currentTime,.012);else v.a.volume=clamp(value);}
   function play(k,options={}){
     if(!ready||!sfxVol)return false;reap();const now=performance.now()/1000,meta=describe(k);if(!meta)return false;
     const channel=options.channel||meta.channel,priority=options.priority??meta.priority;
@@ -65,16 +84,25 @@ const SND=(()=>{
     if(full){const candidates=(same.length>=(LIMIT[channel]||2)?same:voices).filter(v=>v.priority<priority).sort((a,b)=>a.priority-b.priority||a.serial-b.serial);
       if(!candidates.length){dropped++;return false;}stop(candidates[0]);}
     let file=meta.file;if(k==='hit')file='assets/audio/sfx/hit'+(1+(random()*3|0))+'.ogg';
-    let clips=pool.get(file);if(!clips){clips=[];pool.set(file,clips);}
-    let a=clips.find(x=>!voices.some(v=>v.a===x));if(!a){if(clips.length>=MAX_POOL){dropped++;return false;}a=new Audio(file);a.preload='auto';clips.push(a);}
-    const pan=Number.isFinite(options.x)?Math.max(-.35,Math.min(.35,(options.x/8-.5)*.7)):0,link=attach(a,pan);
-    if(link?.panner)link.panner.pan.setValueAtTime(pan,context.currentTime);
-    const v={a,k,channel,priority,meta,serial:serial++,started:false,expires:now+meta.duration+.65,focusUntil:now+(meta.focus||0),level:0};
-    voices.push(v);last.set(k,now);last.set('group:'+channel,now);focusPriority=Math.max(focusPriority,meta.focus?priority:0);
-    v.level=target(v);level(v,v.level);try{a.currentTime=0;}catch(e){}
-    if(context?.state==='suspended')context.resume().catch(()=>{});
+    const pan=Number.isFinite(options.x)?Math.max(-.35,Math.min(.35,(options.x/8-.5)*.7)):0;
+    const v={a:null,node:null,gain:null,panner:null,k,channel,priority,meta,serial:serial++,started:false,expires:now+meta.duration+.65,focusUntil:now+(meta.focus||0),level:0};
+    voices.push(v);last.set(k,now);last.set('group:'+channel,now);focusPriority=Math.max(focusPriority,meta.focus?priority:0);v.level=target(v);
+    if(context){
+      // Buffer sources share the unlocked context: each battle sound needs no new
+      // HTMLMediaElement.play() permission on Safari. Decode/cache once per file.
+      resumeContext();decoded(file).then(buffer=>{if(!buffer){stop(v);return;}if(!voices.includes(v)||!sfxVol)return;
+        const node=context.createBufferSource(),gain=context.createGain(),panner=context.createStereoPanner?context.createStereoPanner():null;
+        node.buffer=buffer;gain.gain.value=v.level;if(panner){panner.pan.value=pan;node.connect(panner);panner.connect(gain);}else node.connect(gain);gain.connect(master);
+        Object.assign(v,{node,gain,panner,started:true,expires:performance.now()/1000+buffer.duration+.2});node.onended=()=>stop(v);node.start();
+      }).catch(()=>stop(v));return true;
+    }
+    // Keep local-file and no-Web-Audio playback, with a Safari-compatible codec.
+    file=audioFile(file);let clips=pool.get(file);if(!clips){clips=[];pool.set(file,clips);}
+    let a=clips.find(x=>!voices.some(v=>v.a===x));if(!a){if(clips.length>=MAX_POOL){dropped++;stop(v);return false;}a=new Audio(file);a.preload='auto';clips.push(a);}
+    v.a=a;level(v,v.level);try{a.currentTime=0;}catch(e){}
     a.play().then(()=>{v.started=true;}).catch(()=>{stop(v);});return true;
   }
+
   function update(dt){
     reap();const now=performance.now()/1000;focusPriority=voices.reduce((n,v)=>v.focusUntil>now?Math.max(n,v.priority):n,0);
     for(const v of voices){const to=target(v);v.level+=(to-v.level)*Math.min(1,dt*(to<v.level?35:9));level(v,v.level);}
@@ -94,6 +122,6 @@ const SND=(()=>{
     setSfx(v){sfxVol=clamp(v);save();if(!sfxVol)reset();},
     get musVol(){return musVol;},get sfxVol(){return sfxVol;},get musicOn(){return musVol>0;},
     inspect(){let peak=0;if(analyser){const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);for(const n of samples)peak=Math.max(peak,Math.abs(n));}
-      return {ready,context:context?.state||'media',active:voices.length,focus:focusPriority,dropped,peak,musicLevel:music[want]._level,voices:voices.map(v=>({key:v.k,channel:v.channel,priority:v.priority,level:v.level,playing:!v.a.paused&&!v.a.ended}))};}
+      return {ready,codec:oggSupported?'ogg':'aac',decodedFiles:buffers.size,loadFailures,context:context?.state||'media',active:voices.length,focus:focusPriority,dropped,peak,musicLevel:music[want]._level,voices:voices.map(v=>({key:v.k,channel:v.channel,priority:v.priority,level:v.level,playing:v.node? v.started : !!v.a&&!v.a.paused&&!v.a.ended}))};}
   };
 })();

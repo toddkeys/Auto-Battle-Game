@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 SRC = sys.argv[1]
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets', 'audio')
@@ -65,4 +66,6 @@ if __name__ == '__main__':
         out = os.path.join(OUT, name + '.mp3')
         shutil.copyfile(os.path.join(SRC, src), out)
         total += os.path.getsize(out)
+    from build_safari_audio import convert
+    for name in SFX: convert(Path(OUT)/'sfx'/(name+'.ogg'))
     print(f'built {len(SFX)} sounds + {len(MUSIC)} music tracks, {total // 1024} KB')

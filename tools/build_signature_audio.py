@@ -72,6 +72,8 @@ def main():
  if not selected:raise SystemExit('Unknown hero/boss')
  with ThreadPoolExecutor(max_workers=4) as pool:
   for cid,profile in pool.map(build_one,selected):profiles[cid]=profile
+ from build_safari_audio import convert
+ with ThreadPoolExecutor(max_workers=4) as pool:list(pool.map(convert,[OUT/(u[0]+'.ogg') for u in selected]))
  manifest.write_text(json.dumps(profiles,indent=2,sort_keys=True)+'\n')
  print('Built',len(selected),'skill signatures with two-pass loudness matching')
 if __name__=='__main__':main()
