@@ -1,91 +1,116 @@
-"""Monkey class (original characters inspired by the old Journey to the West legend): agile staff fighters."""
+"""Monkey class (original characters inspired by the old Journey to the West legend): half-human, half-monkey
+staff fighters — anime faces and hair with furry monkey ears and long curling tails."""
 from kit import *  # noqa: F401,F403  (shared body pieces + palettes)
 from classes import sparkle
 from pixel import Spr, ramp
 
 
-def monkey_head(s, fur, muzzle, band=None, band_gem=None):
-    """furry round head, a pale heart-shaped face, round ears, eyes via kit.face()"""
-    s.part(fur, [('ell', 28, 17.5, 10.5, 10), ('ell', 16.5, 19, 3.2, 3.6), ('ell', 39.5, 19, 3.2, 3.6),
-                 ('poly', [(19, 11), (21, 6), (24, 9), (27, 4.5), (30, 8.5), (34, 5.5), (36, 11)])], soft=2.4)   # fur tufts on top
-    s.part(muzzle, [('ell', 16.5, 19, 1.6, 2), ('ell', 39.5, 19, 1.6, 2)], soft=.5, line=False)   # inner ears
-    s.part(muzzle, [('poly', [(19.5, 16.5), (24, 15), (28, 18), (32, 15), (36.5, 16.5), (36, 23), (31.5, 28), (24.5, 28), (20, 23)])], soft=1.6)   # heart-shaped face
-    if band:
-        s.part(band, [('rect', 17.5, 12, 38.5, 14.2)], soft=.4, gloss=1.2, cast=1)   # circlet
-        if band_gem:
-            s.part(band_gem, [('ell', 28, 13, 1.4, 1.4)], soft=.3, gloss=1.4, line=False)
+def monkey_ears(s, fur, inner):
+    """round furry monkey ears on the sides of the head (instead of human ears)"""
+    with s.grp('head'):
+        s.part(fur, [('ell', 15.5, 18.5, 3.6, 4), ('ell', 40.5, 18.5, 3.6, 4)], soft=1.2)
+        s.part(inner, [('ell', 15.8, 18.8, 1.8, 2.3), ('ell', 40.2, 18.8, 1.8, 2.3)], soft=.4, line=False)
+
+
+def tail(s, fur, tip, pts, w=1.5):
+    """a long curling monkey tail behind the body, with a fluffy tip"""
+    with s.grp('cape'):
+        s.part(fur, [('line', pts, w)], soft=.8, gloss=.5)
+        x, y = pts[-1]
+        s.part(tip, [('ell', x, y, w * 1.5, w * 1.5)], soft=.6)
 
 
 def wukong():
-    # monkey sage, fierce: wild golden mane, narrow glowing eyes and fangs, a gold circlet,
-    # dark crimson lamellar armour with bronze plates and gold trim, a red sash streaming behind,
-    # an iron staff raised overhead, standing on a small golden cloud
+    # the monkey sage as a young half-monkey warrior: wild golden-orange hair, golden-furred monkey ears,
+    # a gold circlet, fierce amber eyes and a confident grin, fur-trimmed crimson-and-gold armour,
+    # a red sash, a long golden tail, an iron staff with golden caps held forward like a blade
     s = Spr()
-    fur, mane, muzzle = ramp('#c8742a', 1.25, 1.1), ramp('#8a3a1a', 1.2), ramp('#ecc8a0', .8)
-    armor, bronze, gold, sash, iron = ramp('#6a1418', 1.3), ramp('#b87a3a', 1.25), P['gold'], ramp('#d83a2a', 1.2, 1.1), ramp('#2a2a32', 1.3)
-    cloud = ramp('#ffe8a0', .8)
+    hair, fur, inner = ramp('#f0902a', 1.3, 1.15), ramp('#e0a040', 1.2), ramp('#f6d6b0', .8)
+    armor, gold, sash, iron = ramp('#a8202a', 1.25, 1.1), P['gold'], ramp('#e04a2a', 1.2, 1.1), ramp('#2c2c36', 1.3)
+    cream = ramp('#f4e2c0', .8)
+    tail(s, fur, cream, [(34, 42), (43, 46), (49, 41), (47, 35), (51, 31)], 1.5)
+    back_hair(s, hair, 31, 12)   # wild mane falling down the back
     with s.grp('cape'):
-        s.part(cloud, [('ell', 20, 51, 9, 3), ('ell', 30, 50.5, 11, 3.5), ('ell', 40, 51.5, 7, 2.6)], soft=1.6, gloss=.6)   # golden cloud
-        s.part(sash, [('poly', [(32, 37), (36, 36), (47, 40), (52, 36), (50, 43), (44, 44), (37, 41)])], soft=1)   # sash streaming behind
-        s.part(fur, [('line', [(35, 42), (44, 47), (50, 42), (47, 37)], 1.3)], soft=.8)   # curling tail
-    legs(s, ramp('#3a1a1a', 1.2), ramp('#1e1214', 1.2))
+        s.part(hair, [('poly', [(17, 22), (12, 32), (19, 29)]), ('poly', [(39, 22), (44, 32), (37, 29)])], soft=.8)
+    with s.grp('cape'):   # sash ends streaming behind
+        s.part(sash, [('poly', [(31, 39), (35, 39), (43, 47), (40, 49), (34, 44)])], soft=.8)
+    legs(s, ramp('#3a2a2a', 1.2), ramp('#2a1e1a', 1.2))
+    with s.grp('legL'):
+        s.part(cream, [('rect', 21.5, 45, 27.5, 46.6)], soft=.5, line=False)   # fur leg wraps
+    with s.grp('legR'):
+        s.part(cream, [('rect', 29.5, 45, 35, 46.6)], soft=.5, line=False)
     torso(s, armor, hem=44)
     with s.grp('body'):
-        for y in (31, 34, 37, 40):   # lamellar rows
-            for x in (22.5, 26.5, 30.5, 34.5):
-                s.part(bronze, [('rect', x - 1.6, y, x + 1.6, y + 2.2)], soft=.3, gloss=.8, line=False)
-        s.part(gold, [('poly', [(21, 28), (35, 28), (33.5, 31), (28, 33), (22.5, 31)])], soft=.8, gloss=1.3)   # gold collar
-        s.part(gold, [('cap', 20, 43.5, 36, 43.5, .7)], soft=.3, gloss=1.2)
-    belt(s, sash, 41, gold)
-    with s.grp('weapon'):   # iron staff raised overhead, golden caps
-        s.part(iron, [('cap', 30, 46, 52, 3, 1.25)], soft=.5, gloss=1.3)
-        s.part(gold, [('cap', 29.5, 47, 31.3, 43.5, 1.6), ('cap', 50.8, 5.5, 52.5, 2, 1.6)], soft=.4, gloss=1.5)
-        s.part(ramp('#ffd060', 1.3), [('cap', 33, 40, 49, 9, .35)], soft=.2, line=False, flat=True, bias=.3)   # glint along the staff
-    arm(s, fur, fur, (35, 30), (40, 26), (43, 22), r=2.8, glove=ramp('#4a2a18'))   # raised arm
-    arm(s, fur, fur, (21, 30), (17.5, 35), (17, 40), r=2.8, glove=ramp('#4a2a18'))
-    s.part(bronze, [('chord', 36, 30.5, 5.5, 4.4, 180, 360), ('chord', 20, 30.5, 5.5, 4.4, 180, 360)], soft=1, gloss=1.2, cast=1)   # pauldrons
-    s.part(gold, [('poly', [(31.5, 27.5), (36, 24), (40.5, 27.5)]), ('poly', [(15.5, 27.5), (20, 24), (24.5, 27.5)])], soft=.4, gloss=1.2)   # pauldron spikes
-    with s.grp('head'):
-        s.part(mane, [('ell', 28, 18, 13, 11.5), ('poly', [(15, 20), (10, 26), (16, 25)]), ('poly', [(41, 20), (46, 26), (40, 25)]),
-                      ('poly', [(17, 11), (15, 3), (21, 8), (24, 1), (28, 6), (32, 1), (35, 8), (41, 3), (39, 11)])], soft=2.2)   # wild mane
-        monkey_head(s, fur, muzzle, gold, ramp('#ff3a3a', 1.2))
-    face(s, '#ffb020', mouth=None, blush=False)
-    for x0, x1 in ((20, 23), (27, 30)):   # fierce: brows slanting down to the nose, narrow glowing eyes
-        for x in range(x0, x1):
-            s.mark(x, 19, (40, 16, 10))
-    s.mark(19, 18, (40, 16, 10)); s.mark(30, 18, (40, 16, 10))
-    for x in (20, 21, 22, 27, 28, 29):
-        s.mark(x, 22, (236, 200, 160))   # narrow the eyes from below
-    for x in (23, 24, 25, 26):
-        s.mark(x, 25, (60, 20, 20))   # snarl
-    s.mark(23, 26, (255, 255, 240)); s.mark(26, 26, (255, 255, 240))   # fangs
-    for x, y in ((52, 12), (8, 30), (10, 46), (54, 28)):
+        s.part(gold, [('poly', [(22.5, 30.5), (33.5, 30.5), (33, 38), (28, 40), (23, 38)])], soft=1, gloss=1.5)   # gold chest plate
+        s.part(armor, [('cap', 28, 31, 28, 39, .4)], soft=.2, line=False)
+        s.part(cream, [('poly', [(20, 27.5), (36, 27.5), (34.5, 31), (28, 32.5), (21.5, 31)])], soft=1.4)   # fur collar
+        s.part(gold, [('poly', [(21, 41), (35, 41), (36, 45.5), (28, 46.5), (20, 45.5)])], soft=.8, gloss=1.2)   # tassets
+    belt(s, sash, 39.5, gold)
+    with s.grp('weapon'):   # iron staff held forward like the swordsmen's blades
+        s.part(iron, [('cap', 40, 50, 50, 8, 1.15)], soft=.5, gloss=1.4)
+        s.part(gold, [('cap', 39.6, 51.5, 40.7, 47.5, 1.5), ('cap', 49.4, 10.5, 50.4, 6.5, 1.5)], soft=.4, gloss=1.6)
+        s.part(ramp('#ffd060', 1.3), [('cap', 42, 41, 48.5, 13, .3)], soft=.2, line=False, flat=True, bias=.3)   # glint
+    arm(s, armor, SKIN, (35, 30), (38.5, 36), (42, 41), r=2.8, glove=ramp('#4a2a18'))
+    arm(s, armor, SKIN, (21, 30), (18.5, 35), (18, 39.5), r=2.8, glove=ramp('#4a2a18'))
+    for cx in (36, 20):   # gold pauldrons with fur edges
+        s.part(gold, [('chord', cx, 30.5, 5.4, 4.6, 180, 360)], soft=1, gloss=1.5, cast=1)
+        s.part(cream, [('cap', cx - 5, 30.6, cx + 5, 30.6, .8)], soft=.6, line=False)
+    head(s)
+    monkey_ears(s, fur, inner)
+    with s.grp('head'):   # wild spikes growing out of the crown of the head
+        s.part(hair, [('poly', [(18.5, 13), (14, 7), (21.5, 8.5), (22, 2.5), (27, 6.5), (31, -1), (32.5, 6), (38, 2.5), (36.5, 9), (42, 9.5), (38, 13)])], soft=1.4, cast=2, shine=7)
+    bangs(s, hair, 'swept', shine=9)
+    with s.grp('head'):   # the circlet
+        s.part(gold, [('cap', 17.5, 14.6, 38.5, 14.6, .7)], soft=.3, gloss=1.5, cast=1)
+        s.part(ramp('#ff3a3a', 1.2), [('ell', 28, 14.6, 1.2, 1.2)], soft=.2, gloss=1.5, line=False)
+    face(s, '#f0a020', mouth=None, blush=False)
+    if not kit_expr():
+        for x0, x1 in ((20, 23), (27, 30)):   # fierce brows
+            for x in range(x0, x1):
+                s.mark(x, 18, (120, 60, 20))
+        for x in (24, 25, 26):   # confident grin with a fang
+            s.mark(x, 25, (150, 60, 60))
+        s.mark(23, 24, (150, 60, 60)); s.mark(25, 26, (255, 255, 240))
+    for x, y in ((52, 6), (8, 30), (54, 26)):
         sparkle(s, x, y, (255, 220, 140))
     return s
 
+
 def stonemonkey():
-    # a young stone-grey monkey: leaf-green vest, rope belt, a red headband with flying tails, a plain wooden staff
+    # a young half-monkey kid: messy grey-brown hair, round grey monkey ears, a cheeky grin,
+    # a leaf-green vest over a tan shirt, a red headband with flying tails, a long tail, a plain wooden staff
     s = Spr()
-    fur, muzzle = ramp('#8a8a92', 1.2), ramp('#e8dcc8', .8)
-    vest, band = ramp('#4a8a3a', 1.1), ramp('#d83a2a', 1.1)
-    with s.grp('cape'):
-        s.part(fur, [('line', [(35, 41), (42, 46), (46, 42)], 1.2)], soft=.8)   # tail
-    legs(s, ramp('#5a4a3a'), ramp('#3a2a20'))
-    torso(s, fur, hem=43)
+    hair, fur, inner = ramp('#7a6a62', 1.2), ramp('#8a8a92', 1.15), ramp('#ecd8c8', .8)
+    vest, shirt, band = ramp('#4a9a3a', 1.15), ramp('#d8b888', .9), ramp('#d83a2a', 1.15)
+    tail(s, fur, inner, [(34, 42), (42, 46), (47, 42), (45, 37)], 1.3)
+    back_hair(s, hair, 25, 11)
+    legs(s, ramp('#6a5440'), ramp('#3a2a20'))
+    torso(s, shirt, hem=43)
     with s.grp('body'):
         s.part(vest, [('poly', [(20.5, 28), (26, 28), (24.5, 41), (20, 41)]), ('poly', [(30, 28), (35.5, 28), (36, 41), (31.5, 41)])], soft=1.2)   # leaf vest
-        s.part(muzzle, [('ell', 28, 35, 3.6, 4.5)], soft=1, line=False)   # pale belly
+        for x, y in ((22, 33), (34, 36)):
+            s.part(ramp('#6ac04a'), [('ell', x, y, 1, 1.6)], soft=.3, line=False)   # leaf pattern
     belt(s, ramp('#b89a5a'), 40)
-    with s.grp('weapon'):   # wooden staff
-        s.part(P['wood'], [('cap', 36, 49, 48, 14, .9)], soft=.5, gloss=.6)
-    arm(s, fur, fur, (35, 30), (38.5, 35.5), (41.5, 32), r=2.5)
-    arm(s, fur, fur, (21, 30), (18.5, 35), (18, 39), r=2.5)
+    with s.grp('weapon'):   # wooden staff held forward
+        s.part(P['wood'], [('cap', 40, 49, 48, 12, .95)], soft=.5, gloss=.7)
+        s.part(ramp('#c8a060'), [('cap', 47.4, 15, 48.2, 11.5, 1.2)], soft=.3, gloss=1)
+    arm(s, shirt, SKIN, (35, 30), (38.5, 36), (42, 41), r=2.5)
+    arm(s, shirt, SKIN, (21, 30), (18.5, 35), (18, 39.5), r=2.5)
+    head(s)
+    monkey_ears(s, fur, inner)
+    with s.grp('head'):   # messy tufts on top
+        s.part(hair, [('poly', [(20, 12), (20, 6), (24, 9), (27, 4), (30, 8.5), (34, 5.5), (36, 12)])], soft=1.4, cast=2, shine=7)
+    bangs(s, hair, 'swept', shine=8)
     with s.grp('head'):
-        monkey_head(s, fur, muzzle)
-        s.part(band, [('rect', 17.5, 12.5, 38.5, 14.5)], soft=.4, cast=1)
+        s.part(band, [('rect', 17.5, 12.6, 38.5, 14.4)], soft=.4, cast=1)
         s.part(band, [('poly', [(38, 13), (46, 10), (44, 14), (47, 17), (38, 15)])], soft=.4)   # flying headband tails
-    face(s, '#6a4a2a', blush=False)
+    face(s, '#8a5a2a', 'open', blush=True)
     return s
+
+
+def kit_expr():
+    import kit
+    return kit.EXPR
 
 
 MONKEYS = dict(wukong=wukong, stonemonkey=stonemonkey)

@@ -495,7 +495,7 @@ const UNITS = [
   {id:'highpriest',  name:'High Priest',  cls:'holy',org:'wildheart',   cost:3,hp:900, atk:60, range:3,as:0.9, ms:1.4,heal:180},
   {id:'assassincross',name:'Assassin Cross',cls:'rogue',leap:1,org:'moonblood',cost:3,hp:950, atk:150,range:1,as:0.55,ms:2.6},
   {id:'highwizard',  name:'High Wizard',  cls:'magic',org:'starborn',  cost:3,hp:780, atk:110,range:4,as:1.2, ms:1.3,splash:1.5},
-  {id:'starwarden',  name:'Star Warden',  cls:'warrior',org:'starborn',cost:4,hp:2000,atk:150,range:1,as:0.9, ms:1.7},
+  {id:'starwarden',  name:'Crimson Valkyrie',cls:'warrior',org:'starborn',cost:4,hp:2000,atk:150,range:1,as:0.9, ms:1.7},
   {id:'stormranger', name:'Storm Ranger', cls:'archer',org:'ironvow',  cost:4,hp:1050,atk:170,range:5,as:0.75,ms:1.4},
   {id:'dawnoracle',  name:'Dawn Oracle',  cls:'holy',org:'gilded',     cost:4,hp:1200,atk:80, range:3,as:0.9, ms:1.4,heal:240},
   {id:'nightreaper', name:'Night Reaper', cls:'rogue',leap:1,org:'wildheart',cost:4,hp:1300,atk:195,range:1,as:0.55,ms:2.6},
@@ -557,7 +557,7 @@ const UNITS = [
   {id:'rimedragoness',name:'Rime Dragoness',cls:'mesmer',org:'wildheart', cost:4,hp:1550,atk:125,range:3,as:1.1, ms:1.4},
   // monkeys: agile staff fighters whose every 4th hit powers them up
   {id:'stonemonkey', name:'Stone Monkey', cls:'monkey',org:'wildheart',   cost:2,hp:760, atk:68, range:1,as:.8,  ms:2.0},
-  {id:'wukong',      name:'Wukong',       cls:'monkey',org:'starborn',    cost:4,hp:1500,atk:145,range:1,as:.8,  ms:2.0,scale:1.18},
+  {id:'wukong',      name:'Wukong',       cls:'monkey',org:'starborn',    cost:4,hp:1500,atk:145,range:1,as:.8,  ms:2.0},
   // gunslingers: quick revolver shots and long-range sniping
   {id:'gunslinger',  name:'Gunslinger',   cls:'gunner',org:'gilded',      cost:2,hp:620, atk:58, range:3,as:.8,  ms:1.5},
   {id:'deadshot',    name:'Deadshot',     cls:'gunner',org:'starborn',    cost:4,hp:1150,atk:185,range:6,as:1.1, ms:1.3},
@@ -832,7 +832,7 @@ const SKILLS = {
     cast(a,t){ hit(a,t,2.2); inflict(t,'blind'); burst(t.x,t.y,'#ff9a40',10,3,3,3); }},
   golem:{name:'Quake Slam', names:['Quake Slam','Boulder Toss'], mp:70, desc:'Alternates Quake Slam (160% damage + 1s stun within 2 cells) and Boulder Toss (300% to the farthest enemy + 1s stun). Takes 30% less damage above half HP; at half HP it enrages and calls mosslings.',
     cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ const t=foes(a).sort((p,q)=>dist(q,a)-dist(p,a))[0]; if(t) shoot(a,t,3,'#a08060',true,e=>stun(e)); return; } for(const e of foes(a)) if(dist(e,a)<=2){ hit(a,e,1.6); stun(e); } V({k:'ring',x:a.x,y:a.y+.3,r:2,c:'#c8a070'}); V({k:'burst',x:a.x,y:a.y+.3,r:2,c:'#a08060'}); burst(a.x,a.y+.3,'#c0a080',18,4,4,5); hitStop(.08); }},
-  starwarden:{name:'Starfall Challenge', mp:90, desc:'Slams down a star: 200% damage to every enemy within 2.5 cells, and Taunts them for 2s — they must attack the Star Warden, and every hit they land on it is reflected back at them at 100%.',
+  starwarden:{name:'Starfall Challenge', mp:90, desc:'Slams down a star: 200% damage to every enemy within 2.5 cells, and Taunts them for 2s — they must attack the Crimson Valkyrie, and every hit they land on it is reflected back at them at 100%.',
     cast(a){ for(const e of foes(a)) if(dist(e,a)<=2.5){ hit(a,e,2); if(e.hp>0){ inflict(e,'taunt',2); e.tauntBy=a; e.tgt=a; } }
       V({k:'ring',x:a.x,y:a.y+.3,r:2.5,c:'#ffe27a'}); burst(a.x,a.y-.4,'#fff3a0',16,3,3,-1); hitStop(.06); }},
   stormranger:{name:'Arrow Storm', mp:80, desc:'Rains 3 volleys of arrows on the most crowded spot: 90% damage per volley to every enemy within 2.2 cells, slowing them for 2s.',
