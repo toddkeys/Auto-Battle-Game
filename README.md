@@ -19,3 +19,23 @@ Rebuild (needs Python with Pillow and numpy):
 python tools/build_sprites.py   # redraw sprites -> assets/units/*.png, assets/preview.png
 python tools/build_game.py      # embed sprites into ro-autobattler.html
 ```
+
+## Coordinated hero skins
+
+The seven reworked skins live in `assets/art/src/hero_skins_atlas.png`:
+Wukong (`stonemonkey`), Mythic Wukong (`wukong`), Eclipse Witch (`eclipsewitch`),
+Stormweaver (`voidsage`), Crimson Ravager/Berserker (`chieftain`),
+Worldbreaker (`grandmaster`), and Shadowstep (`shadowstep`). Gameplay names,
+classes, and stats are unchanged. Only front artwork is used, mirrored for facing.
+
+To extract the skins, copy them into the unit assets, rebuild their animation rigs,
+and embed them into the game (requires ImageMagick plus the Python dependencies above):
+
+```bash
+python tools/prep_hero_skins.py
+python tools/build_game.py
+```
+
+The atlas cell boundaries are in `tools/prep_hero_skins.py`; the matching animation
+piece polygons are in `_SKIN_PARTS` in `tools/art_rig.py`. Adjust both when replacing
+the atlas. The full sprite build also uses these rig definitions for these heroes.

@@ -1100,14 +1100,19 @@ const SPR = {};
 function readStore(){ try{ return JSON.parse(localStorage.getItem('roab_sprites')||'{}'); }catch(e){ return {}; } }
 function writeStore(d){ try{ localStorage.setItem('roab_sprites',JSON.stringify(d)); }catch(e){ msg('Could not save — the image will be lost on refresh'); } }
 function setSprite(id,src,faceLeft,rig){
-  if(src){ const im=new Image(); im.onload=()=>{render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
+  if(src){ const im=new Image(); im.onload=()=>{
+      // Measure visible pixels once so transparent margins do not change hero size.
+      const c=document.createElement('canvas'); c.width=im.naturalWidth; c.height=im.naturalHeight;
+      const g=c.getContext('2d'); g.drawImage(im,0,0); const a=g.getImageData(0,0,c.width,c.height).data;
+      let top=c.height,bottom=0; for(let y=0;y<c.height;y++) for(let x=0;x<c.width;x++) if(a[(y*c.width+x)*4+3]>10){ top=Math.min(top,y); bottom=Math.max(bottom,y+1); }
+      if(SPR[id]&&SPR[id].img===im) SPR[id].bounds={top,bottom,height:Math.max(1,bottom-top)};
+      render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
     if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56}; } }   // custom images have no rig: they animate as one piece
   else delete SPR[id];
 }
 /*DEFAULT_SPRITES*/
 for(const [id,v] of Object.entries(DEFAULT_SPRITES)) setSprite(id,v.src,v.faceLeft,v.rig);
-for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.back&&SPR[id]){ const b=new Image(); b.src=v.back; SPR[id].back=b; }
-for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.art&&SPR[id]){ SPR[id].art=true; if(SPR[id].rig) SPR[id].rig.art=true; }   // hand-made pictures scale smoothly   // back view, shown while facing away (target above)
+for(const [id,v] of Object.entries(DEFAULT_SPRITES)) if(v.art&&SPR[id]){ SPR[id].art=true; if(SPR[id].rig) SPR[id].rig.art=true; }   // hand-made pictures scale smoothly
 for(const [id,v] of Object.entries(readStore())) setSprite(id,v.src,v.faceLeft);
 
 // ====== background: a sunny hand-painted-style pixel meadow (original art) ======
@@ -2420,7 +2425,7 @@ function pose(o,b,rigged){
   if(o.cast>0){ const q=Math.sin((1-o.cast/CAST_T)*Math.PI*.5);
     if(b.range<=1){ dy+=3*q; sx*=1+.05*q; sy*=1-.05*q; } else lift+=8*q;   // melee crouches to wind up; casters float
     rot+=Math.sin(ANIM*45)*.03; }
-  if(o.spin>0) sx*=Math.cos(ANIM*16);   // whirling: the sprite turns edge-on and back
+  if(o.spin>0){ rot+=Math.sin(ANIM*18)*.09; lift+=Math.abs(Math.sin(ANIM*18))*2; }   // keep the silhouette solid during the whirlwind
   if(o.leapP){ lift+=Math.sin(o.leapP*Math.PI)*48; rot+=face*.35*Math.sin(o.leapP*Math.PI); }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); lift+=q*q*90; alpha*=o.spawn>1?0:1-q*.5; }
   if(o.cheer) lift+=Math.abs(Math.sin(ANIM*7+(o.ph||0)))*10;
@@ -2542,6 +2547,9 @@ function rigPose(o,type,b){
   if(o.leapP){ const q=Math.sin(o.leapP*Math.PI); R.legL.r+=.8*q; R.legR.r-=.5*q; R.armR.r+=.8*q; R.armL.r-=.8*q; }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); R.armR.r-=.9*q; R.armL.r+=.9*q; R.legL.r+=.3*q; R.legR.r-=.3*q; }
   if(o.die!==undefined){ const q=1-o.die; R.armR.r+=q*.9; R.armL.r-=q*.9; R.head.r+=q*.5; R.legL.r-=q*.3; R.legR.r+=q*.3; R.wingL.r+=q; R.wingR.r-=q; }
+  if(o.spin>0){ const sweep=Math.sin(t*18); R.front=1; R.body.r=sweep*.1; R.head.r=-sweep*.06;
+    R.armR.r=-.6+sweep*.55; R.weapon.r=-.8+sweep*1.1; R.armL.r=.5-sweep*.35;
+    R.cape.r+=sweep*.2; R.legL.r=sweep*.15; R.legR.r=-sweep*.15; }
   if(st==='arthalberd'&&GRIPS[type]) gripShaft(R,GRIPS[type]);   // two-handed: the back hand stays on the shaft whatever the front hand does
   return R;
 }
@@ -2598,8 +2606,7 @@ function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose 
 function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,blind:.42,slow:.3,psn:.26,brn:.3,frz:.5,dis:.3,shred:.28,drain:.3,wnd:.28,ward:.4};
   A.root=.3; A.shock=.45; A.tstop=.45; const t=Object.keys(A).filter(k=>k==='psn'||k==='brn'?o[k]:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
 function drawUnit(type,star,px,py,o={}){
-  const back=o.back&&SPR[type]&&SPR[type].back&&SPR[type].back.naturalWidth;   // facing away: the hand-made back view, if there is one
-  const b=U[type], sp=SPR[type], col=colorOf(type), rig=!back&&sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.scale||1, oy=-54*(sc-1);
+  const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.boss?(b.scale||1):1, oy=-54*(sc-1);
   ctx.save(); ctx.globalAlpha=P.alpha;
   const sh=Math.max(.3,1-P.lift/30)*sc;
   ctx.save(); ctx.translate(px+P.dx,py+22); ctx.scale(1,.36);   // soft ground shadow
@@ -2623,14 +2630,21 @@ function drawUnit(type,star,px,py,o={}){
     g.addColorStop(0,`rgba(255,226,140,${k})`); g.addColorStop(1,'rgba(255,226,140,0)'); ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+2,26*sc,32*sc,0,0,Math.PI*2); ctx.fill();
     for(let i=0;i<3;i++){ const q=(ANIM*.35+i/3+(o.ph||0))%1; ctx.globalAlpha=P.alpha*.5*Math.sin(q*Math.PI); ctx.fillStyle='#fff0b0'; ctx.fillRect(px+P.dx+Math.sin(i*2.1+ANIM)*14-1,py+20-q*44,2,2); }
     ctx.globalAlpha=P.alpha; }
+  if(o.spin>0){   // broad, ground-plane slash trails convey speed without flattening the hero
+    ctx.save(); ctx.translate(px+P.dx,py+9+P.dy-P.lift); ctx.scale(1,.38);
+    for(let i=0;i<3;i++){ const a=ANIM*18+i*Math.PI*2/3;
+      ctx.strokeStyle=i===0?'rgba(255,243,200,.9)':'rgba(220,177,109,.55)'; ctx.lineWidth=4-i;
+      ctx.beginPath(); ctx.arc(0,0,32+i*4,a,a+Math.PI*.85); ctx.stroke(); }
+    ctx.restore(); }
   if(o.enraged){ ctx.fillStyle='#ff3020'; ctx.globalAlpha=P.alpha*(.35+.2*Math.sin(ANIM*10)); ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,34,13,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
   if(o.glow||o.cast>0){ const g=o.cast>0?.5+.3*Math.sin(ANIM*30):o.glow*1.2;
     ctx.fillStyle=col; ctx.globalAlpha=P.alpha*g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,26,10,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
   if(sp&&sp.img.naturalWidth){
-    const im=back?sp.back:sp.img, s=Math.min(54/im.naturalHeight,60/im.naturalWidth,3)*sc, u=rig?Math.min(1,60/(rig.fw||56))*sc:0;
-    const w=rig?56*u:im.naturalWidth*s, h=rig?54*u:im.naturalHeight*s;   // a rig is drawn on its design grid (wide frames shrink to the same 60px as the plain picture)
+    const im=sp.img, bounds=sp.bounds||{bottom:im.naturalHeight,height:im.naturalHeight}, s=54/bounds.height*sc, u=rig?im.naturalHeight/bounds.height*sc:0;
+    const w=rig?56*u:im.naturalWidth*s, h=rig?54*u:im.naturalHeight*s;   // all heroes share a 54px visible height; bosses retain their larger scale
     const flip=o.face!==undefined&&((o.face<0)!==!!sp.faceLeft);
     ctx.translate(px+P.dx,py+26+P.dy-P.lift); ctx.rotate(P.rot); ctx.scale(flip?-P.sx:P.sx,P.sy);
+    ctx.translate(0,(im.naturalHeight-bounds.bottom)*(rig?54*u/im.naturalHeight:s));
     const fuseTint=o.fuse?[[colorOf(o.fuse),.1+.08*Math.sin(ANIM*2.2+(o.ph||0))]]:[];   // a soft shimmer in the partner's class colour
     if(rig) buildRig(rig,rigPose(o,type,b),[...statusTints(o),...fuseTint],exprOf(o),o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig);
     const draw=()=>rig?ctx.drawImage(RIG,-w/2-w,-h-h,w*3,h*3):ctx.drawImage(im,-w/2,-h,w,h);
