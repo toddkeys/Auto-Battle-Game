@@ -75,6 +75,18 @@ ART_RIGS = {
             'head': {'poly': [(45, 0), (100, 0), (108, 30), (100, 55), (80, 60), (55, 60), (46, 45), (44, 20)], 'piv': (70, 58)},
         },
     },
+    # Eclipse Witch: a long eclipse staff held two-handed across the body, orb forward and up; it sweeps like the halberd
+    'eclipsewitch': {
+        'fill': 7, 'fillTop': 58,   # the staff crosses her robe below the shoulders
+        'order': ['body', 'head', 'weapon', 'armL', 'armR'],
+        'parts': {
+            'armR': {'poly': [(60, 50), (78, 50), (90, 58), (90, 74), (72, 74), (60, 64)], 'piv': (86, 62)},
+            'armL': {'poly': [(98, 78), (122, 80), (124, 98), (104, 100), (96, 90)], 'piv': (108, 70)},
+            'head': {'poly': [(80, 5), (120, 0), (140, 10), (142, 40), (132, 55), (106, 60), (86, 56), (78, 35)], 'piv': (108, 58)},
+            'weapon': {'polys': [[(0, 0), (58, 0), (62, 46), (70, 54), (64, 62), (52, 58), (0, 58)],
+                                 [(70, 64.5), (74, 59.5), (184, 142), (192, 152), (184, 160), (176, 152)]], 'piv': (68, 60)},   # just the shaft, ~6px wide
+        },
+    },
 }
 
 
