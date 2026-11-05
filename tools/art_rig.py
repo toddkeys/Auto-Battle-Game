@@ -87,14 +87,14 @@ ART_RIGS = {
                                  [(70, 64.5), (74, 59.5), (184, 142), (192, 152), (184, 160), (176, 152)]], 'piv': (68, 60)},   # just the shaft, ~6px wide
         },
     },
-    # Shadowstep: a glowing katana held up and forward in the front fist; a short raise, then a fast forward slash
+    # Shadowstep: the glowing katana held low at his side, blade down and forward; it lifts and chops like the Paladin's sword
     'shadowstep': {
         'order': ['body', 'head', 'armL', 'weapon', 'armR'],
         'parts': {
-            'armR': {'poly': [(48, 58), (66, 56), (68, 72), (61, 85), (48, 83)], 'piv': (63, 60)},
-            'weapon': {'poly': [(-2, -2), (18, -2), (50, 66), (58, 82), (59, 106), (41, 108), (25, 86), (-2, 19)], 'piv': (54, 76)},
-            'armL': {'poly': [(86, 56), (102, 56), (106, 80), (104, 104), (90, 104), (86, 80)], 'piv': (92, 60)},
-            'head': {'poly': [(50, 0), (95, 0), (102, 20), (100, 48), (88, 58), (62, 58), (52, 46), (48, 20)], 'piv': (75, 56)},
+            'armR': {'poly': [(50, 58), (64, 58), (62, 80), (56, 104), (42, 104), (44, 80)], 'piv': (57, 60)},
+            'weapon': {'poly': [(46, 86), (56, 91), (50, 106), (48, 115), (12, 166), (-8, 166), (-8, 148), (27, 107), (34, 100)], 'piv': (47, 100)},
+            'armL': {'poly': [(80, 56), (96, 56), (100, 80), (98, 100), (84, 100), (80, 80)], 'piv': (86, 60)},
+            'head': {'poly': [(45, 0), (85, 0), (92, 20), (90, 48), (80, 56), (55, 56), (46, 46), (44, 20)], 'piv': (68, 54)},
         },
     },
 }

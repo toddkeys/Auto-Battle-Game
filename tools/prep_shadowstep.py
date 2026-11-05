@@ -1,6 +1,6 @@
 """One-off prep for the Shadowstep art (assets/art/src/shadowstep_sheet.png, drawn on a black background).
 Cuts the standing pose and the back view off the dark background, puts the sheet's separate glowing katana in his
-front hand (blade up and forward, like the other sword heroes), and saves assets/art/shadowstep(_back).png."""
+front hand (held low at his side, blade angled down and forward, like the top-left drawing), and saves assets/art/shadowstep(_back).png."""
 import os
 import sys
 
@@ -53,9 +53,10 @@ def main():
     ys, xs = np.nonzero(sa[..., 3] > 0)
     top = ys.min()
     hx = xs[ys < top + 6].mean()                        # the hilt end
-    sw = sword.resize((round(sword.width * .74), round(sword.height * .74)), Image.LANCZOS)
-    hx, hy = hx * .74, (top + 4) * .74
-    ang = 220   # hilt at the bottom, blade up and forward (to the left)
+    k = .56   # short enough that the tip stays above his feet
+    sw = sword.resize((round(sword.width * k), round(sword.height * k)), Image.LANCZOS)
+    hx, hy = hx * k, (top + 4) * k
+    ang = -25   # hilt up by the hand, blade down and forward (to the left)
     cx, cy = sw.width / 2, sw.height / 2
     rot = sw.rotate(ang, expand=True, resample=Image.BICUBIC)
     t = np.radians(ang)
@@ -67,7 +68,7 @@ def main():
     pad = 160
     canvas = Image.new('RGBA', (hero.width + pad * 2, hero.height + pad * 2), (0, 0, 0, 0))
     canvas.alpha_composite(hero, (pad, pad))
-    canvas.alpha_composite(rot, (round(pad + fist[0] - hx2), round(pad + fist[1] + 10 - hy2)))
+    canvas.alpha_composite(rot, (round(pad + fist[0] + 9 - hx2), round(pad + fist[1] - 14 - hy2)))   # the hilt end pokes out above the fist
     fz = hero.crop((fist[0] - 14, fist[1] - 13, fist[0] + 14, fist[1] + 13))   # the fist back over the grip
     canvas.alpha_composite(fz, (pad + fist[0] - 14, pad + fist[1] - 13))
     canvas = canvas.crop(canvas.getbbox())
