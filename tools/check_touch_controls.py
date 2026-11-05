@@ -40,7 +40,7 @@ class Fingers:
 async def run_device(browser,server,width,height,preview):
     context=await browser.new_context(viewport={'width':width,'height':height},has_touch=True,is_mobile=True,device_scale_factor=2)
     page=await context.new_page();page.set_default_timeout(8000);errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-    await page.goto(f'http://127.0.0.1:{server.server_port}/ro-autobattler.html',wait_until='load')
+    await page.goto(f'http://127.0.0.1:{server.server_port}/ro-autobattler.html',wait_until='load',timeout=30000)
     await page.wait_for_function('ARENA.naturalWidth&&Object.values(SPR).every(s=>s.img.complete&&s.bounds&&(!s.rig||s.rig.img.complete))')
     await page.locator('.mode[data-m=normal]').tap()
     await page.evaluate('''() => {
@@ -195,6 +195,14 @@ async def run_device(browser,server,width,height,preview):
         before=await page.evaluate('scrollY');await f.drag(start,end);await page.wait_for_timeout(100)
         assert await page.evaluate('scrollY')>before,'empty board swipe scrolls page'
         await page.evaluate("check(!dragU&&!canvasTap,'scroll cancellation cleans canvas state')")
+    # Long new skill descriptions and refreshed skins stay inspectable on tablets.
+    await page.evaluate("touchFixture();S.shop=['watchkeeper','moonlance','voidsage','shogun','fatekeeper'];renderUI()")
+    for index,name in enumerate(['Watchkeeper','Moonlance','Stormweaver','Shogun','Fatekeeper']):
+        await page.locator(f'#shop .su[data-k="{index}"]').tap()
+        assert await page.locator('#heroCard').is_visible()
+        assert name in await page.locator('#heroCard').inner_text()
+        await page.locator('[data-hcclose]').tap()
+    await page.evaluate("check(S.gold===200&&!S.units.length,'new hero details never buy accidentally')")
     await page.evaluate('window.scrollTo(0,0)')
     assert not await page.evaluate('document.documentElement.scrollWidth>innerWidth'),'tablet layout overflow'
     if preview and width==768:await page.screenshot(path=str(preview))

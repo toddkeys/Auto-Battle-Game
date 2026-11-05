@@ -25,7 +25,7 @@ python tools/build_game.py      # embed sprites into ro-autobattler.html
 
 ## Coordinated hero skins
 
-All 72 heroes now use the same compact chibi roster style and articulated rig
+All 88 heroes now use the same compact chibi roster style and articulated rig
 format. `assets/art/src/roster/champions.png` replaces the ten earlier designs:
 Wukong, Mythic Wukong, Eclipse Witch, Stormweaver, Crimson Ravager, Worldbreaker,
 Shadowstep, Aegis Paladin, Crimson Valkyrie and Night Reaper. Their head/body
@@ -34,6 +34,7 @@ and per-character size overrides are removed. They turn left/right like the rost
 
 ```bash
 python tools/prep_roster.py --group champions
+python tools/prep_roster.py --group tactics_reworks  # latest Stormweaver / Shogun override
 python tools/build_game.py
 ```
 
@@ -69,11 +70,11 @@ health bars follow the adjusted size. Bosses retain their separate larger scale.
 
 ## Full roster and interface
 
-All 72 playable heroes now have individual reworked skins and use nine
+All 88 playable heroes now have individual reworked skins and use eleven
 coordinated source sheets in `assets/art/src/roster/`; the
 manifest records their exact cell order. `tools/roster_rigs.py` defines their
 animation masks, and `art_rig.py` builds the same rig format used by the earlier
-reworks. Combat names, classes, stats and skills are unchanged.
+reworks. The tactical expansion below adds classes and skills on top of this art pipeline.
 
 ```bash
 python tools/prep_roster.py
@@ -89,7 +90,7 @@ restored. Narrow screens still stack the panels so controls remain reachable.
 
 Animation uses separate torso, head, arms, elbow/wrist, boots, cape and clothing
 pieces. Attacks have class-specific anticipation, action and recovery poses;
-bows draw, guns recoil, punches extend, and casters raise their staffs. All 72
+bows draw, guns recoil, punches extend, and casters raise their staffs. All 88
 heroes share the articulated lower-body, elbow and trailing-cloth rig format. Wolves,
 wisps, drakes, turrets and bosses have species-specific motion. Summons and small
 monsters use their native silhouettes and individual scale, rather than the hero
@@ -101,7 +102,7 @@ Optional browser smoke checks use Python Playwright and system Chromium:
 python tools/check_visuals.py
 ```
 
-These exercise all 72 skill casts and idle, walking, attack, casting, release,
+These exercise all 88 skill casts and idle, walking, attack, casting, release,
 frozen, death and spinning renders in both directions, plus buying, locking,
 opening the planner/codex and checking a phone-width layout. Render checks also
 cover all seven summons and nine monsters/bosses.
@@ -117,7 +118,7 @@ voices. HTTP(S) playback uses Web Audio compression and subtle stereo positionin
 opening the HTML from disk uses native media playback with the same voice limits
 and volume controls. Sound variation uses a private random generator.
 
-All 72 heroes and six bosses have remixed skill signatures, built from the
+All 88 heroes and six bosses have remixed skill signatures, built from the
 existing credited SFX. Night Reaper uses blade sounds, Worldbreaker uses a punch
 impact, Paladin uses metal and holy textures, and Ice Wall users use ice/shatter
 textures. The original music and SFX remain available for secondary impacts.
@@ -223,7 +224,7 @@ Skill release starts on the strike pose rather than winding up after its damage
 has already landed. Head, elbow, cape and cloth movement support the action;
 short directional hit reactions are visual offsets and do not move combat
 positions or interrupt actions. Reduced-motion preferences soften those offsets.
-All 72 hero rigs have more overlap at joint seams to prevent gaps when pieces
+All 88 hero rigs have more overlap at joint seams to prevent gaps when pieces
 turn, while artwork proportions and summon sizes retain their existing values.
 
 ```bash
@@ -233,7 +234,7 @@ python tools/check_builds_motion.py --preview /tmp/builds-motion.png
 ```
 
 Checks real conditional procs, caps, dispelling, mana/wound reductions, actual
-strike timing, all 72 heroes in 3,168 motion states, phone reward selection and
+strike timing, all 88 heroes in 3,872 motion states, phone reward selection and
 build tooltip layout. Regenerate rigs from the art using `tools/build_sprites.py`,
 then run `tools/build_game.py` to embed the results.
 
@@ -419,3 +420,65 @@ This uses Chromium's native touch input at 1024×768, 768×1024 and 390×844,
 covering actual taps/drags, purchases, hero details, move/fuse, equipment actions,
 plans/presets, cancellation and scrolling. It complements the desktop checks in
 `tools/check_visuals.py`; it does not replace testing Safari on a physical iPad.
+
+
+## Tactical roster expansion
+
+The roster contains 88 heroes across 30 classes. All classes now have a 4-gold
+hero. New content uses English names and descriptions throughout the game.
+
+| Class | 2 gold | 3 gold | 4 gold |
+| --- | --- | --- | --- |
+| Sentinel | Watchkeeper | Chain Warden | Aegis Captain |
+| Abjurer | Hexbreaker | Barrier Weaver | Fatekeeper |
+| Duelist | Rapier Adept | Rose Cavalier | Crown Duelist |
+| Soulbinder | Thread Witch | Soul Cantor | Covenant Queen |
+
+Class bonuses use the existing two/three **different** heroes thresholds.
+Sentinels select a nearby ranged ally to defend, remain near it and ready their
+first skill when an enemy dives nearby. Aegis Captain intercepts two distinct
+divers per perimeter cast; the same diver cannot consume both interceptions.
+Abjurers weaken enemy spells and protect against burst. Reverse Fate absorbs
+35% of nearby ally damage before lethal HP loss, converts absorbed/self damage
+to healing for four seconds and has an eight-second recast cooldown. Absorption
+has a 150% caster-max-HP budget. Only one Fatekeeper can absorb each hit, and the
+transfer bypasses recursive damage/link triggers. Wounds reduce the healing.
+
+Duelists build capped consecutive-target focus; switching targets resets stacks.
+Their challenge cannot disable bosses. Soul links have at most four members,
+share post-shield direct damage once, cannot recurse and stop when their source
+dies. Multiple covenants replace rather than stack on the same enemy.
+
+Moonlance is a new 3-gold Archer. Astral Arrow travels straight, can miss, hits
+only the first enemy and stops at an enemy Ice Wall. Stun is based on travelled
+distance: 0.5s + 0.4s/cell, capped at 3s and 0.65s against bosses.
+Plague Sovereign, Elixir Empress and Verdant Empress complete Occultist,
+Alchemist and Druid at 4 gold; Elixir Empress does not generate extra gold.
+
+Stormweaver has a calm, long violet-haired mage design inspired by Fern, in the
+same chibi proportions as the roster. Shogun is a female katana master with an
+ivory/crimson/obsidian outfit and a delayed line-cut finisher, Moonfall: Final
+Draw. Phantom Blade uses Phantom Cross: a dash, two inexpensive fading echoes
+and a delayed crossing strike. Echoes share the adaptive decoration budget;
+arrow collision, protection and link damage run on the existing simulation
+clock independently of visual quality. Existing 60 FPS pacing/pooling remain.
+
+New art source: `assets/art/src/roster/tactics.png`. The rework source is
+`assets/art/src/tactics_reworks_source.png`; its separate characters are packed
+into `assets/art/src/roster/tactics_reworks.png`. Manifest overrides deliberately
+come last so a full rebuild preserves the latest Stormweaver and Shogun.
+
+```bash
+python tools/prep_tactics_art.py
+python tools/prep_roster.py --group tactics
+python tools/prep_roster.py --group tactics_reworks
+python tools/build_signature_audio.py
+python tools/build_game.py
+python tools/check_tactical_roster.py --preview /tmp/tactical-roster.png
+```
+
+Checks cover pre-lethal protection, overlap/budget limits, damage-over-time,
+barriers, reactive interceptions, bounded soul sharing/focus, arrow misses and
+wall collisions, boss control caps and real combat ticks for all new/reworked
+skills. Visual and motion checks dynamically cover the full roster; the touch
+suite continues to cover tablet landscape/portrait and phone controls.

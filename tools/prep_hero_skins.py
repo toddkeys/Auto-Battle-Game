@@ -5,5 +5,6 @@ Run: python tools/prep_hero_skins.py && python tools/build_game.py
 import sys
 from prep_roster import main
 if __name__=='__main__':
-    sys.argv[1:]=['--group','champions']
-    main()
+    for group in ['champions','tactics_reworks']:
+        sys.argv[1:]=['--group',group]
+        main()

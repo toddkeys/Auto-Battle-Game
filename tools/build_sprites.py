@@ -27,12 +27,15 @@ import hookers  # noqa: E402
 import gunslingers  # noqa: E402
 import monkeys  # noqa: E402
 import mimics  # noqa: E402
+from roster_rigs import HEROES
 from pixel import W, H, PW, PH, R  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), '..', 'assets')
 CHARS = dict(swordsman=kit.swordsman, **classes.CLASSES, **tier4.TIER4, **crusaders.CRUSADERS, **occultists.OCCULTISTS, **samurai.SAMURAI, **frostkin.FROSTKIN, **gamblers.GAMBLERS, **newclasses.NEWCLASSES, **newclasses2.NEWCLASSES2, **hookers.HOOKERS, **gunslingers.GUNSLINGERS, **monkeys.MONKEYS, **mimics.MIMICS, **summoners.SUMMONERS,
              **monsters.MONSTERS, **creatures.CREATURES, **bosses.BOSSES)
 
+# New atlas-only heroes use their checked-in art, not the legacy procedural kit.
+for cid in HEROES: CHARS.setdefault(cid,None)
 
 def preview(sprites, scale=4, cols=6):
     cw, ch = W * scale + 16, H * scale + 30   # preview cells stay on the design grid
@@ -63,6 +66,7 @@ if __name__ == '__main__':
                     if os.path.exists(os.path.join(OUT, 'rig', cid + ext)):
                         os.remove(os.path.join(OUT, 'rig', cid + ext))
             continue
+        if fn is None: raise FileNotFoundError(f'Missing {art}; run tools/prep_roster.py first')
         ims[cid] = fn().render()
         ims[cid].save(os.path.join(OUT, 'units', cid + '.png'))
         s = fn()

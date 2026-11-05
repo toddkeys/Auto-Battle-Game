@@ -9,6 +9,8 @@ ROOT=Path(__file__).resolve().parent.parent
 SFX=ROOT/'assets/audio/sfx';OUT=ROOT/'assets/audio/skills'
 # Main transient, quiet texture, duration. Identity comes from timbre and timing.
 RECIPES={
+ 'sentinel':('trap','shield',.65),'abjurer':('bless','shield',.8),
+ 'duelist':('steal','flurry',.55),'soulbinder':('curse','teleport',.75),
  'warrior':('flurry','bash',.58),'archer':('arrows','shoot',.55),
  'holy':('bless','heal',.8),'rogue':('steal','hit3',.48),
  'magic':('fire','cast',.7),'gambler':('reroll','star',.55),
@@ -24,6 +26,7 @@ RECIPES={
  'druid':('summon','heal',.75),'berserker':('flurry','bash',.65),
 }
 SPECIAL={
+ 'shogun':('steal','flurry',.8),'phantomblade':('teleport','flurry',.6),
  'nightreaper':('flurry','steal',.52),'aegispaladin':('bash','bless',.8),
  'starwarden':('bash','flurry',.68),'grandmaster':('slam','hit2',.58),
  'voidsage':('zap','shatter',.68),'eclipsewitch':('boom','teleport',.85),

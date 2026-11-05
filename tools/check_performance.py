@@ -78,9 +78,10 @@ async def benchmark(browser, server, frames, source=None):
     result = await page.evaluate('''async frames => {
       const out=[],random=Math.random;
       try{
-        for(const [round,fused] of [[15,false],[30,false],[30,true],[60,false]]){
+        const scenarios=[[15,false],[30,false],[30,true],[60,false]];if(U.fatekeeper)scenarios.push([30,false,true],[60,false,true]);
+        for(const [round,fused,tactical] of scenarios){
           newGame('daily');S.round=round;S.extra=6;S.bossOrder=['golem','lich','wyrm','thornmother','stormdjinn','colossus'];
-          const ids=['nightreaper','grandmaster','eclipsewitch','chieftain','bonelord','starcaller','mechanist','winterqueen','highpriest'];
+          const ids=tactical?['aegiscaptain','fatekeeper','barrierweaver','hexbreaker','crownduelist','rosecavalier','covenantqueen','soulcantor','moonlance']:['nightreaper','grandmaster','eclipsewitch','chieftain','bonelord','starcaller','mechanist','winterqueen','highpriest'];
           S.units=ids.map((type,i)=>({uid:i+1,type,star:fused?3:2,...(fused?{fuse:UNITS[(i*7+5)%UNITS.length].id}:{}),items:['stormcore:4'],loc:{w:'board',cx:i%8,cy:5+Math.floor(i/8)}}));
           Math.random=mulberry32(123456+round);ANIM=0;startFight();
           // Extend the fight so both builds exercise the same sustained workload.
@@ -94,7 +95,7 @@ async def benchmark(browser, server, frames, source=None):
           const pct=(a,p)=>[...a].sort((x,y)=>x-y)[Math.floor((a.length-1)*p)];
           const F=S.fight;
           if(F.f.some(a=>!Number.isFinite(a.hp)||!Number.isFinite(a.mp)))throw Error('Invalid late-round fighter');
-          out.push({round,fused,fighters:F.f.length,particles:F.parts.length,vfx:F.vfx.length,
+          out.push({round,fused,tactical:!!tactical,fighters:F.f.length,particles:F.parts.length,vfx:F.vfx.length,
             cpuMeanMs:cpu.reduce((a,b)=>a+b)/cpu.length,cpuP95Ms:pct(cpu,.95),frameGapP95Ms:pct(gaps,.95),
             combat:JSON.stringify({t:F.t,f:F.f.map(a=>[a.type,a.team,a.star,a.x,a.y,a.hp,a.max,a.mp,a.dd,a.dtk,a.hl,a.items,a.fuse]),proj:F.proj.map(p=>[p.x,p.y,p.mult]),timers:F.timers.map(t=>t.t),walls:(F.walls||[]).map(w=>[w.hp,w.t,w.x1,w.y1,w.x2,w.y2])})});
         }

@@ -19,7 +19,7 @@ async def main():
   await page.locator('#bLock').click();assert await page.evaluate('S.locked')
   await page.locator('#bPlan').click();assert await page.locator('#planner').is_visible()
   await page.evaluate("$('#planner').hidden=true")
-  await page.locator('#bCodex').click();assert await page.locator('.codexgrid .cx').count()==72
+  await page.locator('#bCodex').click();assert await page.locator('.codexgrid .cx').count()==await page.evaluate('UNITS.length')
   await page.evaluate("$('#codex').hidden=true")
   result=await page.evaluate('''() => {
     if(UNITS.some(u=>!DEFAULT_SPRITES[u.id].art||!SPR[u.id].rig))throw Error('Unreworked hero');
@@ -43,7 +43,7 @@ async def main():
   }''')
   await page.set_viewport_size({'width':390,'height':844});await page.wait_for_timeout(100)
   assert not await page.evaluate('document.documentElement.scrollWidth>innerWidth')
-  print(result);print('Shop purchase, lock, planner, 72-hero codex and mobile overflow checks passed.');print('Page errors:',errors);assert not errors
+  print(result);print('Shop purchase, lock, planner, full-roster codex and mobile overflow checks passed.');print('Page errors:',errors);assert not errors
   await browser.close()
 try:asyncio.run(main())
 finally:server.shutdown();server.server_close()

@@ -133,5 +133,37 @@
     ],
     "columns": 5,
     "rows": 2
+  },
+  {
+    "key": "tactics",
+    "ids": [
+      "watchkeeper",
+      "chainwarden",
+      "aegiscaptain",
+      "hexbreaker",
+      "barrierweaver",
+      "fatekeeper",
+      "rapieradept",
+      "rosecavalier",
+      "crownduelist",
+      "threadwitch",
+      "soulcantor",
+      "covenantqueen",
+      "plaguesovereign",
+      "elixirempress",
+      "verdantempress",
+      "moonlance"
+    ],
+    "columns": 4,
+    "rows": 4
+  },
+  {
+    "key": "tactics_reworks",
+    "ids": [
+      "voidsage",
+      "shogun"
+    ],
+    "columns": 2,
+    "rows": 1
   }
 ]
