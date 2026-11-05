@@ -2210,7 +2210,12 @@ const byHurt=(p,q)=>p.hp/p.max-q.hp/q.max;
 const V=o=>{ o.m=o.m||.4; if(o.t===undefined) o.t=o.m; o.s=o.s??(Math.random()*1e4|0); S.fight.vfx.push(o); };
 let CASTER=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
 const later=(t,fn)=>S.fight.timers.push({t,fn,c:CASTER});
-function pop(u,txt,c,big){ S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?1.1:.7,txt,c,big}); }
+function pop(u,txt,c,big){ S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?1.1:.7,txt,c,big}); trimFx(); }
+// damage and heal numbers: rapid hits on the same unit add up in one number instead of stacking new ones
+function popNum(u,v,c,pre=''){ const F=S.fight, f=F.fx.find(f=>f.u===u&&f.c===c&&f.t0-f.t<.35);
+  if(f){ f.num+=v; f.txt=pre+Math.round(f.num); return; }   // only during a number's first 0.35s, so a steady stream still shows new numbers
+  F.fx.push({x:u.x,y:u.y-.35,t:.7,t0:.7,num:v,txt:pre+Math.round(v),c,u}); trimFx(); }
+function trimFx(){ const fx=S.fight.fx; while(fx.length>30){ const i=fx.findIndex(f=>!f.big&&!f.crit&&!f.icon); if(i<0) break; fx.splice(i,1); } }   // at most 30 on screen: the oldest small numbers go first
 function popIcon(u,icon,c){   // a status lands: its icon pops instead of a word; several at once sit side by side
   const n=S.fight.fx.filter(f=>f.icon&&f.u===u&&f.t0-f.t<.3).length;
   S.fight.fx.push({x:u.x+[0,.42,-.42,.84,-.84][n%5],y:u.y-.35,t:.8,t0:.8,icon,c,u}); }
@@ -2292,7 +2297,7 @@ const segX=(ax,ay,bx,by,cx,cy,dx,dy)=>{ const d=(bx-ax)*(dy-cy)-(by-ay)*(dx-cx);
   const u=((cx-ax)*(dy-cy)-(cy-ay)*(dx-cx))/d, v=((cx-ax)*(by-ay)-(cy-ay)*(bx-ax))/d; return u>=0&&u<=1&&v>=0&&v<=1; };
 // heal over time: rate adds up, duration takes the longer one (Frost Healer class bonus scales it)
 function hot(u,total,secs,src){ if(u.hp<=0) return; const k=src?(src.hotBoost||1)*(CASTER===src?src.skHeal||1:1)*(1+(src.healOut||0)):1; secs+=(src&&src.wardPlus)||0;
-  const left=u.hotT>0?u.hotR*u.hotT:0; u.hotT=Math.max(u.hotT||0,secs); if(!(left>0)) pop(u,'Mending','#bff2ff'); u.hotR=(left+total*k)/u.hotT; u.hotSrc=src; }
+  const left=u.hotT>0?u.hotR*u.hotT:0; u.hotT=Math.max(u.hotT||0,secs); u.hotR=(left+total*k)/u.hotT; u.hotSrc=src; }
 // Ice Ward: the ally is encased (can't act), heals 8% max HP/s, ignores physical damage, takes +20% magic damage
 function ward(u,secs,src){ if(u.hp<=0) return; secs+=(src&&src.wardPlus)||0; u.ward=Math.max(u.ward||0,secs); u.wardM=u.ward; u.wardSrc=src;
   pop(u,'Ice Ward','#dff8ff',true); SND.play('freeze'); FX('nova',u.x,u.y-.3,{s:1,tint:'#cff6ff',m:.5}); }
@@ -2335,8 +2340,8 @@ function burn(u,dps,s,src){ if(u.hp<=0||u.spin) return;
 function burnTick(a,d,dmg){ let left=dmg;
   for(const k of ['mshield','shield']) if(a[k]>0&&left>0){ const take=Math.min(a[k],left*2); a[k]-=take; left-=take/2; if(d.src) d.src.dd+=take/2; }
   if(left<dmg) burst(a.x,a.y-.4,'#ffb070',3,1.5,2,-1);
-  if(left>0) dotTick(a,d,left,'#ff9a40'); else pop(a,Math.round(dmg),'#ffb070'); }
-function dotTick(a,d,dmg,c){ a.hp-=dmg; a.dtk+=dmg; if(d.src) d.src.dd+=dmg; pop(a,Math.round(dmg),c); }
+  if(left>0) dotTick(a,d,left,'#ff9a40'); else popNum(a,dmg,'#ffb070'); }
+function dotTick(a,d,dmg,c){ a.hp-=dmg; a.dtk+=dmg; if(d.src) d.src.dd+=dmg; popNum(a,dmg,c); }
 // poison stacks: each hit adds a stack (max 5) and refreshes it to at least 5s; every stack deals 60% of the hit's damage per second
 const PSN_MAX=5;
 function poison(u,dps,s,src,lbl='Poisoned',c='#8be06a'){ if(u.hp<=0||u.spin) return;
@@ -2356,7 +2361,7 @@ function burst(x,y,c,n,spd=2.5,size=3,g=6){
   for(let i=0;i<n;i++){ const an=Math.random()*Math.PI*2, v=spd*(.4+Math.random()*.8), life=.3+Math.random()*.3;
     S.fight.parts.push({x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-(g>0?1.5:0),life,max:life,c,size,g}); }
 }
-function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal',{x:u.x}); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
+function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); popNum(u,amt,'#7CFC9A','+'); SND.play('heal',{x:u.x}); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
 const PROJ={maskedmagus:'p_arcane',mirrormage:'p_arcane',puppeteer:'p_dark',rimedragoness:'p_ice',thornmother:'p_plant',stormdjinn:'p_light',colossus:'p_light',cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',piper:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
   acolyte:'p_light',priest:'p_light',highpriest:'p_light',dawnoracle:'p_light',spiritcaller:'p_arcane',starcaller:'p_arcane',stonebinder:'p_arcane',wisp:'p_arcane',shroomkin:'p_plant'};
 // basic ranged attacks fly as small missiles (skills keep the big spell sprites)
@@ -2393,7 +2398,7 @@ function deal(t,dmg,crit,src){
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
   burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.impact(src,t,crit);
-  if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else pop(t,Math.round(dmg),['#fff','#ffe27a','#ffb050'][BACKHIT],false);
+  if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else popNum(t,dmg,['#fff','#ffe27a','#ffb050'][BACKHIT]);
   if(BACKHIT===2&&Math.random()<.35) pop({x:t.x,y:t.y-.7},'Back!','#ffb050');
 }
 // Mimics: steal an enemy's skill and cast it as your own
@@ -2579,7 +2584,7 @@ function step(dt){
           a.tgt=t; a.face=t.x<a.x?-1:1; } }
       continue; }
     if(a.hotT>0){ const h=Math.min(a.hotR*dt*healMul(a),a.max-a.hp); a.hp+=h; if(a.hotSrc) a.hotSrc.hl+=h; a.hotT-=dt;   // heal over time
-      a.hotAcc=(a.hotAcc||0)+h; if((a.hotTick=(a.hotTick||0)+dt)>=.5){ if(a.hotAcc>=1) pop(a,'+'+Math.round(a.hotAcc),'#9ee8ff'); a.hotAcc=0; a.hotTick=0; } }
+      a.hotAcc=(a.hotAcc||0)+h; if((a.hotTick=(a.hotTick||0)+dt)>=1.5){ if(a.hotAcc>=1) popNum(a,a.hotAcc,'#9ee8ff','+'); a.hotAcc=0; a.hotTick=0; } }
     if(a.haste>0) a.haste-=dt; if(a.furyT>0) a.furyT-=dt; if(a.wAST>0) a.wAST-=dt;
     if(a.ward>0){ a.ward-=dt; const h=Math.min(a.max*.08*dt*healMul(a),a.max-a.hp); a.hp+=h; if(a.wardSrc) a.wardSrc.hl+=h; continue; }   // encased: heals, can't act
     if(a.frz>0){ a.frz-=dt; continue; }
