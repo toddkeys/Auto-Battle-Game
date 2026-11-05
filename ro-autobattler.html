@@ -242,6 +242,7 @@ button.go{display:block;width:100%;margin-top:10px}
 .card.sellzone h3::after{content:'Drop to sell';font:400 18px var(--pixel);color:#8a1a10}
 /* unit info */
 #info{min-height:150px;color:var(--muted);font-size:14px}
+#info .fz{font-size:12px;color:#ffe27a;margin:-1px 0 2px}
 #info .ih,#tip .ih,#heroCard .ih{display:flex;gap:12px;align-items:center;margin-bottom:8px;color:var(--text)}
 #info .ih .th,#tip .ih .th,#heroCard .ih .th{width:70px;height:70px;flex:none;display:flex;align-items:flex-end;justify-content:center;border:2px solid var(--ink);border-radius:8px;
   background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--cc) 45%,transparent),#140c07 75%);box-shadow:inset 0 0 0 2px var(--brass-lo)}
@@ -1813,6 +1814,14 @@ const MAX_ITEMS=1;   // one item per hero
 const itemSlots=u=>u.fuse?2:MAX_ITEMS;   // a fused hero carries both heroes' gear
 // ====== fusion (late game): two 3-star heroes of different classes become one hero with both classes, origins and skills ======
 const FUSE_COST=100, FUSE_ROUND=15;
+// fused heroes get a name: the partner's class word + the lead's class title (Priest leading Knight = "Battle Priest")
+const FUSE_WORDS={warrior:['Battle','Knight'],archer:['Swift','Ranger'],holy:['Holy','Priest'],rogue:['Cutthroat','Rogue'],magic:['Arcane','Mage'],
+  gambler:['Lucky','Gambler'],samurai:['Bushido','Samurai'],frost:['Frost','Warden'],occultist:['Cursed','Occultist'],crusader:['Valiant','Paladin'],
+  summoner:['Spirit','Summoner'],bard:['Melodic','Bard'],alchemist:['Toxic','Alchemist'],necro:['Undying','Necromancer'],engineer:['Clockwork','Engineer'],
+  monk:['Zen','Monk'],chrono:['Warping','Warper'],ninja:['Shadow','Assassin'],mimic:['Mirror','Mimic'],mesmer:['Hypnotic','Mesmer'],monkey:['Simian','Trickster'],
+  gunner:['Gunpowder','Gunslinger'],grapple:['Chained','Grappler'],gravity:['Void','Voidcaller'],druid:['Verdant','Druid'],berserker:['Raging','Berserker']};
+function fusedName(lead,partner){ const a=FUSE_WORDS[U[partner].cls], b=FUSE_WORDS[U[lead].cls]; return a&&b?a[0]+' '+b[1]:U[lead].name; }
+const heroName=(type,fuse)=>fuse?fusedName(type,fuse):U[type].name;
 const fuseMana=(a,b)=>Math.round((SKILLS[a].mp+SKILLS[b].mp)*.85);   // a fused hero casts both skills at once for 85% of both manas (simulated: as strong as alternating them)
 const typesOf=u=>u.fuse?[u.type,u.fuse]:[u.type];   // what a hero counts as for class/origin bonuses
 const canTryFuse=(a,b)=>a&&b&&a!==b&&a.star===3&&b.star===3&&!a.fuse&&!b.fuse&&U[a.type].cls!==U[b.type].cls&&U[a.type].cost<5&&U[b.type].cost<5;
@@ -1823,7 +1832,7 @@ function fuse(a,b,leadUnit=defaultLead(a,b)){   // a is dragged onto b; the lead
   const lt=lead.type, ot=other.type; b.type=lt; b.fuse=ot;   // read both types before b changes
   b.star=3; b.items=items.slice(0,itemSlots(b)); S.inv.push(...items.slice(itemSlots(b)));
   S.units=S.units.filter(v=>v!==a); S.gold-=FUSE_COST; S.sel=b.uid;
-  S.ufx.push({k:'star',uid:b.uid,t:1.1,m:1.1}); SND.play('star'); msg(`⚭ Fused ${U[b.type].name} + ${U[b.fuse].name}: both classes, both origins, both skills`);
+  S.ufx.push({k:'star',uid:b.uid,t:1.1,m:1.1}); SND.play('star'); msg(`⚭ ${U[b.type].name} + ${U[b.fuse].name} became the ${fusedName(b.type,b.fuse)}!`);
 }
 function askFuse(e,a,b){
   const err=fuseError(), c=$('#confirm'); let lead=defaultLead(a,b); if(err) msg('⚭ '+err);
@@ -1832,7 +1841,7 @@ function askFuse(e,a,b){
     c.innerHTML=`<div>⚭ Fuse <b>${U[a.type].name} ★★★</b> + <b>${U[b.type].name} ★★★</b>${err?'':` for <b>${FUSE_COST} gold</b>`}?</div>
     ${err?`<div style="font-size:13px;margin-top:4px;max-width:320px;color:#ff9a80">${err}</div>`:
       `<div class="fuselead">Lead: ${leadBtn(a)}${leadBtn(b)}</div>
-       <div style="font-size:12px;margin-top:4px;max-width:330px">Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), casts both skills at once (${fuseMana(lead.type,other.type)} mana), holds 2 items.</div>`}
+       <div style="font-size:12px;margin-top:4px;max-width:330px">Becomes the <b style="color:#ffe27a">${fusedName(lead.type,other.type)}</b>. Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), casts both skills at once (${fuseMana(lead.type,other.type)} mana), holds 2 items.</div>`}
     <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`; };
   draw(); c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
   c.onclick=ev=>{ const l=ev.target.closest('[data-lead]'); if(l){ lead=l.dataset.lead==='a'?a:b; draw(); return; }
@@ -2672,7 +2681,7 @@ function endFight(win){
   F.winner=win?0:F.f.some(x=>x.team===1&&x.hp>0)&&!F.f.some(x=>x.team===0&&x.hp>0)?1:null;
   const rows=new Map();   // summons, turrets and raised dead count toward the hero who made them
   for(const x of F.f.filter(x=>x.team===0)){ let o=x; while(o.summon&&o.owner) o=o.owner; if(o.summon) continue;
-    const r=rows.get(o)||rows.set(o,{type:o.type,star:o.star,dd:0,dt:0,hl:0}).get(o); r.dd+=x.dd; r.dt+=x.dtk; r.hl+=x.hl; }
+    const r=rows.get(o)||rows.set(o,{type:o.type,fuse:o.fuse,star:o.star,dd:0,dt:0,hl:0}).get(o); r.dd+=x.dd; r.dt+=x.dtk; r.hl+=x.hl; }
   S.meter=[...rows.values()];
   if(win&&F.kind==='boss'){ S.cardsDue=true; S.bosses++; }
   if(win&&F.kind==='monster'&&S.mod==='titan') S.cardsDue=true;
@@ -3395,7 +3404,7 @@ function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
   const u=U[id], m=STAR_MULT[star-1], sk=SKILLS[id], c=CLASSES[u.cls]||{name:u.boss?'Boss':u.cls==='summon'?'Summon':'Monster',color:colorOf(id)}, o=ORIGINS[u.org];
   const side=live?(live.team===0?'<span style="color:#7fd0ff">Ally</span>':'<span style="color:#ff8a80">Enemy</span>')+' · ':'';
   const st=live?['ward','frz','stun','taunt','crs','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
-  return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${u.name} ${fuse?'<span class="stars" style="color:#ff3a3a">★</span>':`<span class="stars">${'★'.repeat(star)}</span>`}</div>
+  return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${heroName(id,fuse)} ${fuse?'<span class="stars" style="color:#ff3a3a">★</span>':`<span class="stars">${'★'.repeat(star)}</span>`}</div>${fuse?`<div class="fz">⚭ ${u.name} + ${U[fuse].name}</div>`:''}
     <div class="tags">${side}<span style="color:${c.color}">${c.name}</span>${o?` · <span style="color:${o.color}">${o.icon} ${o.name}</span>`:''}${u.cost&&u.cost<5?` · ${u.cost} gold`:''}</div></div></div>
     <div class="chips">${live?`<span>❤ ${Math.max(0,Math.round(live.hp))} / ${Math.round(live.max)}</span><span>⚔ ${Math.round(live.atk*live.dmgM)}</span>${live.mshield>1?`<span style="color:#d0a0ff">🔮 ${Math.round(live.mshield)}</span>`:''}${live.shield>1?`<span>🛡 ${Math.round(live.shield)}</span>`:''}${sk.mp<1e9?`<span>💧 ${Math.round(live.mp)} / ${sk.mp}</span>`:''}`
       :`<span>❤ ${Math.round(u.hp*m)}</span><span>⚔ ${Math.round(u.atk*m)}</span>`}${u.heal?`<span>✚ ${Math.round(u.heal*m)}</span>`:''}<span>🎯 ${u.range}</span><span>⏱ ${u.as}s</span></div>
@@ -3431,7 +3440,7 @@ function renderMeter(){
   const th=(k,t)=>`<th class="sortable${k===key?' on':''}" data-sort="${k}" title="Sort by ${t.toLowerCase()}">${t}${k===key?'▾':''}</th>`;
   const cell=(v,k,c)=>`<td class="b" style="--c:${c};--w:${Math.round(v/mx(k)*100)}%">${Math.round(v)}</td>`;
   $('#meter').innerHTML=`<table><tr><th>Unit</th>${th('dd','Damage')}${th('dt','Taken')}${th('hl','Heal')}</tr>`+
-    rows.map(r=>`<tr><td>${U[r.type].name} <span style="color:#ffd23f">${'★'.repeat(r.star)}</span></td>${cell(r.dd,'dd','#a8404a')}${cell(r.dt,'dt','#5a5f80')}${cell(r.hl,'hl','#3a8a50')}</tr>`).join('')+'</table>';
+    rows.map(r=>`<tr><td>${heroName(r.type,r.fuse)} <span style="color:${r.fuse?'#ff3a3a':'#ffd23f'}">${r.fuse?'★':'★'.repeat(r.star)}</span></td>${cell(r.dd,'dd','#a8404a')}${cell(r.dt,'dt','#5a5f80')}${cell(r.hl,'hl','#3a8a50')}</tr>`).join('')+'</table>';
 }
 function renderInfo(){
   const sel=S.units.find(v=>v.uid===S.sel), ins=S.inspect&&S.fight&&S.fight.f.includes(S.inspect)?S.inspect:null;
