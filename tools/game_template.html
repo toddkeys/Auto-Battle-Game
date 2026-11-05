@@ -379,7 +379,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Right-click an item</b> to <b>🎲 reroll</b> it into another random item of the same rarity, keeping its enchant level (30 gold), or to sell it. <b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
         <li><b>⟲ Mimics</b> steal enemy spells. The 4💰 <b>Masked Magus</b> copies the skill of a random living enemy — bosses too, a different one each time when it can — — the victim takes 220% damage and is silenced — and casts it with 25% more damage. The 2💰 <b>Mirror Mage</b> can only copy enemies that cost 2 gold or less (no bosses), but can copy fallen ones; with nothing to copy it blasts the area and inflicts a random debuff. Class bonus: mimics gain mana whenever an enemy casts.</li>
         <li><b>🌀 Mesmers</b> turn enemies on each other. <b>Mesmerized</b> enemies must attack one of their own allies. The 2💰 <b>Puppeteer</b> mesmerizes the strongest enemy for 2.5s; the 4💰 <b>Rime Dragoness</b> freezes the enemy standing among the most foes and makes every enemy near it attack it for 2s. Class bonus: mesmerized enemies take more damage.</li>
-        <li><b>🐒 Monkeys</b> count their normal hits. Every 4th hit: the 2💰 <b>Stone Monkey</b> attacks 30% faster for 3s; the 4💰 <b>Wukong</b> gains <b>Sage's Fury</b> — his next 4 hits deal +40% damage and he heals for 30% of all damage he deals (skills included) until they're used. Wukong's skill <b>Ruyi Smash</b> slams his staff in a long line: 160% damage that always crits and a 1s stun. Class bonus: the team dodges attacks.</li>
+        <li><b>🐒 Monkeys</b> count their normal hits. Every 4th hit: the 2💰 <b>Wukong</b> attacks 30% faster for 3s; the 4💰 <b>Mythic Wukong</b> gains <b>Sage's Fury</b> — his next 4 hits deal +40% damage and he heals for 30% of all damage he deals (skills included) until they're used. Mythic Wukong's skill <b>Ruyi Smash</b> slams his staff in a long line: 160% damage that always crits and a 1s stun. Class bonus: the team dodges attacks.</li>
         <li>The 4💰 <b>Gearmaster</b> builds <b>Arc Towers</b> instead of turrets: their shots chain lightning to 2 more enemies. It starts every battle with one built, and its skill Storm Foundry builds more and supercharges them.</li>
         <li><b>🔫 Gunslingers</b>: the 2💰 Gunslinger fans 4 quick shots that can each crit; the 4💰 Deadshot snipes the farthest enemy with a piercing bullet. Their class bonus makes the whole team's critical hits hit harder. The 4💰 <b>Gearmaster</b> is the top Engineer: it builds two turrets at once and overclocks them.</li>
         <li><b>🪝 Grapplers</b> hook the enemy's back line and drag it in: the 2💰 Harpooner hooks the farthest enemy, the 4💰 Anchor Brute hooks the two farthest. Hooked enemies are stunned for 1s, and with the class bonus they take more damage for 3s. Bosses can't be dragged.</li>
@@ -556,8 +556,8 @@ const UNITS = [
   {id:'puppeteer',   name:'Puppeteer',    cls:'mesmer',org:'gilded',      cost:2,hp:720, atk:54, range:3,as:1.1, ms:1.4},
   {id:'rimedragoness',name:'Rime Dragoness',cls:'mesmer',org:'wildheart', cost:4,hp:1550,atk:125,range:3,as:1.1, ms:1.4},
   // monkeys: agile staff fighters whose every 4th hit powers them up
-  {id:'stonemonkey', name:'Stone Monkey', cls:'monkey',org:'wildheart',   cost:2,hp:760, atk:68, range:1,as:.8,  ms:2.0},
-  {id:'wukong',      name:'Wukong',       cls:'monkey',org:'starborn',    cost:4,hp:1500,atk:145,range:1,as:.8,  ms:2.0},
+  {id:'stonemonkey', name:'Wukong',       cls:'monkey',org:'wildheart',   cost:2,hp:760, atk:68, range:1,as:.8,  ms:2.0},
+  {id:'wukong',      name:'Mythic Wukong', cls:'monkey',org:'starborn',    cost:4,hp:1500,atk:145,range:1,as:.8,  ms:2.0},
   // gunslingers: quick revolver shots and long-range sniping
   {id:'gunslinger',  name:'Gunslinger',   cls:'gunner',org:'gilded',      cost:2,hp:620, atk:58, range:3,as:.8,  ms:1.5},
   {id:'deadshot',    name:'Deadshot',     cls:'gunner',org:'starborn',    cost:4,hp:1150,atk:185,range:6,as:1.1, ms:1.3},
@@ -2492,9 +2492,16 @@ function rigPose(o,type,b){
   if(o.leapP){ const q=Math.sin(o.leapP*Math.PI); R.legL.r+=.8*q; R.legR.r-=.5*q; R.armR.r+=.8*q; R.armL.r-=.8*q; }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); R.armR.r-=.9*q; R.armL.r+=.9*q; R.legL.r+=.3*q; R.legR.r-=.3*q; }
   if(o.die!==undefined){ const q=1-o.die; R.armR.r+=q*.9; R.armL.r-=q*.9; R.head.r+=q*.5; R.legL.r-=q*.3; R.legR.r+=q*.3; R.wingL.r+=q; R.wingR.r-=q; }
+  if(st==='arthalberd') gripShaft(R,HALBERD_GRIP);   // two-handed: the back hand stays on the shaft whatever the front hand does
   return R;
 }
-const LOOSE={legL:1,legR:1,fx:1,body:1};   // every other piece rides on the body's bob
+const LOOSE={legL:1,legR:1,fx:1,body:1};
+// two-handed weapons in hand-made art: where the front hand's shoulder and wrist are, and where the back hand grips the shaft (design pixels)
+const HALBERD_GRIP={sh:[22.5,28.67],wr:[18.5,33.33],hand:[34.5,33]};
+function gripShaft(R,G){ const a=R.armR.r, w=R.weapon.r, c=Math.cos, s=Math.sin;
+  const vx=G.wr[0]-G.sh[0], vy=G.wr[1]-G.sh[1], wx=G.sh[0]+vx*c(a)-vy*s(a)+R.armR.x, wy=G.sh[1]+vx*s(a)+vy*c(a)+R.armR.y;   // where the front hand is now
+  const dx=G.hand[0]-G.wr[0], dy=G.hand[1]-G.wr[1], t=a+w, px=wx+dx*c(t)-dy*s(t), py=wy+dx*s(t)+dy*c(t);   // that point of the shaft, turned with it
+  R.armL.x=px-G.hand[0]; R.armL.y=py-G.hand[1]; R.armL.r=0; }   // every other piece rides on the body's bob
 // pieces are assembled on a scratch canvas (one sprite frame of margin on every side for raised limbs),
 // so glow/flash overlays tint the figure once instead of once per overlapping piece
 const RIG=document.createElement('canvas'); RIG.width=168*RES; RIG.height=162*RES;
