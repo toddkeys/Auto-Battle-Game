@@ -17,6 +17,7 @@ def spec(cid,size):
     def part(poly,piv):return {'poly':[(x*w,y*h) for x,y in poly],'piv':(piv[0]*w,piv[1]*h)}
     # The forward hand is reserved before the weapon, keeping fingers above it.
     parts={
+      'foreR':part([(.18,.6),(.34,.54),(.41,.61),(.35,.7),(.23,.73),(.16,.66)],(.37,.61)),
       'armR':part([(.23,.53),(.43,.48),(.5,.59),(.43,.71),(.23,.72),(.17,.64)],(.43,.54)),
       'armL':part([(.7,.5),(.85,.52),(.95,.69),(.85,.78),(.71,.69)],(.73,.53)),
     }
@@ -28,7 +29,9 @@ def spec(cid,size):
         parts['weapon']=part([(0,.38),(.2,.31),(.29,.5),(.31,.68),(.22,.86),(0,.9)],(.28,.64))
     # A compact head mask leaves the trailing hair and cloak on the body.
     parts['head']=part([(.25,0),(.91,0),(.98,.28),(.84,.49),(.54,.53),(.3,.44),(.2,.24)],(.57,.49))
-    parts['legL']=part([(.32,.86),(.57,.86),(.57,1),(.28,1)],(.47,.87))
-    parts['legR']=part([(.6,.86),(.9,.86),(.95,1),(.59,1)],(.72,.87))
-    return {'parts':parts,'order':['body','legL','legR','head','armL','weapon','armR'],
-            'nofill':['weapon','armR','armL','legL','legR'],'fill':2}
+    parts['legL']=part([(.32,.78),(.57,.78),(.57,1),(.28,1)],(.47,.79))
+    parts['legR']=part([(.6,.78),(.9,.78),(.95,1),(.59,1)],(.72,.79))
+    parts['cape']=part([(.83,.42),(1,.48),(1,.94),(.85,.9),(.76,.66)],(.8,.5))
+    parts['cloth']=part([(.44,.68),(.73,.68),(.8,.84),(.36,.85)],(.57,.69))
+    return {'parts':parts,'order':['cape','body','legL','legR','cloth','head','armL','weapon','foreR','armR'],
+            'nofill':['weapon','foreR','armR','armL','legL','legR','cape','cloth'],'fill':2}

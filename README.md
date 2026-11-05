@@ -84,11 +84,16 @@ Use `--group vanguard` (or another manifest group) to rebuild just one sheet.
 The complete sprite builder also recognizes these art overrides. Keep each
 figure within its atlas cell when replacing source artwork.
 
-The interface theme is `assets/ui/sanctuary.css`. The game builder embeds it in
-the generated HTML alongside the sprites and arena: no font CDN or separate CSS
-request is needed. Desktop uses three columns; narrow screens put the shop below
-the battlefield. The existing shop, planner, codex, settings and keyboard controls
-are preserved.
+The original oak-and-brass interface, compact shop and wooden reserve bench are
+restored. Narrow screens still stack the panels so controls remain reachable.
+
+Animation uses separate torso, head, arms, elbow/wrist, boots, cape and clothing
+pieces. Attacks have class-specific anticipation, action and recovery poses;
+bows draw, guns recoil, punches extend, and casters raise their staffs. The ten
+earlier skins also have animated lower-body and trailing-cloth pieces. Wolves,
+wisps, drakes, turrets and bosses have species-specific motion. Summons and small
+monsters use their native silhouettes and individual scale, rather than the hero
+height normalization. Combat definitions are unchanged.
 
 Optional browser smoke checks use Python Playwright and system Chromium:
 
@@ -98,4 +103,5 @@ python tools/check_visuals.py
 
 These exercise all 72 skill casts and idle, walking, attack, casting, release,
 frozen, death and spinning renders in both directions, plus buying, locking,
-opening the planner/codex and checking a phone-width layout.
+opening the planner/codex and checking a phone-width layout. Render checks also
+cover all seven summons and nine monsters/bosses.

@@ -4,6 +4,7 @@ the drawn heroes: the sword arm swings, the shield and head turn. Writes assets/
 Pieces are polygons in picture pixels. Whatever a moving piece covered on the body is filled with the nearest
 body colours, so no holes show when it moves."""
 import json
+import copy
 import os
 
 import numpy as np
@@ -182,9 +183,31 @@ def build(cid, art_dir, rig_dir):
         x0,y0,x1,y1=_BOSS_HEADS[cid]; w,h=pic.size
         parts={'head':{'poly':[(x0*w,y0*h),(x1*w,y0*h),(x1*w,y1*h),(x0*w,y1*h)],'piv':((x0+x1)*w/2,y1*h)}}
         if cid in ('golem','colossus'):
-            for name,lo,hi in [('armR',.01,.3),('armL',.72,.99)]:
-                parts[name]={'poly':[(lo*w,.38*h),(hi*w,.38*h),(hi*w,.8*h),(lo*w,.8*h)],'piv':((lo+hi)*w/2,.4*h)}
-        spec={'parts':parts,'order':['body',*parts],'nofill':list(parts)}
+            for name,poly,piv in [
+                ('armR',[(.07,.45),(.22,.39),(.34,.53),(.3,.73),(.17,.8),(.02,.69)],(.27,.46)),
+                ('armL',[(.73,.42),(.88,.4),(.98,.58),(.96,.75),(.83,.8),(.7,.65)],(.76,.45)),
+                ('legL',[(.2,.84),(.5,.84),(.5,1),(.15,1)],(.38,.85)),
+                ('legR',[(.6,.84),(.95,.84),(1,1),(.6,1)],(.74,.85))]:
+                parts[name]={'poly':[(x*w,y*h) for x,y in poly],'piv':(piv[0]*w,piv[1]*h)}
+        if cid=='wyrm':
+            for name,poly,piv in [
+                ('wingR',[(.58,0),(1,0),(1,.52),(.7,.45)],(.64,.35)),
+                ('wingL',[(.25,0),(.6,0),(.65,.33),(.4,.4)],(.48,.32))]:
+                parts[name]={'poly':[(x*w,y*h) for x,y in poly],'piv':(piv[0]*w,piv[1]*h)}
+        spec={'parts':parts,'order':[n for n in ('wingR','wingL') if n in parts]+['body']+[n for n in parts if not n.startswith('wing')],'nofill':list(parts),'seams':{'armR':8,'armL':8} if cid in ('golem','colossus') else {}}
+    if cid in _SKIN_PARTS:
+        spec=copy.deepcopy(spec)
+        w,h=pic.size
+        extras={
+            'legL':([( .3,.8),(.55,.8),(.55,1),(.26,1)],(.44,.81)),
+            'legR':([(.6,.8),(.9,.8),(.95,1),(.59,1)],(.72,.81)),
+            'cape':([(.82,.43),(1,.48),(1,.94),(.84,.9),(.76,.66)],(.8,.5)),
+            'cloth':([(.44,.68),(.73,.68),(.8,.84),(.36,.85)],(.57,.69)),
+        }
+        for name,(poly,piv) in extras.items():
+            spec['parts'][name]={'poly':[(x*w,y*h) for x,y in poly],'piv':(piv[0]*w,piv[1]*h)}
+        spec['order']=['cape','body','legL','legR','cloth']+[n for n in spec['order'] if n!='body']
+        spec['nofill']=spec.get('nofill',[])+list(extras)
     cw = max(W, -(-pic.width // K) * K)   # a picture wider than the frame gets a wider frame (fw), so nothing is clipped
     fw = cw // K
     canvas = Image.new('RGBA', (cw, H), (0, 0, 0, 0))
@@ -219,7 +242,7 @@ def build(cid, art_dir, rig_dir):
             m = Image.new('L', (cw, H), 0)
             for poly in spec['parts'][name].get('polys', [spec['parts'][name].get('poly')]):
                 ImageDraw.Draw(m).polygon([(x + ox, y + oy) for x, y in poly], fill=255)
-            fill &= ~(np.asarray(m) > 0) | (dist <= 1)
+            fill &= ~(np.asarray(m) > 0) | (dist <= spec.get('seams',{}).get(name,1))
     body[fill] = body[iy[fill], ix[fill]]
     layers['body'] = body
     strip = Image.new('RGBA', (cw * len(spec['order']), H), (0, 0, 0, 0))

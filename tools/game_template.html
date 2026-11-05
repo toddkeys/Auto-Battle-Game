@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Auto Battler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;500;700;800&family=Jersey+10&display=swap" rel="stylesheet">
 <style>
 /* ====== look: an adventurers' tavern — dark oak, aged brass, gold plaques ====== */
 :root{--ink:#0c0806;--oak:#3a2718;--oak2:#26180f;--oak3:#1b110a;--brass:#c89b4a;--brass-hi:#f3d48a;--brass-lo:#7a5626;
@@ -215,7 +218,7 @@ button.go{display:block;width:100%;margin-top:10px}
 .su .th{height:60px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:3px}
 .su img{-webkit-user-drag:none;user-select:none;pointer-events:none}   /* the browser's own image drag would steal the shop drag */
 .su .th img{max-width:60px;max-height:60px;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))}
-.su .nm{font:400 15px/0.95 var(--pixel);letter-spacing:0;hyphens:auto;-webkit-hyphens:auto;color:#fff4dc;text-shadow:0 1px 0 #000}
+.su .nm{overflow-wrap:anywhere;min-width:0;font:400 15px/0.95 var(--pixel);letter-spacing:0;hyphens:auto;-webkit-hyphens:auto;color:#fff4dc;text-shadow:0 1px 0 #000}
 .su .cl{margin-top:2px;font-size:11px;line-height:1.1;color:var(--muted)}
 .su .c{position:absolute;top:-7px;right:-7px;width:25px;height:25px;display:grid;place-items:center;border:2px solid var(--ink);border-radius:50%;
   font:400 19px/1 var(--pixel);color:#3a2000;background:radial-gradient(circle at 35% 30%,#fff6b8,#f2b733 55%,#a8700f)}
@@ -315,8 +318,9 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 @media (max-width:1000px){.game{grid-template-columns:200px auto 270px}.col{zoom:.78}}
 @media (min-width:2200px){.game{grid-template-columns:375px auto 500px}.col{zoom:1.25}}
 @media (prefers-reduced-motion:reduce){.card,button.go,.items .it.rare{animation:none}}
+@media(max-width:960px){body{overflow:auto}.game{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr) 270px}.center{grid-column:1;grid-row:1;min-width:0}.right{grid-column:2;grid-row:1}.left{grid-column:1/3;grid-row:2;display:grid;grid-template-columns:1fr 1fr;overflow:visible}.col{zoom:1;overflow:visible}.board{max-width:100%}}
+@media(max-width:600px){.game{display:flex;flex-direction:column;padding:8px}.center{order:0}.right{order:1}.left{order:2;display:flex}.sumbox{max-height:94vh;overflow:auto}.modegrid{grid-template-columns:1fr}.mode .md{min-height:0}.mode{padding:12px}.mode .mi{font-size:22px}.hudbtns{flex-wrap:wrap}.cardrow{flex-direction:column}.cardsbox{max-height:94vh;overflow:auto}.bless{width:100%;min-height:0}}
 </style>
-<style>/*UI_THEME*/</style>
 </head>
 <body>
 <div class="game">
@@ -340,18 +344,17 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
     </div>
   </aside>
   <main class="center">
-    <header class="arena-brand"><strong>Auto Battle</strong><span>The Sanctuary</span></header>
     <div class="hud">
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
-      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">Runs</button></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
     </div>
     <div class="board"><canvas id="cv"></canvas><div id="msg"></div></div>
   </main>
   <aside class="col right">
     <div class="card">
-      <h3>Shop <button class="b bigbtn" id="bBig" data-tip="Big Shop (200 gold): show 10 heroes instead of 5 for the rest of this run">10 slots · 200 G</button><span class="coins" id="coins"><span class="coin"></span><span id="sGold"></span></span><button class="b lockbtn" id="bLock">🔓 Lock</button></h3>
+      <h3>Shop <button class="b bigbtn" id="bBig" data-tip="Big Shop (200 gold): show 10 heroes instead of 5 for the rest of this run">🛒 ×10 · 200💰</button><span class="coins" id="coins"><span class="coin"></span><span id="sGold"></span></span><button class="b lockbtn" id="bLock">🔓 Lock</button></h3>
       <div class="shop" id="shop"></div>
       <div class="odds" id="odds"></div>
       <div class="actions">
@@ -359,14 +362,14 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <button class="b" id="bSell">Sell</button>
         <button class="b" id="bCap" data-tip="Upgrade the shop: +1 hero slot on the field and better odds for 2-4 gold heroes">Upgrade</button>
       </div>
-      <button class="b go" id="bFight">Start battle</button>
+      <button class="b go" id="bFight">⚔ Start battle</button>
     </div>
     <div class="card"><h3>Hero</h3><div id="info"></div></div>
-    <div class="card"><h3 class="shophead">Items <span class="hint">drag onto a hero</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">Scroll · 50 G</button></h3><div id="items" class="items"></div></div>
+    <div class="card"><h3 class="shophead">Items <span class="hint">drag onto a hero</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="items" class="items"></div></div>
     <div class="card">
       <details id="howto"><summary>How to play</summary>
       <ol class="help">
-        <li><b>Buy</b> heroes in the shop. They wait on the bench (the reserve row).</li>
+        <li><b>Buy</b> heroes in the shop. They wait on the bench (the wooden deck).</li>
         <li><b>Drag</b> a hero to move it (drop on another hero to swap). Click selects; click empty ground to cancel. <b>Right-click</b> a hero or drop it on the shop to sell.</li>
         <li><b>3 copies</b> merge into ★★ automatically (3 × ★★ = ★★★).</li>
         <li><b>Bonuses</b>: 2 or 3 <i>different</i> heroes of the same class or origin unlock a bonus (copies count once).</li>
@@ -394,7 +397,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%) and <b>alternates both skills</b>. Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
-        <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the Codex (☆, up to 10): they glow gold in the shop. <b>Click any hero</b> in the Codex or the Team Plan to see its full details.</li>
+        <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop. <b>Click any hero</b> in the Codex or the Team Plan to see its full details.</li>
         <li><b>Runs</b> (☰): <b>Daily Challenge</b> gives everyone the same shops, enemies and events for the day; <b>Hard</b> unlocks at round 15 and adds a run modifier. Every 4th round brings an <b>event</b>: a merchant, a mystery chest or a training ground.</li>
         <li><b>Ninjas</b> dash between enemies. <b>Gravity</b> mages pull enemies together (Event Horizon holds them in a black hole). <b>Druids</b> 🌿 <b>root</b> enemies (rooted: can't walk or use moving skills, only attacks what is in range) and carry allies to safety. <b>Berserkers</b> are giants that spin their axes through crowds. Gambler cards fly as projectiles; summons' attacks carry a small elemental effect (burn, bleed, slow, mana drain…).</li>
         <li><b>Bards</b> sing to nearby allies, one song every 4s: ♪ Haste (attack speed) → Guard (less damage taken) → Spirit (mana). The 1💰 Piper speeds up one ally (Rousing Note); the 4💰 Minstrel plays all three at once (Crescendo). <b>Alchemists</b> throw potions and earn gold. <b>Necromancers</b> raise fallen enemies to fight for you. <b>Engineers</b> build turrets. <b>Monks</b> dodge and get faster with every hit. <b>Teleporters</b> move allies onto the weakest enemy: the 2💰 Teleporter sends the ally behind it (or any neighbour), the 4💰 Warp Master sends everyone within 2 cells and stuns where they land.</li>
@@ -1307,11 +1310,11 @@ const HARD_UNLOCK=15;
 const bestKey=m=>m==='hard'?'ab_best_hard':m==='daily'?'ab_daily_'+today():'ab_best';
 function openModes(first){
   const nb=readBest('normal'), hb=readBest('hard'), db=readBest('daily'), open=true;   // Hard mode is open to everyone
-  $('#modesbox').innerHTML=`<div class="lobby-kicker">Auto Battle · The Sanctuary</div><h2>Choose your run</h2><p class="lobby-note">Build a team. Survive the next round.</p><div class="modegrid">
-    <button class="mode" data-m="normal"><div class="mi">01 / CLASSIC</div><div class="mn">Normal</div><div class="md">The classic run.</div><div class="mb">Best ${nb?'round '+nb.round:'–'}</div></button>
-    <button class="mode" data-m="daily"><div class="mi">02 / SHARED SEED</div><div class="mn">Daily Challenge</div><div class="md">Everyone gets the same shops, enemies and events today (${today()}). Compare with friends!</div><div class="mb">Today ${db?'round '+db.round:'–'}</div></button>
-    <button class="mode" data-m="hard" ${open?'':'disabled'}><div class="mi">03 / MODIFIERS</div><div class="mn">Hard</div><div class="md">${open?'Enemies 20% stronger, plus a run modifier you pick.':`Reach round ${HARD_UNLOCK} in Normal to unlock.`}</div><div class="mb">Best ${hb?'round '+hb.round:'–'}</div></button></div>
-    <button class="b" id="modesCodex">Hero Codex</button> <button class="b" id="modesTop">Leaderboard</button> <button class="b" id="modesClose" ${first?'hidden':''}>Back to the current run</button>`;
+  $('#modesbox').innerHTML=`<h2>New run</h2><div class="modegrid">
+    <button class="mode" data-m="normal"><div class="mi">⚔</div><div class="mn">Normal</div><div class="md">The classic run.</div><div class="mb">🏆 Best ${nb?'round '+nb.round:'–'}</div></button>
+    <button class="mode" data-m="daily"><div class="mi">📅</div><div class="mn">Daily Challenge</div><div class="md">Everyone gets the same shops, enemies and events today (${today()}). Compare with friends!</div><div class="mb">🏆 Today ${db?'round '+db.round:'–'}</div></button>
+    <button class="mode" data-m="hard" ${open?'':'disabled'}><div class="mi">💀</div><div class="mn">Hard</div><div class="md">${open?'Enemies 20% stronger, plus a run modifier you pick.':`Reach round ${HARD_UNLOCK} in Normal to unlock.`}</div><div class="mb">🏆 Best ${hb?'round '+hb.round:'–'}</div></button></div>
+    <button class="b" id="modesCodex">📖 Hero Codex</button> <button class="b" id="modesTop">🏆 Top 10</button> <button class="b" id="modesClose" ${first?'hidden':''}>Back to the current run</button>`;
   $('#modes').hidden=false;
 }
 $('#modesbox').addEventListener('click',e=>{
@@ -2475,19 +2478,37 @@ function thrust(R,p,k){ R.weapon.r+=KF(p,[[0,-1.4],[.3,-1.45],[.45,-1.55],[.7,-1
 function beats(p,wind,hit){ return p<.35?wind*easeOut(p/.35) : p<.55?wind+(hit-wind)*easeOut((p-.35)/.2) : hit*(1-easeInOut((p-.55)/.45)); }
 // joint offsets for this frame: {group:{x,y,r}} in sprite pixels / radians. The sprite faces left, so forward = -x.
 // Arm rotation: armR negative = raise, armL positive = raise.
+// Separate anticipation, action and recovery poses for each combat discipline.
+const ACTION_STYLE={warrior:'cut',crusader:'thrust',samurai:'cut',rogue:'stab',ninja:'stab',berserker:'cut',monkey:'thrust',monk:'punch',archer:'bow',gunner:'gun',engineer:'gun',grapple:'thrust',bard:'song',alchemist:'throw',gambler:'throw'};
+function articulateAttack(R,p,style,big){
+  const k=big?1.25:1,B=(wind,hit)=>beats(p,wind,hit)*k;
+  R.foreR.r+=B(.35,-.25);
+  R.body.x+=B(1,-2);R.body.y+=B(1,-.8);R.head.r+=B(-.06,.08);
+  R.legL.r+=B(.18,-.2);R.legR.r+=B(-.14,.15);R.cloth.r+=B(-.06,.1);R.cape.r+=B(.12,-.18);
+  if(style==='cut'){R.armR.r+=B(-.6,.7);R.weapon.r+=B(.18,-.3);R.armL.r+=B(.2,-.25);}
+  else if(style==='thrust'||style==='stab'){R.armR.x+=B(1.8,-3.6);R.armR.r+=B(-.18,.3);R.armL.r+=B(.25,-.35);R.weapon.r+=B(.08,-.12);}
+  else if(style==='punch'){R.foreR.r+=B(.5,-.1);R.armR.x+=B(2,-4);R.armR.y+=B(-.7,-1.5);R.armR.r+=B(.3,-.25);R.armL.r+=B(-.2,.45);}
+  else if(style==='bow'){R.foreR.r+=B(.2,-.3);R.armR.x+=B(2.8,-.5);R.armR.y+=B(.3,-.2);R.armL.x+=B(-1,.3);R.armL.r+=B(.1,-.1);R.body.x+=B(1,.5);}
+  else if(style==='gun'){R.armR.x+=B(-.4,2.4);R.armR.r+=B(0,-.12);R.weapon.r+=B(0,-.1);R.armL.x+=B(-.2,1.3);R.body.x+=B(0,1.5);}
+  else if(style==='throw'){R.armR.r+=B(-.5,.55);R.armR.x+=B(1,-2);R.armL.r+=B(.1,-.2);}
+  else if(style==='song'){R.armR.r+=B(-.12,.2);R.armL.x+=B(.8,-.8);R.head.r+=B(.05,-.05);}
+  else {R.armR.r+=B(-.5,.4);R.armL.r+=B(.3,-.4);R.weapon.r+=B(.12,-.15);R.body.y+=B(1,-1.2);}
+}
 function rigPose(o,type,b){
   if(o.frz>0) return {head:{x:0,y:0,r:0,s:HERO_HEAD_SCALE[type]||1}};   // freeze the pose, keeping the hero's art-directed proportions
   const t=ANIM+(o.ph||0), br=Math.sin(t*3.2), st=animOf(type,b), R={};
   const J=(x=0,y=0,r=0)=>({x,y,r});
-  R.body=J(0,br*.5); R.head=J(0,br*.35,Math.sin(t*1.3)*.03); R.cape=J(0,0,Math.sin(t*1.9)*.05);
-  R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
-  R.wingL=J(); R.wingR=J();
+  R.body=J(0,br*.5);R.body.sx=1+br*.012;R.body.sy=1-br*.01; R.head=J(0,br*.35,Math.sin(t*1.3)*.03); R.cape=J(0,0,Math.sin(t*1.9)*.05);
+  R.foreR=J(); R.armR=J(0,0,br*.05); R.armL=J(0,0,-br*.05); R.legL=J(); R.legR=J(); R.weapon=J();
+  R.wingL=J(); R.wingR=J(); R.cloth=J(0,0,Math.sin(t*2.1)*.025);
   if(st==='roster'){
-    R.armR.r=0; R.armL.r=0; R.weapon.r=0;
-    const p=o.rel>0?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
-    if(p>=0){ const k=b.range<=1?1:.5, hit=beats(p,.18,-.3)*k;
-      R.armR.r=hit; R.weapon.r=hit*.2; R.armL.r=-hit*.45; R.body.x=beats(p,.4,-.8)*k; R.head.r-=hit*.08; }
-    if(o.cast>0){const q=1-o.cast/CAST_T;R.armR.r=-.15*q;R.armL.r=.12*q;R.body.y+=.5*q;}
+    R.armR.r=br*.025; R.armL.r=-br*.02; R.weapon.r=0;
+    const style=ACTION_STYLE[b.cls]||'cast', big=o.rel>0, p=big?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
+    if(p>=0) articulateAttack(R,p,style,big);
+    if(o.cast>0){const q=easeOut(1-o.cast/CAST_T);
+      R.foreR.r-=.25*q;R.armR.r-=(style==='cast'?.55:.35)*q; R.armL.r+=.28*q;
+      R.body.y+=1.5*q;R.legL.r+=.18*q;R.legR.r-=.18*q; R.head.y+=.5*q;
+      R.cloth.r-=.06*q;R.cape.r+=.12*q;}
   }
   if(st==='reaper'){
     R.armR.r=-.15+br*.04; R.armL.r=.15-br*.04;
@@ -2542,17 +2563,18 @@ function rigPose(o,type,b){
   if(st==='blob') R.head.r=Math.sin(t*2.5)*.12;
   if(o.moving){   // walk cycle: legs step in turn, arms swing against them, body bobs, cape trails
     const w=(o.walk||0)*5, s=Math.sin(w), c=Math.cos(w);
-    R.legL.r=s*.5; R.legR.r=-s*.5; R.legL.y=Math.min(0,c)*1.3; R.legR.y=Math.min(0,-c)*1.3;
+    R.legL.r=s*.55; R.legR.r=-s*.55; R.legL.y=Math.min(0,c)*2.7; R.legR.y=Math.min(0,-c)*2.7;
+    R.foreR.r+=s*.15;R.legL.x=-s*.8;R.legR.x=s*.8;R.legL.sy=1+Math.min(0,c)*.12;R.legR.sy=1+Math.min(0,-c)*.12;R.cloth.r+=s*.09;
     R.body.y-=Math.abs(c)*1.2; R.armL.r-=s*.4; R.armR.r-=s*.35; R.cape.r+=.12+s*.05; R.head.r+=s*.03;
     if(st==='blob') R.head.r+=s*.15;
   }
   if(o.rel>0&&st==='slash'){ const p=1-o.rel/REL_T; swing(R,p,SWING_BIG); R.body.y+=KF(p,[[0,0],[.35,-3],[.5,1.5],[1,0]]); R.legL.r+=KF(p,[[0,0],[.35,.3],[.5,-.25],[1,0]]); R.legR.r+=KF(p,[[0,0],[.35,-.3],[.5,.25],[1,0]]); }
   else if(o.rel>0&&st==='spear'){ const p=1-o.rel/REL_T; thrust(R,p,1.6); R.legL.r+=KF(p,[[0,0],[.3,.2],[.45,-.3],[1,0]]); }
-  else if(o.rel>0&&st!=='artsword'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
+  else if(o.rel>0&&st!=='roster'&&st!=='reaper'&&st!=='artsword'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
     const p=1-o.rel/REL_T, B=(w,h)=>beats(p,w,h);
     R.armR.r+=B(-2.1,1.4); R.armL.r+=B(1.5,-.8); R.body.y+=B(-3,1.5); R.head.r+=B(-.12,.12);
     R.legL.r+=B(.3,-.2); R.legR.r+=B(-.3,.2); R.wingL.r+=B(-.8,.6); R.wingR.r+=B(.8,-.6); R.cape.r+=B(.25,-.1);
-  } else if(o.atkT>0&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
+  } else if(o.atkT>0&&st!=='roster'&&st!=='reaper'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
     const p=1-o.atkT/ATK_T, B=(w,h)=>beats(p,w,h);
     if(st==='slash') swing(R,p,SWING);
     else if(st==='spear') thrust(R,p,1);
@@ -2567,10 +2589,20 @@ function rigPose(o,type,b){
   if(o.cast>0&&(st==='slash'||st==='stab')){   // melee wind-up: hand up by the shoulder, blade laid back, knees bent
     const q=easeOut(1-o.cast/CAST_T);
     R.armR.r-=1.8*q; R.weapon.r+=(1.8+1.7)*q; R.armL.r+=.35*q; R.body.y+=2*q; R.legL.r+=.25*q; R.legR.r-=.25*q; R.head.r+=.06*q;
-  } else if(o.cast>0&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){   // charging a skill: arms (or wings) lift, weapon held high
+  } else if(o.cast>0&&st!=='roster'&&st!=='reaper'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){   // charging a skill: arms (or wings) lift, weapon held high
     const q=easeOut(1-o.cast/CAST_T);
     R.armR.r-=1.3*q; R.armL.r+=1.1*q; R.head.r-=.08*q; R.wingL.r-=.7*q; R.wingR.r+=.7*q; R.body.y-=q;
   }
+  if(type==='wolf'){
+    const gait=Math.sin((o.walk||0)*7);R.cape.r=Math.sin(t*9)*.3;
+    if(o.moving){R.legL.r=gait*.8;R.legR.r=-gait*.8;R.body.y-=Math.abs(gait)*1.5;R.head.y+=gait*.6;}
+    if(o.atkT>0){const p=1-o.atkT/ATK_T;R.head.x+=beats(p,1,-3.5);R.head.r+=beats(p,-.1,.22);}
+  }
+  if(type==='wisp'){R.head.y=Math.sin(t*4)*2.4;R.head.sx=1+Math.sin(t*3)*.04;R.head.sy=1-Math.sin(t*3)*.03;R.head.r=Math.sin(t*2)*.05;}
+  if(type==='drake'||type==='wyrm'){const flap=Math.sin(t*(type==='drake'?11:6));R.wingL.r=flap*.7;R.wingR.r=-flap*.7;R.body.y+=flap*.8;R.head.r-=flap*.035;}
+  if(type==='turret'||type==='arctower'){R.head.r=Math.sin(t*1.3)*.04;if(o.atkT>0){const p=1-o.atkT/ATK_T;R.head.x+=beats(p,0,2.2);R.head.y+=beats(p,-.4,.5);}}
+  if(type==='stormdjinn'||type==='lich'){R.body.y+=Math.sin(t*2)*1.5;R.head.y-=Math.sin(t*2)*.4;}
+  if(b.boss&&o.moving&&(type==='golem'||type==='colossus')){const step=Math.sin((o.walk||0)*4);R.body.r+=step*.035;R.armR.r+=step*.2;R.armL.r-=step*.2;}
   if(o.flash){ const f=o.flash; R.head.r+=f*.2; R.body.x+=f*1.5; R.armR.r+=f*.3; R.armL.r-=f*.3; }   // hit recoil
   if(o.stun>0){ R.head.r+=Math.sin(ANIM*6)*.18; R.armR.r+=.4; R.armL.r-=.4; }                          // dizzy
   if(o.cheer){ const wv=Math.sin(t*10)*.25; R.armR.r=-2+wv; R.armL.r=2-wv; R.wingL.r=-.6; R.wingR.r=.6; }   // V-shape: straight up would hide behind the head
@@ -2580,6 +2612,10 @@ function rigPose(o,type,b){
   if(o.spin>0){ const sweep=Math.sin(t*18); R.front=1; R.body.r=sweep*.1; R.head.r=-sweep*.06;
     R.armR.r=-.6+sweep*.55; R.weapon.r=-.8+sweep*1.1; R.armL.r=.5-sweep*.35;
     R.cape.r+=sweep*.2; R.legL.r=sweep*.15; R.legR.r=-sweep*.15; }
+  if(type==='golem'||type==='colossus'){
+    R.armR.r=Math.max(-.4,Math.min(.4,R.armR.r));R.armL.r=Math.max(-.4,Math.min(.4,R.armL.r));
+    R.armR.x-=Math.sin(R.armR.r)*1.5;R.armL.x+=Math.sin(R.armL.r)*1.5;
+  }
   if(SPR[type]&&SPR[type].art){
     R.head.s=HERO_HEAD_SCALE[type]||1;
     if(o.moving&&!o.spin){ const stride=Math.sin((o.walk||0)*5); R.body.y-=Math.abs(stride)*.8; R.head.r-=stride*.025;
@@ -2609,6 +2645,13 @@ function exprOf(o){
 }
 // one rig layer: frames are fw x 54 design pixels (fw is 56 unless a hand-made picture is wider), stored k x bigger
 function rigLayer(r,i,p){ const fw=r.fw||56, k=r.k||1; rg.drawImage(r.img,i*fw*k,0,fw*k,54*k,-p[0]-(fw-56)/2,-p[1],fw,54); }
+// Shoulder -> elbow -> wrist. The hand and weapon share this transform.
+function gripTransform(rig,R,target){
+  const a=R.armR||{x:0,y:0,r:0}, b=R.body||{x:0,y:0}, pa=rig.piv.armR, ph=target;
+  rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y);if(a.r)rg.rotate(a.r);rg.scale(a.sx||1,a.sy||1);
+  if(rig.piv.foreR){const f=R.foreR||{x:0,y:0,r:0},pe=rig.piv.foreR;rg.translate(pe[0]-pa[0]+f.x,pe[1]-pa[1]+f.y);if(f.r)rg.rotate(f.r);rg.translate(ph[0]-pe[0],ph[1]-pe[1]);}
+  else rg.translate(ph[0]-pa[0],ph[1]-pa[1]);
+}
 function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose weapon and cape replace the lead's
   const b=R.body||{x:0,y:0,r:0}; rg.setTransform(RES,0,0,RES,0,0); rg.clearRect(0,0,168,162); rg.imageSmoothingEnabled=!!rig.art;   // layers are k x detail: crisp for pixel sprites, smooth for hand-made pictures
   let order=rig.layers.map((g,i)=>i);
@@ -2623,15 +2666,16 @@ function buildRig(rig,R,tints,expr,mix){   // mix: a fused partner's rig, whose 
   order.forEach(i=>{ const g=rig.layers[i];
     if(g==='weapon'&&mixW.length){ if(mixDone) return; mixDone=true;   // the partner's weapon in the lead's hand
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon, pm=mix.piv.weapon;
-      for(const k of mixW){ rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
+      for(const k of mixW){ rg.save(); gripTransform(rig,R,ph); if(w.r) rg.rotate(w.r);
         rigLayer(mix,k,pm); rg.restore(); }
       return; }
     if(g==='weapon'&&rig.piv.weapon){   // shoulder -> arm turn -> wrist -> weapon turn
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon;
-      rg.save(); rg.translate(56+pa[0]+a.x+b.x,54+pa[1]+a.y+b.y); if(a.r) rg.rotate(a.r); rg.translate(ph[0]-pa[0],ph[1]-pa[1]); if(w.r) rg.rotate(w.r);
+      rg.save(); gripTransform(rig,R,ph); if(w.r) rg.rotate(w.r);
       rigLayer(rig,i,ph); rg.restore(); return; }
+    if(g==='foreR'&&rig.piv.foreR){rg.save();gripTransform(rig,R,rig.piv.foreR);rigLayer(rig,i,rig.piv.foreR);rg.restore();return;}
     const j=R[g]||b, p=rig.piv[g]||rig.piv.body, ox=j.x+(LOOSE[g]?0:b.x), oy=j.y+(LOOSE[g]?0:b.y);
-    rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r); if(j.s) rg.scale(j.s,j.s);
+    rg.save(); rg.translate(56+p[0]+ox,54+p[1]+oy); if(j.r) rg.rotate(j.r); if(j.s) rg.scale(j.s,j.s);rg.scale(j.sx||1,j.sy||1);
     const src=i===rig.faceLayer&&expr&&rig.expr?rig.expr[expr]??i:i;
     rigLayer(rig,src,p); rg.restore();
   });
@@ -2653,10 +2697,12 @@ const HERO_VISUAL_SCALE={
   grandmaster:.98,shadowstep:1,stonemonkey:.97,wukong:.96,
   eclipsewitch:1,chieftain:.98,
 };
+const CREATURE_SCALE={wisp:.8,wolf:.9,guardian:1.15,drake:1.1,skeleton:.9,turret:.9,arctower:1,mossling:.85,shroomkin:.9,emberbat:.9};
 function drawUnit(type,star,px,py,o={}){
-  const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), sc=b.boss?(b.scale||1):(HERO_VISUAL_SCALE[type]||1), oy=-54*(sc-1);
+  const b=U[type], sp=SPR[type], col=colorOf(type), rig=sp&&sp.rig&&sp.rig.img.naturalWidth?sp.rig:null, P=pose(o,b,!!rig), native=Object.hasOwn(CREATURE_SCALE,type), sc=b.boss?(b.scale||1):native?CREATURE_SCALE[type]:(HERO_VISUAL_SCALE[type]||1),
+    visible=native&&sp&&sp.bounds?sp.bounds.height/sp.img.naturalHeight:1, oy=54*(1-sc*visible);
   ctx.save(); ctx.globalAlpha=P.alpha;
-  const sh=Math.max(.3,1-P.lift/30)*sc;
+  const sh=Math.max(.3,1-P.lift/30)*sc*(native?.7:1);
   ctx.save(); ctx.translate(px+P.dx,py+22); ctx.scale(1,.36);   // soft ground shadow
   const gsh=ctx.createRadialGradient(0,0,0,0,0,22*sh); gsh.addColorStop(0,'rgba(12,18,10,.5)'); gsh.addColorStop(.65,'rgba(12,18,10,.28)'); gsh.addColorStop(1,'rgba(12,18,10,0)');
   ctx.fillStyle=gsh; ctx.beginPath(); ctx.arc(0,0,22*sh,0,Math.PI*2); ctx.fill(); ctx.restore();
@@ -2692,7 +2738,7 @@ function drawUnit(type,star,px,py,o={}){
   if(o.glow||o.cast>0){ const g=o.cast>0?.5+.3*Math.sin(ANIM*30):o.glow*1.2;
     ctx.fillStyle=col; ctx.globalAlpha=P.alpha*g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,26,10,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
   if(sp&&sp.img.naturalWidth){
-    const im=sp.img, bounds=sp.bounds||{bottom:im.naturalHeight,height:im.naturalHeight}, s=54/bounds.height*sc, u=rig?im.naturalHeight/bounds.height*sc:0;
+    const im=sp.img, bounds=sp.bounds||{bottom:im.naturalHeight,height:im.naturalHeight}, s=54/(native?im.naturalHeight:bounds.height)*sc, u=rig?(native?1:im.naturalHeight/bounds.height)*sc:0;
     const w=rig?56*u:im.naturalWidth*s, h=rig?54*u:im.naturalHeight*s;   // optical corrections balance body size across different art styles; bosses stay larger
     const flip=o.face!==undefined&&((o.face<0)!==!!sp.faceLeft);
     ctx.translate(px+P.dx,py+26+P.dy-P.lift); ctx.rotate(P.rot); ctx.scale(flip?-P.sx:P.sx,P.sy);
@@ -2877,10 +2923,8 @@ function render(){
     ctx.stroke();
   }
   if(S.fight&&S.fight.dim>.01){ ctx.fillStyle=`rgba(8,6,20,${S.fight.dim*.4})`; ctx.fillRect(0,0,W,BOARD_H); }
-  ctx.fillStyle='#1c2830';ctx.fillRect(0,BOARD_H,W,H-BOARD_H);
-  ctx.strokeStyle='#64717a';ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(0,BOARD_H+.5);ctx.lineTo(W,BOARD_H+.5);ctx.stroke();
-  for(let i=0;i<BENCH;i++){ ctx.strokeStyle='#46545e';ctx.lineWidth=.5;ctx.strokeRect(i*CELL+4,BENCH_Y+2,CELL-8,CELL-4); ctx.fillStyle='#24323c'; ctx.fillRect(i*CELL+4,BENCH_Y+2,CELL-8,CELL-4); }
-  ctx.fillStyle='#f3e7cf'; ctx.font="9px system-ui"; ctx.textAlign='left'; ctx.fillText('RESERVES',6,BENCH_Y-6);
+  for(let i=0;i<BENCH;i++){ ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(i*CELL+4,BENCH_Y+2,CELL-8,CELL-4); }
+  ctx.fillStyle='#f3e7cf'; ctx.font="17px 'Jersey 10',system-ui"; ctx.textAlign='left'; ctx.fillText('BENCH',6,BENCH_Y-6);
 
   if(shopDrag&&shopDrag.moved&&shopDrag.over){   // where a hero dragged from the shop would land
     const l=shopDrag.over, ok=S.gold>=U[shopDrag.id].cost&&!(l.w==='board'&&(l.cy<4||onBoard().length>=cap()))&&!S.units.some(v=>sameLoc(v.loc,l));

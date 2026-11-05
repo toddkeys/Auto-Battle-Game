@@ -34,6 +34,9 @@ async def main():
         drawUnit(u.id,2,100,100,{face,...state});states++;
       }
     }
+    for(const u of [...SUMMONS,...MONSTERS])for(const face of [-1,1])for(const state of [{},{moving:true,walk:2},{cast:CAST_T*.5},{atkT:ATK_T*.5},{rel:REL_T*.5},{frz:1},{die:.5},{spin:1}]){
+      drawUnit(u.id,1,100,100,{face,...state});states++;
+    }
     newGame();$('#cards').hidden=true;
     S.units=UNITS.slice(0,3).map((u,i)=>({uid:i+1,type:u.id,star:1,items:[],loc:{w:'board',cx:2+i,cy:5}}));render();renderUI();
     return {heroes:UNITS.length,casts,renderStates:states};
