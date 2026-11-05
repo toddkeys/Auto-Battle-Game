@@ -98,6 +98,17 @@ ART_RIGS = {
             'head': {'poly': [(48, 0), (88, 0), (92, 20), (90, 46), (80, 56), (56, 56), (50, 46), (48, 20)], 'piv': (68, 54)},
         },
     },
+    # Crimson Ravager: an axe hanging in each hand; the front axe lifts and chops like the Paladin's sword, the other swings with its arm
+    'chieftain': {
+        'nofill': ['weapon'],   # the front axe hangs beside his leg: no body behind it
+        'order': ['body', 'head', 'armL', 'weapon', 'armR'],
+        'parts': {
+            'armR': {'poly': [(28, 66), (46, 66), (44, 90), (40, 112), (26, 112), (26, 90)], 'piv': (38, 68)},
+            'weapon': {'poly': [(-2, 94), (30, 94), (36, 108), (30, 146), (-2, 146)], 'piv': (32, 104)},
+            'armL': {'poly': [(72, 64), (90, 64), (98, 84), (119, 82), (119, 136), (96, 140), (84, 118), (76, 100)], 'piv': (80, 68)},
+            'head': {'poly': [(28, 0), (80, 0), (90, 20), (88, 45), (75, 55), (45, 55), (35, 45), (28, 25)], 'piv': (58, 52)},
+        },
+    },
 }
 
 
@@ -133,6 +144,12 @@ def build(cid, art_dir, rig_dir):
         rows = np.arange(H)[:, None] >= spec['fillTop'] + oy
         wide = (dist <= 3) | (wide & rows)
     fill = taken & (wide | ~(blade if blade is not None else taken))
+    if 'nofill' in spec:   # pieces that hang beside the body (a weapon out to the side) leave nothing behind
+        for name in spec['nofill']:
+            m = Image.new('L', (cw, H), 0)
+            for poly in spec['parts'][name].get('polys', [spec['parts'][name].get('poly')]):
+                ImageDraw.Draw(m).polygon([(x + ox, y + oy) for x, y in poly], fill=255)
+            fill &= ~(np.asarray(m) > 0) | (dist <= 1)
     body[fill] = body[iy[fill], ix[fill]]
     layers['body'] = body
     strip = Image.new('RGBA', (cw * len(spec['order']), H), (0, 0, 0, 0))
