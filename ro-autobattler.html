@@ -551,7 +551,7 @@ const UNITS = [
   {id:'mechanist',   name:'Mechanist',    cls:'engineer',org:'gilded',    cost:3,hp:950, atk:78, range:4,as:1.0, ms:1.4},
   // monks: dodge, and every hit makes them faster (combo)
   {id:'brawler',     name:'Brawler',      cls:'monk',org:'wildheart',     cost:1,hp:620, atk:46, range:1,as:.7, ms:2.0},
-  {id:'grandmaster', name:'Grandmaster',  cls:'monk',org:'starborn',      cost:4,hp:1800,atk:135,range:1,as:.6, ms:2.0},
+  {id:'grandmaster', name:'Worldbreaker', cls:'monk',org:'starborn',      cost:4,hp:1800,atk:135,range:1,as:.6, ms:2.0},
   // teleporters: move allies onto the weakest enemy
   {id:'chronomancer',name:'Teleporter',   cls:'chrono',org:'starborn',    cost:2,hp:580, atk:48, range:3,as:1.1, ms:1.4},
   {id:'timekeeper',  name:'Warp Master',   cls:'chrono',org:'moonblood',   cost:4,hp:1100,atk:105,range:4,as:1.0, ms:1.3},
@@ -910,7 +910,7 @@ const SKILLS = {
       later(.6,()=>{ FX('boom',x,y-.2,{s:.9,m:.5}); addTrauma(.15); for(const o of foes(a)) if(Math.hypot(o.x-x,o.y-y)<=1){ hit(a,o,1.8); if(i===0) stun(o); } }); }); }},
   brawler:{name:'Hundred Fists', mp:55, desc:'Five rapid punches at the target for 55% damage each; every punch adds a combo stack.',
     cast(a,t){ for(let i=0;i<5;i++) later(i*.09,()=>{ if(t.hp>0&&a.hp>0){ hit(a,t,.55,false); combo(a); burst(t.x,t.y-.25,'#ffe0a0',4,2.5,2); } }); }},
-  grandmaster:{name:'Palm of Heaven', mp:90, desc:'An open-palm strike: 380% damage, a 1s stun and a knockback. Then the Grandmaster reaches full combo and dodges an extra 50% of attacks for 3s.',
+  grandmaster:{name:'Palm of Heaven', mp:90, desc:'An open-palm strike: 380% damage, a 1s stun and a knockback. Then the Worldbreaker reaches full combo and dodges an extra 50% of attacks for 3s.',
     cast(a,t){ hit(a,t,3.8); stun(t); const d=dist(a,t)||1; t.x+=(t.x-a.x)/d*.8; t.y+=(t.y-a.y)/d*.8; clampOnBoard(t);
       a.combo=10; a.zen=3; FX('nova',t.x,t.y-.2,{s:1.2,tint:'#ffe27a',m:.5}); hitStop(.08); }},
   chronomancer:{name:'Warp Partner', mp:70, desc:'Teleports one ally standing next to it (the one behind it first, otherwise any neighbour) beside the weakest enemy. With nobody next to it, it zaps the weakest enemy for 150% damage instead.',
