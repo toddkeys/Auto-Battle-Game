@@ -294,6 +294,7 @@ details summary::before{content:'▸ ';color:var(--brass)}details[open] summary:
 #bubble{position:fixed;z-index:90;max-width:260px;padding:8px 11px;border:2px solid var(--ink);border-radius:8px;pointer-events:none;
   background:linear-gradient(180deg,#fbe9bd,#e6c47c);color:#2a1607;font:500 13px/1.35 var(--body);box-shadow:0 4px 0 var(--ink),0 10px 24px rgba(0,0,0,.5)}
 #bubble[hidden]{display:none}
+.ctag{display:inline-block;margin:2px 1px 0;padding:1px 6px;border-radius:4px;background:#2a1a0e;color:var(--c);font-weight:700;line-height:1.3;white-space:nowrap}
 #bubble::after{content:'';position:absolute;left:calc(var(--ax) - 7px);bottom:-9px;border:7px solid transparent;border-top-color:#e6c47c;border-bottom:0}
 #bubble.below::after{bottom:auto;top:-9px;border:7px solid transparent;border-bottom-color:#fbe9bd;border-top:0}
 #bubble b{font:400 19px/1 var(--pixel);letter-spacing:.02em}
@@ -1573,8 +1574,9 @@ let LB_TEAM=null;   // does the online table have the line-up column (null = not
 const lineupOf=()=>{ const us=onBoard().length?onBoard():S.units; return us.slice(0,12).map(u=>({t:u.type,s:u.star,...(u.fuse?{f:u.fuse}:{})})); };
 const okTeam=tm=>Array.isArray(tm)?tm.filter(h=>h&&U[h.t]&&(!h.f||U[h.f])):[];
 function heroTip(h){ const u=U[h.t], f=h.f&&U[h.f];
-  return f?`<b>${u.name}</b> ⚭ <b>${f.name}</b><br><span style="color:${colorOf(h.t)}">${CLASSES[u.cls].name}</span> + <span style="color:${colorOf(h.f)}">${CLASSES[f.cls].name}</span> · ${ORIGINS[u.org].icon} ${ORIGINS[f.org].icon}`
-    :`<b>${u.name}</b> ${'★'.repeat(h.s||1)}<br><span style="color:${colorOf(h.t)}">${CLASSES[u.cls].name}</span> · ${ORIGINS[u.org].icon} ${ORIGINS[u.org].name}`; }
+  const tag=(c,txt)=>`<span class="ctag" style="--c:${c}">${txt}</span>`;   // class colours are made for dark panels: a dark tag keeps them readable on the light tooltip
+  return f?`<b>${u.name}</b> ⚭ <b>${f.name}</b><br>${tag(colorOf(h.t),CLASSES[u.cls].name)} + ${tag(colorOf(h.f),CLASSES[f.cls].name)} ${tag('#f3e2b8',ORIGINS[u.org].icon+' '+ORIGINS[u.org].name)} ${tag('#f3e2b8',ORIGINS[f.org].icon+' '+ORIGINS[f.org].name)}`
+    :`<b>${u.name}</b> ${'★'.repeat(h.s||1)}<br>${tag(colorOf(h.t),CLASSES[u.cls].name)} ${tag('#f3e2b8',ORIGINS[u.org].icon+' '+ORIGINS[u.org].name)}`; }
 const lineupHTML=tm=>okTeam(tm).length?`<div class="lineup">${okTeam(tm).map(h=>`<span class="lu${h.f?' fz':''}" data-tip="${esc(heroTip(h))}">${thumbHTML(h.t,32)}<i>${h.f?'<b style="color:#ff3a3a">★</b>':'★'.repeat(h.s||1)}</i></span>`).join('')}</div>`
   :'<div class="lineup none">No line-up saved for this score.</div>';
 async function lbFetch(board){
