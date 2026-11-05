@@ -1248,45 +1248,9 @@ function drawAmbient(){
 }
 
 
-// ====== sound: recorded effects + music (assets/audio, built by tools/build_audio.py; credits in assets/audio/CREDITS.txt) ======
-// plain <audio> elements, so it also works when the page is opened straight from disk
-const SND=(()=>{
-  let ready=false, musVol=.5, sfxVol=.7, want='prep';   // volumes 0..1, set by the HUD sliders
-  const SFX_VOL=.85, MUS_VOL=.45, pool={}, last={};
-  try{ const p=JSON.parse(localStorage.getItem('ab_sound')||'{}'); if(p.mus>=0) musVol=p.mus; if(p.sfx>=0) sfxVol=p.sfx; }catch(e){}
-  const save=()=>{ try{ localStorage.setItem('ab_sound',JSON.stringify({mus:musVol,sfx:sfxVol})); }catch(e){} };
-  const FILES=['hit1','hit2','hit3','crit','shoot','zapshot','cast','skill','hdie','mdie','shatter','freeze','boom','slam','quake','heal','bless','shield',
-    'fire','flame','ice','zap','curse','poison','teleport','summon','stun','arrows','snipe','steal','flurry','trap','slime','roar_golem','roar_lich','roar',
-    'bash','click','buy','sell','reroll','star','equip','slot','start','victory','defeat'];
-  const ALIAS={hit:['hit1','hit2','hit3']};
-  const GAP={hit:.06,crit:.08,shoot:.06,zapshot:.07,heal:.15,cast:.1,boom:.15,freeze:.12,shatter:.12,click:.04,hdie:.1,mdie:.1};
-  const VOL={click:.5,cast:.6,hit:.75,shoot:.7,zapshot:.6,buy:.8,sell:.8,reroll:.8};
-  const music={prep:new Audio('assets/audio/prep.mp3'),battle:new Audio('assets/audio/battle.mp3')};
-  for(const m of Object.values(music)){ m.loop=true; m.volume=0; m.preload='auto'; }
-  function init(){
-    if(ready) return; ready=true;
-    for(const n of FILES) pool[n]={i:0,a:Array.from({length:3},()=>{ const x=new Audio('assets/audio/sfx/'+n+'.ogg'); x.preload='auto'; return x; })};
-  }
-  function play(k){
-    if(!ready||!sfxVol) return; const now=performance.now()/1000; if(now-(last[k]||-9)<(GAP[k]||.05)) return; last[k]=now;
-    let n=ALIAS[k]||k; if(Array.isArray(n)) n=n[Math.random()*n.length|0];
-    const p=pool[n]; if(!p) return; const x=p.a[p.i++%p.a.length];
-    x.volume=Math.min(1,SFX_VOL*sfxVol*(VOL[k]||1)); try{ x.currentTime=0; }catch(e){} x.play().catch(()=>{});
-  }
-  // called every frame: the wanted track fades in, the other fades out (and pauses when silent)
-  function update(dt){
-    for(const [k,m] of Object.entries(music)){
-      const tgt=ready&&k===want?MUS_VOL*musVol:0;
-      if(tgt>0&&m.paused) m.play().catch(()=>{});
-      m.volume=Math.max(0,Math.min(1,m.volume+(tgt-m.volume)*Math.min(1,dt*2.5)));
-      if(tgt===0&&!m.paused&&m.volume<.005) m.pause();
-    }
-  }
-  return {init,play,update,
-    music(kind){ if(kind!==want&&kind==='battle'){ try{ music.battle.currentTime=0; }catch(e){} } want=kind; },
-    setMusic(v){ musVol=v; save(); }, setSfx(v){ sfxVol=v; save(); },
-    get musVol(){ return musVol; }, get sfxVol(){ return sfxVol; }, get musicOn(){ return musVol>0; }};
-})();
+// ====== sound: priority mixer and remixed hero/boss signatures ======
+/*AUDIO_PROFILES*/
+/*AUDIO_MIXER*/
 // which sound each skill makes when it goes off
 const SKILL_SND={maskedmagus:'teleport',mirrormage:'teleport',puppeteer:'curse',rimedragoness:'freeze',minstrel:'bless',piper:'bless',dancer:'flurry',apothecary:'curse',merchant:'reroll',gravecaller:'summon',bonelord:'summon',tinkerer:'zap',mechanist:'boom',brawler:'flurry',grandmaster:'slam',chronomancer:'teleport',timekeeper:'teleport',turret:'zap',swordsman:'slam',knight:'stun',lordknight:'slam',archer:'shoot',hunter:'trap',sniper:'snipe',acolyte:'heal',priest:'heal',highpriest:'bless',
   thief:'steal',assassin:'flurry',assassincross:'teleport',mage:'fire',wizard:'ice',highwizard:'fire',starwarden:'bash',stormranger:'arrows',dawnoracle:'bless',
@@ -1588,7 +1552,7 @@ function showSummary(){
   if(rec) SND.play('star');
   lbRunOver();
 }
-function newGame(mode='normal',mod){ $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
+function newGame(mode='normal',mod){ SND.reset(); $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -2092,7 +2056,7 @@ function burst(x,y,c,n,spd=2.5,size=3,g=6){
   for(let i=0;i<n;i++){ const an=Math.random()*Math.PI*2, v=spd*(.4+Math.random()*.8), life=.3+Math.random()*.3;
     S.fight.parts.push({x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-(g>0?1.5:0),life,max:life,c,size,g}); }
 }
-function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal'); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
+function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal',{x:u.x}); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
 const PROJ={maskedmagus:'p_arcane',mirrormage:'p_arcane',puppeteer:'p_dark',rimedragoness:'p_ice',thornmother:'p_plant',stormdjinn:'p_light',colossus:'p_light',cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',piper:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
   acolyte:'p_light',priest:'p_light',highpriest:'p_light',dawnoracle:'p_light',spiritcaller:'p_arcane',starcaller:'p_arcane',stonebinder:'p_arcane',wisp:'p_arcane',shroomkin:'p_plant'};
 // basic ranged attacks fly as small missiles (skills keep the big spell sprites)
@@ -2127,7 +2091,7 @@ function deal(t,dmg,crit,src){
   if(src&&src.leech&&src.hp>0){ const h=Math.min(dmg*src.leech*healMul(src),src.max-src.hp); src.hp+=h; src.hl+=h; }
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
-  burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.play(crit?'crit':'hit');
+  burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.impact(src,t,crit);
   if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else pop(t,Math.round(dmg),['#fff','#ffe27a','#ffb050'][BACKHIT],false);
   if(BACKHIT===2&&Math.random()<.35) pop({x:t.x,y:t.y-.7},'Back!','#ffb050');
 }
@@ -2229,7 +2193,7 @@ function releaseCast(a){
   a.atkT=ATK_T; a.relT=REL_T; a.glow=.5; if(t) a.tgt=t; if(a.spellblade) a.sb=a.spellblade;
   if(a.star===3){ FXS=1.3; V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.6,m:.8}); V({k:'ring',x:a.x,y:a.y,r:1.1,c:'#fff3c0',m:.6}); burst(a.x,a.y-.4,'#ffe9a0',18,3.5,3,-2); }   // 3 stars: a golden flourish
   for(const m of S.fight.f) if(m.mimicMp&&m.team!==a.team&&m.hp>0) gainMp(m,m.mimicMp);   // Mimic class bonus
-  CASTER=a; SND.play(SKILL_SND[a.type]||'skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
+  CASTER=a; SND.skill(a); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
   const accent=a.type==='nightreaper'?'#ff5276':BOSS_PALETTES[a.type]||colorOf(a.type);
   V({k:'sigilBloom',x:a.x,y:a.y+.2,c:accent,r:U[a.type].boss?1.3:.75,m:.65});
   if(t&&!(a.heal>0)) V({k:'impactBloom',x:t.x,y:t.y-.2,c:accent,r:U[a.type].boss?1.1:.65,m:.42});

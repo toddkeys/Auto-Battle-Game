@@ -1,0 +1,1094 @@
+{
+  "acolyte": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/acolyte.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.5,
+    "priority": 2,
+    "sources": [
+      "bless",
+      "heal"
+    ]
+  },
+  "aegispaladin": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/aegispaladin.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.68,
+    "priority": 3,
+    "sources": [
+      "bash",
+      "bless"
+    ]
+  },
+  "anchorbrute": {
+    "channel": "skill",
+    "duration": 0.65,
+    "file": "assets/audio/skills/anchorbrute.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.04,
+    "priority": 3,
+    "sources": [
+      "trap",
+      "bash"
+    ]
+  },
+  "apothecary": {
+    "channel": "skill",
+    "duration": 0.65,
+    "file": "assets/audio/skills/apothecary.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.78,
+    "priority": 2,
+    "sources": [
+      "poison",
+      "heal"
+    ]
+  },
+  "archer": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/archer.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.82,
+    "priority": 2,
+    "sources": [
+      "arrows",
+      "shoot"
+    ]
+  },
+  "assassin": {
+    "channel": "skill",
+    "duration": 0.48,
+    "file": "assets/audio/skills/assassin.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.96,
+    "priority": 2,
+    "sources": [
+      "steal",
+      "hit3"
+    ]
+  },
+  "assassincross": {
+    "channel": "skill",
+    "duration": 0.48,
+    "file": "assets/audio/skills/assassincross.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.46,
+    "priority": 3,
+    "sources": [
+      "steal",
+      "hit3"
+    ]
+  },
+  "axebrute": {
+    "channel": "skill",
+    "duration": 0.65,
+    "file": "assets/audio/skills/axebrute.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.32,
+    "priority": 2,
+    "sources": [
+      "flurry",
+      "bash"
+    ]
+  },
+  "beastmaster": {
+    "channel": "skill",
+    "duration": 0.82,
+    "file": "assets/audio/skills/beastmaster.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.0,
+    "priority": 2,
+    "sources": [
+      "summon",
+      "cast"
+    ]
+  },
+  "bogwitch": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/bogwitch.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.64,
+    "priority": 2,
+    "sources": [
+      "curse",
+      "poison"
+    ]
+  },
+  "bonelord": {
+    "channel": "skill",
+    "duration": 0.85,
+    "file": "assets/audio/skills/bonelord.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.28,
+    "priority": 3,
+    "sources": [
+      "summon",
+      "curse"
+    ]
+  },
+  "brawler": {
+    "channel": "skill",
+    "duration": 0.48,
+    "file": "assets/audio/skills/brawler.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.78,
+    "priority": 2,
+    "sources": [
+      "hit2",
+      "slam"
+    ]
+  },
+  "bulwark": {
+    "channel": "skill",
+    "duration": 0.72,
+    "file": "assets/audio/skills/bulwark.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.64,
+    "priority": 2,
+    "sources": [
+      "bash",
+      "shield"
+    ]
+  },
+  "cardshark": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/cardshark.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -1.14,
+    "priority": 2,
+    "sources": [
+      "reroll",
+      "star"
+    ]
+  },
+  "chieftain": {
+    "channel": "skill",
+    "duration": 0.72,
+    "file": "assets/audio/skills/chieftain.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.04,
+    "priority": 3,
+    "sources": [
+      "flurry",
+      "slam"
+    ]
+  },
+  "chronomancer": {
+    "channel": "skill",
+    "duration": 0.7,
+    "file": "assets/audio/skills/chronomancer.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.64,
+    "priority": 2,
+    "sources": [
+      "teleport",
+      "cast"
+    ]
+  },
+  "colossus": {
+    "channel": "boss",
+    "duration": 0.95,
+    "file": "assets/audio/skills/colossus.ogg",
+    "focus": 0.5,
+    "gain": 0.92,
+    "gap": 0.22,
+    "pitch_semitones": -0.66,
+    "priority": 4,
+    "sources": [
+      "bash",
+      "quake"
+    ]
+  },
+  "dancer": {
+    "channel": "skill",
+    "duration": 0.72,
+    "file": "assets/audio/skills/dancer.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.5,
+    "priority": 3,
+    "sources": [
+      "bless",
+      "equip"
+    ]
+  },
+  "dawnoracle": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/dawnoracle.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.28,
+    "priority": 3,
+    "sources": [
+      "bless",
+      "heal"
+    ]
+  },
+  "deadshot": {
+    "channel": "skill",
+    "duration": 0.48,
+    "file": "assets/audio/skills/deadshot.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 1.0,
+    "priority": 3,
+    "sources": [
+      "snipe",
+      "shoot"
+    ]
+  },
+  "doomherald": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/doomherald.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.14,
+    "priority": 3,
+    "sources": [
+      "curse",
+      "poison"
+    ]
+  },
+  "eclipsewitch": {
+    "channel": "skill",
+    "duration": 0.85,
+    "file": "assets/audio/skills/eclipsewitch.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.28,
+    "priority": 3,
+    "sources": [
+      "boom",
+      "teleport"
+    ]
+  },
+  "fortuneteller": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/fortuneteller.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.32,
+    "priority": 2,
+    "sources": [
+      "reroll",
+      "star"
+    ]
+  },
+  "frostoracle": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/frostoracle.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.5,
+    "priority": 3,
+    "sources": [
+      "ice",
+      "shield"
+    ]
+  },
+  "galecaller": {
+    "channel": "skill",
+    "duration": 0.75,
+    "file": "assets/audio/skills/galecaller.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.18,
+    "priority": 3,
+    "sources": [
+      "summon",
+      "heal"
+    ]
+  },
+  "gearmaster": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/gearmaster.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.68,
+    "priority": 3,
+    "sources": [
+      "zapshot",
+      "equip"
+    ]
+  },
+  "glacierwarden": {
+    "channel": "skill",
+    "duration": 0.75,
+    "file": "assets/audio/skills/glacierwarden.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.0,
+    "priority": 2,
+    "sources": [
+      "shield",
+      "ice"
+    ]
+  },
+  "golem": {
+    "channel": "boss",
+    "duration": 1.0,
+    "file": "assets/audio/skills/golem.ogg",
+    "focus": 0.5,
+    "gain": 0.92,
+    "gap": 0.22,
+    "pitch_semitones": -1.62,
+    "priority": 4,
+    "sources": [
+      "quake",
+      "roar_golem"
+    ]
+  },
+  "grandmaster": {
+    "channel": "skill",
+    "duration": 0.58,
+    "file": "assets/audio/skills/grandmaster.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -2.5,
+    "priority": 3,
+    "sources": [
+      "slam",
+      "hit2"
+    ]
+  },
+  "gravecaller": {
+    "channel": "skill",
+    "duration": 0.85,
+    "file": "assets/audio/skills/gravecaller.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.96,
+    "priority": 2,
+    "sources": [
+      "summon",
+      "curse"
+    ]
+  },
+  "gunslinger": {
+    "channel": "skill",
+    "duration": 0.48,
+    "file": "assets/audio/skills/gunslinger.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.32,
+    "priority": 2,
+    "sources": [
+      "snipe",
+      "shoot"
+    ]
+  },
+  "harpooner": {
+    "channel": "skill",
+    "duration": 0.65,
+    "file": "assets/audio/skills/harpooner.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.96,
+    "priority": 2,
+    "sources": [
+      "trap",
+      "bash"
+    ]
+  },
+  "hexer": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/hexer.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.5,
+    "priority": 2,
+    "sources": [
+      "curse",
+      "poison"
+    ]
+  },
+  "highpriest": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/highpriest.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.46,
+    "priority": 3,
+    "sources": [
+      "bless",
+      "heal"
+    ]
+  },
+  "highroller": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/highroller.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.28,
+    "priority": 3,
+    "sources": [
+      "reroll",
+      "star"
+    ]
+  },
+  "highwizard": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/highwizard.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.82,
+    "priority": 3,
+    "sources": [
+      "fire",
+      "boom"
+    ]
+  },
+  "hunter": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/hunter.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.32,
+    "priority": 2,
+    "sources": [
+      "arrows",
+      "shoot"
+    ]
+  },
+  "kensei": {
+    "channel": "skill",
+    "duration": 0.58,
+    "file": "assets/audio/skills/kensei.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.46,
+    "priority": 3,
+    "sources": [
+      "steal",
+      "flurry"
+    ]
+  },
+  "knight": {
+    "channel": "skill",
+    "duration": 0.58,
+    "file": "assets/audio/skills/knight.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.32,
+    "priority": 2,
+    "sources": [
+      "flurry",
+      "bash"
+    ]
+  },
+  "lich": {
+    "channel": "boss",
+    "duration": 1.0,
+    "file": "assets/audio/skills/lich.ogg",
+    "focus": 0.5,
+    "gain": 0.92,
+    "gap": 0.22,
+    "pitch_semitones": -1.62,
+    "priority": 4,
+    "sources": [
+      "ice",
+      "roar_lich"
+    ]
+  },
+  "lordknight": {
+    "channel": "skill",
+    "duration": 0.58,
+    "file": "assets/audio/skills/lordknight.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.78,
+    "priority": 3,
+    "sources": [
+      "flurry",
+      "bash"
+    ]
+  },
+  "mage": {
+    "channel": "skill",
+    "duration": 0.7,
+    "file": "assets/audio/skills/mage.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.82,
+    "priority": 2,
+    "sources": [
+      "fire",
+      "cast"
+    ]
+  },
+  "maskedmagus": {
+    "channel": "skill",
+    "duration": 0.65,
+    "file": "assets/audio/skills/maskedmagus.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 1.0,
+    "priority": 3,
+    "sources": [
+      "teleport",
+      "shatter"
+    ]
+  },
+  "mechanist": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/mechanist.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.18,
+    "priority": 3,
+    "sources": [
+      "zapshot",
+      "equip"
+    ]
+  },
+  "merchant": {
+    "channel": "skill",
+    "duration": 0.65,
+    "file": "assets/audio/skills/merchant.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 1.14,
+    "priority": 3,
+    "sources": [
+      "poison",
+      "heal"
+    ]
+  },
+  "minstrel": {
+    "channel": "skill",
+    "duration": 0.72,
+    "file": "assets/audio/skills/minstrel.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.36,
+    "priority": 3,
+    "sources": [
+      "bless",
+      "equip"
+    ]
+  },
+  "mirrormage": {
+    "channel": "skill",
+    "duration": 0.65,
+    "file": "assets/audio/skills/mirrormage.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.64,
+    "priority": 2,
+    "sources": [
+      "teleport",
+      "shatter"
+    ]
+  },
+  "nightreaper": {
+    "channel": "skill",
+    "duration": 0.52,
+    "file": "assets/audio/skills/nightreaper.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 1.7,
+    "priority": 3,
+    "sources": [
+      "flurry",
+      "steal"
+    ]
+  },
+  "phantomblade": {
+    "channel": "skill",
+    "duration": 0.48,
+    "file": "assets/audio/skills/phantomblade.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.96,
+    "priority": 2,
+    "sources": [
+      "flurry",
+      "teleport"
+    ]
+  },
+  "piper": {
+    "channel": "skill",
+    "duration": 0.72,
+    "file": "assets/audio/skills/piper.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.82,
+    "priority": 2,
+    "sources": [
+      "bless",
+      "equip"
+    ]
+  },
+  "priest": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/priest.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.96,
+    "priority": 2,
+    "sources": [
+      "bless",
+      "heal"
+    ]
+  },
+  "puppeteer": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/puppeteer.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.96,
+    "priority": 2,
+    "sources": [
+      "curse",
+      "bless"
+    ]
+  },
+  "riftcaller": {
+    "channel": "skill",
+    "duration": 0.85,
+    "file": "assets/audio/skills/riftcaller.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.32,
+    "priority": 2,
+    "sources": [
+      "teleport",
+      "boom"
+    ]
+  },
+  "rimedragoness": {
+    "channel": "skill",
+    "duration": 0.8,
+    "file": "assets/audio/skills/rimedragoness.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 1.32,
+    "priority": 3,
+    "sources": [
+      "curse",
+      "bless"
+    ]
+  },
+  "ronin": {
+    "channel": "skill",
+    "duration": 0.58,
+    "file": "assets/audio/skills/ronin.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.46,
+    "priority": 2,
+    "sources": [
+      "steal",
+      "flurry"
+    ]
+  },
+  "shadowstep": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/shadowstep.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.68,
+    "priority": 3,
+    "sources": [
+      "steal",
+      "teleport"
+    ]
+  },
+  "shogun": {
+    "channel": "skill",
+    "duration": 0.58,
+    "file": "assets/audio/skills/shogun.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.36,
+    "priority": 3,
+    "sources": [
+      "steal",
+      "flurry"
+    ]
+  },
+  "sniper": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/sniper.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.82,
+    "priority": 3,
+    "sources": [
+      "arrows",
+      "shoot"
+    ]
+  },
+  "snowmender": {
+    "channel": "skill",
+    "duration": 0.78,
+    "file": "assets/audio/skills/snowmender.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.78,
+    "priority": 2,
+    "sources": [
+      "ice",
+      "shatter"
+    ]
+  },
+  "spiritcaller": {
+    "channel": "skill",
+    "duration": 0.82,
+    "file": "assets/audio/skills/spiritcaller.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.82,
+    "priority": 2,
+    "sources": [
+      "summon",
+      "cast"
+    ]
+  },
+  "starcaller": {
+    "channel": "skill",
+    "duration": 0.82,
+    "file": "assets/audio/skills/starcaller.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.04,
+    "priority": 3,
+    "sources": [
+      "summon",
+      "cast"
+    ]
+  },
+  "starwarden": {
+    "channel": "skill",
+    "duration": 0.68,
+    "file": "assets/audio/skills/starwarden.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 1.0,
+    "priority": 3,
+    "sources": [
+      "bash",
+      "flurry"
+    ]
+  },
+  "stonebinder": {
+    "channel": "skill",
+    "duration": 0.82,
+    "file": "assets/audio/skills/stonebinder.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 1.14,
+    "priority": 3,
+    "sources": [
+      "summon",
+      "cast"
+    ]
+  },
+  "stonemonkey": {
+    "channel": "skill",
+    "duration": 0.58,
+    "file": "assets/audio/skills/stonemonkey.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.32,
+    "priority": 2,
+    "sources": [
+      "flurry",
+      "bash"
+    ]
+  },
+  "stormdjinn": {
+    "channel": "boss",
+    "duration": 0.9,
+    "file": "assets/audio/skills/stormdjinn.ogg",
+    "focus": 0.5,
+    "gain": 0.92,
+    "gap": 0.22,
+    "pitch_semitones": -1.3,
+    "priority": 4,
+    "sources": [
+      "zap",
+      "boom"
+    ]
+  },
+  "stormranger": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/stormranger.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.36,
+    "priority": 3,
+    "sources": [
+      "arrows",
+      "shoot"
+    ]
+  },
+  "swordsman": {
+    "channel": "skill",
+    "duration": 0.58,
+    "file": "assets/audio/skills/swordsman.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.18,
+    "priority": 2,
+    "sources": [
+      "flurry",
+      "bash"
+    ]
+  },
+  "templar": {
+    "channel": "skill",
+    "duration": 0.72,
+    "file": "assets/audio/skills/templar.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.18,
+    "priority": 3,
+    "sources": [
+      "bash",
+      "shield"
+    ]
+  },
+  "thief": {
+    "channel": "skill",
+    "duration": 0.48,
+    "file": "assets/audio/skills/thief.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.78,
+    "priority": 2,
+    "sources": [
+      "steal",
+      "hit3"
+    ]
+  },
+  "thornmother": {
+    "channel": "boss",
+    "duration": 0.95,
+    "file": "assets/audio/skills/thornmother.ogg",
+    "focus": 0.5,
+    "gain": 0.92,
+    "gap": 0.22,
+    "pitch_semitones": -0.66,
+    "priority": 4,
+    "sources": [
+      "trap",
+      "poison"
+    ]
+  },
+  "thornweaver": {
+    "channel": "skill",
+    "duration": 0.75,
+    "file": "assets/audio/skills/thornweaver.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.32,
+    "priority": 2,
+    "sources": [
+      "summon",
+      "heal"
+    ]
+  },
+  "timekeeper": {
+    "channel": "skill",
+    "duration": 0.7,
+    "file": "assets/audio/skills/timekeeper.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 1.0,
+    "priority": 3,
+    "sources": [
+      "teleport",
+      "cast"
+    ]
+  },
+  "tinkerer": {
+    "channel": "skill",
+    "duration": 0.55,
+    "file": "assets/audio/skills/tinkerer.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -1.14,
+    "priority": 2,
+    "sources": [
+      "zapshot",
+      "equip"
+    ]
+  },
+  "voidsage": {
+    "channel": "skill",
+    "duration": 0.68,
+    "file": "assets/audio/skills/voidsage.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.36,
+    "priority": 3,
+    "sources": [
+      "zap",
+      "shatter"
+    ]
+  },
+  "winterqueen": {
+    "channel": "skill",
+    "duration": 0.9,
+    "file": "assets/audio/skills/winterqueen.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": -0.6,
+    "priority": 3,
+    "sources": [
+      "freeze",
+      "shatter"
+    ]
+  },
+  "wizard": {
+    "channel": "skill",
+    "duration": 0.7,
+    "file": "assets/audio/skills/wizard.ogg",
+    "focus": 0.18,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.96,
+    "priority": 2,
+    "sources": [
+      "fire",
+      "cast"
+    ]
+  },
+  "wukong": {
+    "channel": "skill",
+    "duration": 0.65,
+    "file": "assets/audio/skills/wukong.ogg",
+    "focus": 0.32,
+    "gain": 0.85,
+    "gap": 0.14,
+    "pitch_semitones": 0.68,
+    "priority": 3,
+    "sources": [
+      "bash",
+      "flurry"
+    ]
+  },
+  "wyrm": {
+    "channel": "boss",
+    "duration": 1.0,
+    "file": "assets/audio/skills/wyrm.ogg",
+    "focus": 0.5,
+    "gain": 0.92,
+    "gap": 0.22,
+    "pitch_semitones": -0.66,
+    "priority": 4,
+    "sources": [
+      "flame",
+      "roar"
+    ]
+  }
+}

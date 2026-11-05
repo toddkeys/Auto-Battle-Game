@@ -105,3 +105,40 @@ These exercise all 72 skill casts and idle, walking, attack, casting, release,
 frozen, death and spinning renders in both directions, plus buying, locking,
 opening the planner/codex and checking a phone-width layout. Render checks also
 cover all seven summons and nine monsters/bosses.
+
+## Sound mixing and skill signatures
+
+`assets/audio/mixer.js` supplies the priority mixer, embedded into the game by
+`build_game.py`. It allows at most 10 active SFX voices with smaller channel
+limits for basic hits, healing, casts, skills, critical hits and bosses. Important
+sounds lower the music and background combat sounds briefly, with gradual
+recovery. Music/SFX sliders keep their saved settings; muting SFX stops active
+voices. HTTP(S) playback uses Web Audio compression and subtle stereo positioning;
+opening the HTML from disk uses native media playback with the same voice limits
+and volume controls. Sound variation uses a private random generator.
+
+All 72 heroes and six bosses have remixed skill signatures, built from the
+existing credited SFX. Night Reaper uses blade sounds, Worldbreaker uses a punch
+impact, Paladin uses metal and holy textures, and Ice Wall users use ice/shatter
+textures. The original music and SFX remain available for secondary impacts.
+Signatures are matched with two-pass loudness normalization and peak headroom.
+
+```bash
+python tools/build_signature_audio.py
+python tools/build_game.py
+```
+
+Use `--only nightreaper` to rebuild one signature. Recipe data is in the Python
+builder; the generated `assets/audio/skills/profiles.json` records each source,
+duration, pitch and runtime mix settings. Remix attribution and license are in
+`assets/audio/skills/CREDITS.txt`.
+
+Browser audio checks (Python Playwright and system Chromium):
+
+```bash
+python tools/check_audio.py
+```
+
+Checks decode every signature, reject silent/clipped samples, exercise the global
+voice cap, verify music ducking and mute/preference persistence, and exercise the
+native-media fallback with Web Audio unavailable.

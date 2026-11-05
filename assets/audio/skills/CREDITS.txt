@@ -1,0 +1,22 @@
+Hero and boss skill signature remixes
+
+All .ogg files in this directory are remixes of the shipped SFX named in
+profiles.json (the sources field). Remixes: pitch shifts, equalization,
+layering, timing, fades and two-pass loudness matching by this project's
+contributors. Rebuild with tools/build_signature_audio.py.
+
+Source authors and packs:
+- p0ss, Spell Sounds Starter Pack, CC BY-SA 3.0
+  https://opengameart.org/content/spell-sounds-starter-pack
+- artisticdude, RPG Sound Pack, CC0
+  https://opengameart.org/content/rpg-sound-pack
+- rubberduck, 80 CC0 RPG SFX / 25 CC0 bang and firework SFX, CC0
+  https://opengameart.org/content/80-cc0-rpg-sfx
+  https://opengameart.org/content/25-cc0-bang-firework-sfx
+- Kenney, 50 RPG sound effects, CC0
+  https://opengameart.org/content/50-rpg-sound-effects
+
+These signature remixes are distributed under CC BY-SA 3.0:
+https://creativecommons.org/licenses/by-sa/3.0/
+Original CC0 ingredients remain CC0. See ../CREDITS.txt for the original
+file-to-pack attribution. Music and the original SFX have not been replaced.

@@ -35,6 +35,11 @@ out = tpl.replace('/*DEFAULT_SPRITES*/', block, 1)
 with open(os.path.join(ROOT,'assets','scenery','sanctuary.jpg'),'rb') as f:
     arena='data:image/jpeg;base64,'+base64.b64encode(f.read()).decode()
 out=out.replace('/*ARENA_ART*/','const ARENA_SRC = '+json.dumps(arena)+';',1)
+with open(os.path.join(ROOT,'assets','audio','skills','profiles.json'),encoding='utf8') as f:
+    profiles=json.load(f)
+out=out.replace('/*AUDIO_PROFILES*/','const AUDIO_PROFILES = '+json.dumps(profiles)+';',1)
+with open(os.path.join(ROOT,'assets','audio','mixer.js'),encoding='utf8') as f:
+    out=out.replace('/*AUDIO_MIXER*/',f.read(),1)
 path = os.path.join(ROOT, 'ro-autobattler.html')
 open(path, 'w', encoding='utf8', newline='\n').write(out)
 print(f'built ro-autobattler.html with {len(data)} sprites ({len(out) // 1024} KB)')

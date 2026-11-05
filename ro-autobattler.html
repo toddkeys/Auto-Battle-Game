@@ -1340,45 +1340,108 @@ function drawAmbient(){
 }
 
 
-// ====== sound: recorded effects + music (assets/audio, built by tools/build_audio.py; credits in assets/audio/CREDITS.txt) ======
-// plain <audio> elements, so it also works when the page is opened straight from disk
+// ====== sound: priority mixer and remixed hero/boss signatures ======
+const AUDIO_PROFILES = {"acolyte": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/acolyte.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.5, "priority": 2, "sources": ["bless", "heal"]}, "aegispaladin": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/aegispaladin.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.68, "priority": 3, "sources": ["bash", "bless"]}, "anchorbrute": {"channel": "skill", "duration": 0.65, "file": "assets/audio/skills/anchorbrute.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.04, "priority": 3, "sources": ["trap", "bash"]}, "apothecary": {"channel": "skill", "duration": 0.65, "file": "assets/audio/skills/apothecary.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.78, "priority": 2, "sources": ["poison", "heal"]}, "archer": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/archer.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.82, "priority": 2, "sources": ["arrows", "shoot"]}, "assassin": {"channel": "skill", "duration": 0.48, "file": "assets/audio/skills/assassin.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.96, "priority": 2, "sources": ["steal", "hit3"]}, "assassincross": {"channel": "skill", "duration": 0.48, "file": "assets/audio/skills/assassincross.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.46, "priority": 3, "sources": ["steal", "hit3"]}, "axebrute": {"channel": "skill", "duration": 0.65, "file": "assets/audio/skills/axebrute.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.32, "priority": 2, "sources": ["flurry", "bash"]}, "beastmaster": {"channel": "skill", "duration": 0.82, "file": "assets/audio/skills/beastmaster.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.0, "priority": 2, "sources": ["summon", "cast"]}, "bogwitch": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/bogwitch.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.64, "priority": 2, "sources": ["curse", "poison"]}, "bonelord": {"channel": "skill", "duration": 0.85, "file": "assets/audio/skills/bonelord.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.28, "priority": 3, "sources": ["summon", "curse"]}, "brawler": {"channel": "skill", "duration": 0.48, "file": "assets/audio/skills/brawler.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.78, "priority": 2, "sources": ["hit2", "slam"]}, "bulwark": {"channel": "skill", "duration": 0.72, "file": "assets/audio/skills/bulwark.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.64, "priority": 2, "sources": ["bash", "shield"]}, "cardshark": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/cardshark.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -1.14, "priority": 2, "sources": ["reroll", "star"]}, "chieftain": {"channel": "skill", "duration": 0.72, "file": "assets/audio/skills/chieftain.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.04, "priority": 3, "sources": ["flurry", "slam"]}, "chronomancer": {"channel": "skill", "duration": 0.7, "file": "assets/audio/skills/chronomancer.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.64, "priority": 2, "sources": ["teleport", "cast"]}, "colossus": {"channel": "boss", "duration": 0.95, "file": "assets/audio/skills/colossus.ogg", "focus": 0.5, "gain": 0.92, "gap": 0.22, "pitch_semitones": -0.66, "priority": 4, "sources": ["bash", "quake"]}, "dancer": {"channel": "skill", "duration": 0.72, "file": "assets/audio/skills/dancer.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.5, "priority": 3, "sources": ["bless", "equip"]}, "dawnoracle": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/dawnoracle.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.28, "priority": 3, "sources": ["bless", "heal"]}, "deadshot": {"channel": "skill", "duration": 0.48, "file": "assets/audio/skills/deadshot.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 1.0, "priority": 3, "sources": ["snipe", "shoot"]}, "doomherald": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/doomherald.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.14, "priority": 3, "sources": ["curse", "poison"]}, "eclipsewitch": {"channel": "skill", "duration": 0.85, "file": "assets/audio/skills/eclipsewitch.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.28, "priority": 3, "sources": ["boom", "teleport"]}, "fortuneteller": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/fortuneteller.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.32, "priority": 2, "sources": ["reroll", "star"]}, "frostoracle": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/frostoracle.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.5, "priority": 3, "sources": ["ice", "shield"]}, "galecaller": {"channel": "skill", "duration": 0.75, "file": "assets/audio/skills/galecaller.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.18, "priority": 3, "sources": ["summon", "heal"]}, "gearmaster": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/gearmaster.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.68, "priority": 3, "sources": ["zapshot", "equip"]}, "glacierwarden": {"channel": "skill", "duration": 0.75, "file": "assets/audio/skills/glacierwarden.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.0, "priority": 2, "sources": ["shield", "ice"]}, "golem": {"channel": "boss", "duration": 1.0, "file": "assets/audio/skills/golem.ogg", "focus": 0.5, "gain": 0.92, "gap": 0.22, "pitch_semitones": -1.62, "priority": 4, "sources": ["quake", "roar_golem"]}, "grandmaster": {"channel": "skill", "duration": 0.58, "file": "assets/audio/skills/grandmaster.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -2.5, "priority": 3, "sources": ["slam", "hit2"]}, "gravecaller": {"channel": "skill", "duration": 0.85, "file": "assets/audio/skills/gravecaller.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.96, "priority": 2, "sources": ["summon", "curse"]}, "gunslinger": {"channel": "skill", "duration": 0.48, "file": "assets/audio/skills/gunslinger.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.32, "priority": 2, "sources": ["snipe", "shoot"]}, "harpooner": {"channel": "skill", "duration": 0.65, "file": "assets/audio/skills/harpooner.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.96, "priority": 2, "sources": ["trap", "bash"]}, "hexer": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/hexer.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.5, "priority": 2, "sources": ["curse", "poison"]}, "highpriest": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/highpriest.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.46, "priority": 3, "sources": ["bless", "heal"]}, "highroller": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/highroller.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.28, "priority": 3, "sources": ["reroll", "star"]}, "highwizard": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/highwizard.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.82, "priority": 3, "sources": ["fire", "boom"]}, "hunter": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/hunter.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.32, "priority": 2, "sources": ["arrows", "shoot"]}, "kensei": {"channel": "skill", "duration": 0.58, "file": "assets/audio/skills/kensei.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.46, "priority": 3, "sources": ["steal", "flurry"]}, "knight": {"channel": "skill", "duration": 0.58, "file": "assets/audio/skills/knight.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.32, "priority": 2, "sources": ["flurry", "bash"]}, "lich": {"channel": "boss", "duration": 1.0, "file": "assets/audio/skills/lich.ogg", "focus": 0.5, "gain": 0.92, "gap": 0.22, "pitch_semitones": -1.62, "priority": 4, "sources": ["ice", "roar_lich"]}, "lordknight": {"channel": "skill", "duration": 0.58, "file": "assets/audio/skills/lordknight.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.78, "priority": 3, "sources": ["flurry", "bash"]}, "mage": {"channel": "skill", "duration": 0.7, "file": "assets/audio/skills/mage.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.82, "priority": 2, "sources": ["fire", "cast"]}, "maskedmagus": {"channel": "skill", "duration": 0.65, "file": "assets/audio/skills/maskedmagus.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 1.0, "priority": 3, "sources": ["teleport", "shatter"]}, "mechanist": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/mechanist.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.18, "priority": 3, "sources": ["zapshot", "equip"]}, "merchant": {"channel": "skill", "duration": 0.65, "file": "assets/audio/skills/merchant.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 1.14, "priority": 3, "sources": ["poison", "heal"]}, "minstrel": {"channel": "skill", "duration": 0.72, "file": "assets/audio/skills/minstrel.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.36, "priority": 3, "sources": ["bless", "equip"]}, "mirrormage": {"channel": "skill", "duration": 0.65, "file": "assets/audio/skills/mirrormage.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.64, "priority": 2, "sources": ["teleport", "shatter"]}, "nightreaper": {"channel": "skill", "duration": 0.52, "file": "assets/audio/skills/nightreaper.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 1.7, "priority": 3, "sources": ["flurry", "steal"]}, "phantomblade": {"channel": "skill", "duration": 0.48, "file": "assets/audio/skills/phantomblade.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.96, "priority": 2, "sources": ["flurry", "teleport"]}, "piper": {"channel": "skill", "duration": 0.72, "file": "assets/audio/skills/piper.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.82, "priority": 2, "sources": ["bless", "equip"]}, "priest": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/priest.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.96, "priority": 2, "sources": ["bless", "heal"]}, "puppeteer": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/puppeteer.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.96, "priority": 2, "sources": ["curse", "bless"]}, "riftcaller": {"channel": "skill", "duration": 0.85, "file": "assets/audio/skills/riftcaller.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.32, "priority": 2, "sources": ["teleport", "boom"]}, "rimedragoness": {"channel": "skill", "duration": 0.8, "file": "assets/audio/skills/rimedragoness.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 1.32, "priority": 3, "sources": ["curse", "bless"]}, "ronin": {"channel": "skill", "duration": 0.58, "file": "assets/audio/skills/ronin.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.46, "priority": 2, "sources": ["steal", "flurry"]}, "shadowstep": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/shadowstep.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.68, "priority": 3, "sources": ["steal", "teleport"]}, "shogun": {"channel": "skill", "duration": 0.58, "file": "assets/audio/skills/shogun.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.36, "priority": 3, "sources": ["steal", "flurry"]}, "sniper": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/sniper.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.82, "priority": 3, "sources": ["arrows", "shoot"]}, "snowmender": {"channel": "skill", "duration": 0.78, "file": "assets/audio/skills/snowmender.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.78, "priority": 2, "sources": ["ice", "shatter"]}, "spiritcaller": {"channel": "skill", "duration": 0.82, "file": "assets/audio/skills/spiritcaller.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.82, "priority": 2, "sources": ["summon", "cast"]}, "starcaller": {"channel": "skill", "duration": 0.82, "file": "assets/audio/skills/starcaller.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.04, "priority": 3, "sources": ["summon", "cast"]}, "starwarden": {"channel": "skill", "duration": 0.68, "file": "assets/audio/skills/starwarden.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 1.0, "priority": 3, "sources": ["bash", "flurry"]}, "stonebinder": {"channel": "skill", "duration": 0.82, "file": "assets/audio/skills/stonebinder.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 1.14, "priority": 3, "sources": ["summon", "cast"]}, "stonemonkey": {"channel": "skill", "duration": 0.58, "file": "assets/audio/skills/stonemonkey.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.32, "priority": 2, "sources": ["flurry", "bash"]}, "stormdjinn": {"channel": "boss", "duration": 0.9, "file": "assets/audio/skills/stormdjinn.ogg", "focus": 0.5, "gain": 0.92, "gap": 0.22, "pitch_semitones": -1.3, "priority": 4, "sources": ["zap", "boom"]}, "stormranger": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/stormranger.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.36, "priority": 3, "sources": ["arrows", "shoot"]}, "swordsman": {"channel": "skill", "duration": 0.58, "file": "assets/audio/skills/swordsman.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.18, "priority": 2, "sources": ["flurry", "bash"]}, "templar": {"channel": "skill", "duration": 0.72, "file": "assets/audio/skills/templar.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.18, "priority": 3, "sources": ["bash", "shield"]}, "thief": {"channel": "skill", "duration": 0.48, "file": "assets/audio/skills/thief.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.78, "priority": 2, "sources": ["steal", "hit3"]}, "thornmother": {"channel": "boss", "duration": 0.95, "file": "assets/audio/skills/thornmother.ogg", "focus": 0.5, "gain": 0.92, "gap": 0.22, "pitch_semitones": -0.66, "priority": 4, "sources": ["trap", "poison"]}, "thornweaver": {"channel": "skill", "duration": 0.75, "file": "assets/audio/skills/thornweaver.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.32, "priority": 2, "sources": ["summon", "heal"]}, "timekeeper": {"channel": "skill", "duration": 0.7, "file": "assets/audio/skills/timekeeper.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 1.0, "priority": 3, "sources": ["teleport", "cast"]}, "tinkerer": {"channel": "skill", "duration": 0.55, "file": "assets/audio/skills/tinkerer.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": -1.14, "priority": 2, "sources": ["zapshot", "equip"]}, "voidsage": {"channel": "skill", "duration": 0.68, "file": "assets/audio/skills/voidsage.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.36, "priority": 3, "sources": ["zap", "shatter"]}, "winterqueen": {"channel": "skill", "duration": 0.9, "file": "assets/audio/skills/winterqueen.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": -0.6, "priority": 3, "sources": ["freeze", "shatter"]}, "wizard": {"channel": "skill", "duration": 0.7, "file": "assets/audio/skills/wizard.ogg", "focus": 0.18, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.96, "priority": 2, "sources": ["fire", "cast"]}, "wukong": {"channel": "skill", "duration": 0.65, "file": "assets/audio/skills/wukong.ogg", "focus": 0.32, "gain": 0.85, "gap": 0.14, "pitch_semitones": 0.68, "priority": 3, "sources": ["bash", "flurry"]}, "wyrm": {"channel": "boss", "duration": 1.0, "file": "assets/audio/skills/wyrm.ogg", "focus": 0.5, "gain": 0.92, "gap": 0.22, "pitch_semitones": -0.66, "priority": 4, "sources": ["flame", "roar"]}};
+// Priority mixer. HTML media fallback keeps local-file play supported.
 const SND=(()=>{
-  let ready=false, musVol=.5, sfxVol=.7, want='prep';   // volumes 0..1, set by the HUD sliders
-  const SFX_VOL=.85, MUS_VOL=.45, pool={}, last={};
-  try{ const p=JSON.parse(localStorage.getItem('ab_sound')||'{}'); if(p.mus>=0) musVol=p.mus; if(p.sfx>=0) sfxVol=p.sfx; }catch(e){}
-  const save=()=>{ try{ localStorage.setItem('ab_sound',JSON.stringify({mus:musVol,sfx:sfxVol})); }catch(e){} };
-  const FILES=['hit1','hit2','hit3','crit','shoot','zapshot','cast','skill','hdie','mdie','shatter','freeze','boom','slam','quake','heal','bless','shield',
-    'fire','flame','ice','zap','curse','poison','teleport','summon','stun','arrows','snipe','steal','flurry','trap','slime','roar_golem','roar_lich','roar',
-    'bash','click','buy','sell','reroll','star','equip','slot','start','victory','defeat'];
-  const ALIAS={hit:['hit1','hit2','hit3']};
-  const GAP={hit:.06,crit:.08,shoot:.06,zapshot:.07,heal:.15,cast:.1,boom:.15,freeze:.12,shatter:.12,click:.04,hdie:.1,mdie:.1};
-  const VOL={click:.5,cast:.6,hit:.75,shoot:.7,zapshot:.6,buy:.8,sell:.8,reroll:.8};
+  const clamp=v=>Math.max(0,Math.min(1,Number(v)||0));
+  let ready=false,musVol=.5,sfxVol=.7,want='prep',context=null,master=null,analyser=null;
+  let voices=[],serial=0,rng=0x41c64e6d,focusPriority=0,dropped=0;
+  const last=new Map(),bound=new WeakMap(),pool=new Map();
+  const MAX_VOICES=10,MAX_POOL=3,SFX_VOL=.72,MUSIC_VOL=.42;
+  const LIMIT={basic:3,support:2,cast:1,skill:3,critical:2,boss:2,ui:2,result:1};
+  const CHANNEL_GAP={basic:.065,support:.24,cast:.16,critical:.09,boss:.12,ui:.04};
+  const UI=new Set(['click','buy','sell','reroll','equip','slot']);
+  const SUPPORT=new Set(['heal','bless','shield']);
+  const BASIC=new Set(['hit','hit1','hit2','hit3','shoot','zapshot','hdie','mdie','slime']);
+  const VOLUME={click:.35,buy:.65,sell:.6,reroll:.55,equip:.55,slot:.65,hit:.48,hit1:.48,hit2:.48,hit3:.48,shoot:.45,zapshot:.42,cast:.34,heal:.48,bless:.5,shield:.55,crit:.8,hdie:.4,mdie:.4,flurry:.52};
+  const GAPS={hit:.08,shoot:.085,zapshot:.09,heal:.3,bless:.35,shield:.3,cast:.18,boom:.25,quake:.25,freeze:.22,shatter:.18,flurry:.16};
   const music={prep:new Audio('assets/audio/prep.mp3'),battle:new Audio('assets/audio/battle.mp3')};
-  for(const m of Object.values(music)){ m.loop=true; m.volume=0; m.preload='auto'; }
+  for(const m of Object.values(music)){m.loop=true;m.volume=0;m.preload='auto';m._level=0;}
+  try{const p=JSON.parse(localStorage.getItem('ab_sound')||'{}');if(Number.isFinite(p.mus))musVol=clamp(p.mus);if(Number.isFinite(p.sfx))sfxVol=clamp(p.sfx);}catch(e){}
+  const save=()=>{try{localStorage.setItem('ab_sound',JSON.stringify({mus:musVol,sfx:sfxVol}));}catch(e){}};
+  const random=()=>{rng=(Math.imul(rng,1664525)+1013904223)>>>0;return rng/4294967296;};
+  function attach(a,pan=0){
+    if(!context)return null;if(bound.has(a))return bound.get(a);
+    try{const gain=context.createGain(),panner=context.createStereoPanner?context.createStereoPanner():null,source=context.createMediaElementSource(a);
+      gain.gain.value=0;if(panner){panner.pan.value=pan;source.connect(panner);panner.connect(gain);}else source.connect(gain);
+      gain.connect(master);const link={gain,panner,source};bound.set(a,link);a.volume=1;return link;
+    }catch(e){return null;}
+  }
   function init(){
-    if(ready) return; ready=true;
-    for(const n of FILES) pool[n]={i:0,a:Array.from({length:3},()=>{ const x=new Audio('assets/audio/sfx/'+n+'.ogg'); x.preload='auto'; return x; })};
+    if(ready){if(context?.state==='suspended')context.resume().catch(()=>{});return;}ready=true;
+    // Local-file audio uses native media volumes, without CORS-dependent routing.
+    if(location.protocol==='http:'||location.protocol==='https:')try{
+      const AC=window.AudioContext||window.webkitAudioContext;if(AC){context=new AC();master=context.createGain();master.gain.value=.85;
+        const compressor=context.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=6;compressor.ratio.value=12;compressor.attack.value=.003;compressor.release.value=.14;
+        analyser=context.createAnalyser();analyser.fftSize=1024;master.connect(compressor);compressor.connect(analyser);analyser.connect(context.destination);
+        for(const m of Object.values(music))attach(m);context.resume().catch(()=>{});}
+    }catch(e){context=null;master=null;analyser=null;}
   }
-  function play(k){
-    if(!ready||!sfxVol) return; const now=performance.now()/1000; if(now-(last[k]||-9)<(GAP[k]||.05)) return; last[k]=now;
-    let n=ALIAS[k]||k; if(Array.isArray(n)) n=n[Math.random()*n.length|0];
-    const p=pool[n]; if(!p) return; const x=p.a[p.i++%p.a.length];
-    x.volume=Math.min(1,SFX_VOL*sfxVol*(VOL[k]||1)); try{ x.currentTime=0; }catch(e){} x.play().catch(()=>{});
+  function describe(k){
+    if(k.startsWith('skill:'))return AUDIO_PROFILES[k.slice(6)]||null;
+    let channel=UI.has(k)?'ui':SUPPORT.has(k)?'support':BASIC.has(k)?'basic':k==='cast'?'cast':k==='crit'?'critical':k.startsWith('roar')?'boss':k==='victory'||k==='defeat'||k==='start'||k==='star'?'result':'skill';
+    return {file:'assets/audio/sfx/'+k+'.ogg',channel,priority:channel==='result'?6:channel==='ui'?2:channel==='boss'?4:channel==='critical'?3:channel==='skill'?2:channel==='basic'?0:1,
+      gain:VOLUME[k]??.65,gap:GAPS[k]??.12,focus:channel==='boss'?.45:channel==='critical'?.15:channel==='skill'?.18:channel==='result'?.3:0,duration:channel==='result'?2.5:channel==='basic'?.6:1.7};
   }
-  // called every frame: the wanted track fades in, the other fades out (and pauses when silent)
+  function stop(v){
+    if(!voices.includes(v))return;
+    voices=voices.filter(x=>x!==v);v.a.pause();try{v.a.currentTime=0;}catch(e){}
+    const link=bound.get(v.a);if(link)link.gain.gain.setValueAtTime(0,context.currentTime);else v.a.volume=0;
+  }
+  function reap(){const now=performance.now()/1000;for(const v of [...voices])if(v.a.ended||(v.started&&v.a.paused)||now>v.expires)stop(v);}
+  function channelGain(channel){
+    if(focusPriority>=4)return {basic:.25,support:.4,cast:.4,skill:.7,critical:.85}[channel]??1;
+    if(focusPriority>=3)return {basic:.4,support:.55,cast:.5,skill:.85}[channel]??1;
+    return focusPriority>=2&&channel==='basic'?.7:1;
+  }
+  function target(v){const combat=voices.filter(x=>x.channel!=='ui'&&x.channel!=='result').length;
+    const density=v.channel==='ui'||v.channel==='result'?1:1/Math.sqrt(Math.max(1,combat/3));
+    return clamp(SFX_VOL*sfxVol*v.meta.gain*channelGain(v.channel)*density);
+  }
+  function level(v,value){const link=bound.get(v.a);if(link)link.gain.gain.setTargetAtTime(value,context.currentTime,.012);else v.a.volume=clamp(value);}
+  function play(k,options={}){
+    if(!ready||!sfxVol)return false;reap();const now=performance.now()/1000,meta=describe(k);if(!meta)return false;
+    const channel=options.channel||meta.channel,priority=options.priority??meta.priority;
+    if(k==='victory'||k==='defeat')for(const v of [...voices])if(v.channel!=='ui')stop(v);
+    if(now-(last.get(k)??-99)<meta.gap||now-(last.get('group:'+channel)??-99)<(CHANNEL_GAP[channel]||0)){dropped++;return false;}
+    const same=voices.filter(v=>v.channel===channel),full=voices.length>=MAX_VOICES||same.length>=(LIMIT[channel]||2);
+    if(full){const candidates=(same.length>=(LIMIT[channel]||2)?same:voices).filter(v=>v.priority<priority).sort((a,b)=>a.priority-b.priority||a.serial-b.serial);
+      if(!candidates.length){dropped++;return false;}stop(candidates[0]);}
+    let file=meta.file;if(k==='hit')file='assets/audio/sfx/hit'+(1+(random()*3|0))+'.ogg';
+    let clips=pool.get(file);if(!clips){clips=[];pool.set(file,clips);}
+    let a=clips.find(x=>!voices.some(v=>v.a===x));if(!a){if(clips.length>=MAX_POOL){dropped++;return false;}a=new Audio(file);a.preload='auto';clips.push(a);}
+    const pan=Number.isFinite(options.x)?Math.max(-.35,Math.min(.35,(options.x/8-.5)*.7)):0,link=attach(a,pan);
+    if(link?.panner)link.panner.pan.setValueAtTime(pan,context.currentTime);
+    const v={a,k,channel,priority,meta,serial:serial++,started:false,expires:now+meta.duration+.65,focusUntil:now+(meta.focus||0),level:0};
+    voices.push(v);last.set(k,now);last.set('group:'+channel,now);focusPriority=Math.max(focusPriority,meta.focus?priority:0);
+    v.level=target(v);level(v,v.level);try{a.currentTime=0;}catch(e){}
+    if(context?.state==='suspended')context.resume().catch(()=>{});
+    a.play().then(()=>{v.started=true;}).catch(()=>{stop(v);});return true;
+  }
   function update(dt){
+    reap();const now=performance.now()/1000;focusPriority=voices.reduce((n,v)=>v.focusUntil>now?Math.max(n,v.priority):n,0);
+    for(const v of voices){const to=target(v);v.level+=(to-v.level)*Math.min(1,dt*(to<v.level?35:9));level(v,v.level);}
+    const duck=focusPriority>=4?.35:focusPriority>=3?.52:focusPriority>=2?.75:1;
     for(const [k,m] of Object.entries(music)){
-      const tgt=ready&&k===want?MUS_VOL*musVol:0;
-      if(tgt>0&&m.paused) m.play().catch(()=>{});
-      m.volume=Math.max(0,Math.min(1,m.volume+(tgt-m.volume)*Math.min(1,dt*2.5)));
-      if(tgt===0&&!m.paused&&m.volume<.005) m.pause();
+      const to=ready&&k===want?MUSIC_VOL*musVol*duck:0;m._level+=(to-m._level)*Math.min(1,dt*(to<m._level?18:3));
+      const link=bound.get(m);if(link)link.gain.gain.setTargetAtTime(m._level,context.currentTime,.025);else m.volume=clamp(m._level);
+      if(to>0&&m.paused)m.play().catch(()=>{});if(to===0&&m._level<.003&&!m.paused)m.pause();
     }
   }
-  return {init,play,update,
-    music(kind){ if(kind!==want&&kind==='battle'){ try{ music.battle.currentTime=0; }catch(e){} } want=kind; },
-    setMusic(v){ musVol=v; save(); }, setSfx(v){ sfxVol=v; save(); },
-    get musVol(){ return musVol; }, get sfxVol(){ return sfxVol; }, get musicOn(){ return musVol>0; }};
+  function reset(){for(const v of [...voices])stop(v);last.clear();focusPriority=0;}
+  return {init,play,update,reset,
+    skill(a){const key=AUDIO_PROFILES[a.type]?'skill:'+a.type:SKILL_SND[a.type]||'skill';return play(key,{x:a.x});},
+    impact(src,t,crit){return play(crit?'crit':'hit',{x:t.x});},
+    music(kind){if(kind!==want&&kind==='battle')try{music.battle.currentTime=0;}catch(e){}want=kind;},
+    setMusic(v){musVol=clamp(v);save();if(!musVol)for(const m of Object.values(music)){m._level=0;const l=bound.get(m);if(l)l.gain.gain.setValueAtTime(0,context.currentTime);else m.volume=0;}},
+    setSfx(v){sfxVol=clamp(v);save();if(!sfxVol)reset();},
+    get musVol(){return musVol;},get sfxVol(){return sfxVol;},get musicOn(){return musVol>0;},
+    inspect(){let peak=0;if(analyser){const samples=new Float32Array(analyser.fftSize);analyser.getFloatTimeDomainData(samples);for(const n of samples)peak=Math.max(peak,Math.abs(n));}
+      return {ready,context:context?.state||'media',active:voices.length,focus:focusPriority,dropped,peak,musicLevel:music[want]._level,voices:voices.map(v=>({key:v.k,channel:v.channel,priority:v.priority,level:v.level,playing:!v.a.paused&&!v.a.ended}))};}
+  };
 })();
+
 // which sound each skill makes when it goes off
 const SKILL_SND={maskedmagus:'teleport',mirrormage:'teleport',puppeteer:'curse',rimedragoness:'freeze',minstrel:'bless',piper:'bless',dancer:'flurry',apothecary:'curse',merchant:'reroll',gravecaller:'summon',bonelord:'summon',tinkerer:'zap',mechanist:'boom',brawler:'flurry',grandmaster:'slam',chronomancer:'teleport',timekeeper:'teleport',turret:'zap',swordsman:'slam',knight:'stun',lordknight:'slam',archer:'shoot',hunter:'trap',sniper:'snipe',acolyte:'heal',priest:'heal',highpriest:'bless',
   thief:'steal',assassin:'flurry',assassincross:'teleport',mage:'fire',wizard:'ice',highwizard:'fire',starwarden:'bash',stormranger:'arrows',dawnoracle:'bless',
@@ -1680,7 +1743,7 @@ function showSummary(){
   if(rec) SND.play('star');
   lbRunOver();
 }
-function newGame(mode='normal',mod){ $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
+function newGame(mode='normal',mod){ SND.reset(); $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -2184,7 +2247,7 @@ function burst(x,y,c,n,spd=2.5,size=3,g=6){
   for(let i=0;i<n;i++){ const an=Math.random()*Math.PI*2, v=spd*(.4+Math.random()*.8), life=.3+Math.random()*.3;
     S.fight.parts.push({x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-(g>0?1.5:0),life,max:life,c,size,g}); }
 }
-function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal'); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
+function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); pop(u,'+'+Math.round(amt),'#7CFC9A'); SND.play('heal',{x:u.x}); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
 const PROJ={maskedmagus:'p_arcane',mirrormage:'p_arcane',puppeteer:'p_dark',rimedragoness:'p_ice',thornmother:'p_plant',stormdjinn:'p_light',colossus:'p_light',cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',piper:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
   acolyte:'p_light',priest:'p_light',highpriest:'p_light',dawnoracle:'p_light',spiritcaller:'p_arcane',starcaller:'p_arcane',stonebinder:'p_arcane',wisp:'p_arcane',shroomkin:'p_plant'};
 // basic ranged attacks fly as small missiles (skills keep the big spell sprites)
@@ -2219,7 +2282,7 @@ function deal(t,dmg,crit,src){
   if(src&&src.leech&&src.hp>0){ const h=Math.min(dmg*src.leech*healMul(src),src.max-src.hp); src.hp+=h; src.hl+=h; }
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
-  burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.play(crit?'crit':'hit');
+  burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.impact(src,t,crit);
   if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else pop(t,Math.round(dmg),['#fff','#ffe27a','#ffb050'][BACKHIT],false);
   if(BACKHIT===2&&Math.random()<.35) pop({x:t.x,y:t.y-.7},'Back!','#ffb050');
 }
@@ -2321,7 +2384,7 @@ function releaseCast(a){
   a.atkT=ATK_T; a.relT=REL_T; a.glow=.5; if(t) a.tgt=t; if(a.spellblade) a.sb=a.spellblade;
   if(a.star===3){ FXS=1.3; V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.6,m:.8}); V({k:'ring',x:a.x,y:a.y,r:1.1,c:'#fff3c0',m:.6}); burst(a.x,a.y-.4,'#ffe9a0',18,3.5,3,-2); }   // 3 stars: a golden flourish
   for(const m of S.fight.f) if(m.mimicMp&&m.team!==a.team&&m.hp>0) gainMp(m,m.mimicMp);   // Mimic class bonus
-  CASTER=a; SND.play(SKILL_SND[a.type]||'skill'); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
+  CASTER=a; SND.skill(a); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
   const accent=a.type==='nightreaper'?'#ff5276':BOSS_PALETTES[a.type]||colorOf(a.type);
   V({k:'sigilBloom',x:a.x,y:a.y+.2,c:accent,r:U[a.type].boss?1.3:.75,m:.65});
   if(t&&!(a.heal>0)) V({k:'impactBloom',x:t.x,y:t.y-.2,c:accent,r:U[a.type].boss?1.1:.65,m:.42});

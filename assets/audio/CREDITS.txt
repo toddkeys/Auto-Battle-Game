@@ -20,3 +20,6 @@ Sound effects
   https://opengameart.org/content/25-cc0-bang-firework-sfx
 - "50 RPG sound effects" by Kenney (www.kenney.nl) — CC0
   https://opengameart.org/content/50-rpg-sound-effects
+
+Hero/boss signature remixes: skills/*.ogg; see skills/CREDITS.txt and
+skills/profiles.json for sources, modifications and CC BY-SA 3.0 attribution.
