@@ -2210,7 +2210,17 @@ const byHurt=(p,q)=>p.hp/p.max-q.hp/q.max;
 const V=o=>{ o.m=o.m||.4; if(o.t===undefined) o.t=o.m; o.s=o.s??(Math.random()*1e4|0); S.fight.vfx.push(o); };
 let CASTER=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
 const later=(t,fn)=>S.fight.timers.push({t,fn,c:CASTER});
-function pop(u,txt,c,big){ S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?1.1:.7,txt,c,big}); trimFx(); }
+function pop(u,txt,c,big){ if(typeof txt==='string'&&!/^[+\d]/.test(txt)) return popIcon(u,wordIcon(txt),c);   // words show as icons; numbers stay numbers
+  S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?1.1:.7,txt,c,big}); trimFx(); }
+// every word pop-up as an icon (matched by its first word; a text that starts with a symbol uses that symbol)
+const WORD_ICONS={Dispelled:'🚫',Warp:'🌀',Blink:'🌀',Thawed:'♨️',Stripped:'✋',Snake:'🎲',Shatter:'💥',Second:'🌬️',Risen:'🧟',Rhythm:'🎵',Reborn:'🕊️',
+  Phoenix:'🪶',Miss:'❌',JACKPOT:'🎰',Immune:'⛔',Ice:'❄️',Fury:'😡',Executed:'💀',ENRAGED:'👹',Doused:'💧',Dodge:'💨',Cursed:'🧿',Cleansed:'✨',
+  Blocked:'🛡️',Back:'🗡️',Poison:'☠️',Poisoned:'☠️',Bleeding:'🩸',Combo:'🔗'};
+function wordIcon(txt){
+  const m=txt.match(/^🎲 (\d)/); if(m) return '⚀⚁⚂⚃⚄⚅'[+m[1]-1]||'🎲';   // dice show their face
+  if(txt.startsWith('♪ ')) return '🎵'; if(txt.startsWith('⚭')) return '🔗'; if(txt.startsWith('⟲')) return '🪞';
+  const first=[...txt][0]; if(first.codePointAt(0)>0x2000) return first;   // already starts with a symbol (cards, notes)
+  return WORD_ICONS[txt.split(/[^A-Za-z]/)[0]]||'❗'; }
 // damage and heal numbers: rapid hits on the same unit add up in one number instead of stacking new ones
 function popNum(u,v,c,pre=''){ const F=S.fight, f=F.fx.find(f=>f.u===u&&f.c===c&&f.t0-f.t<.35);
   if(f){ f.num+=v; f.txt=pre+Math.round(f.num); return; }   // only during a number's first 0.35s, so a steady stream still shows new numbers
@@ -2222,7 +2232,7 @@ function popIcon(u,icon,c){   // a status lands: its icon pops instead of a word
 // emoji are drawn once into a small canvas and stamped: no colour-font text rendering every frame
 const ICONS={};
 function iconImg(ch){ let c=ICONS[ch]; if(c) return c; c=ICONS[ch]=document.createElement('canvas'); c.width=c.height=48;
-  const g=c.getContext('2d'); g.font='38px system-ui'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(ch,24,27); return c; }
+  const g=c.getContext('2d'); g.font='38px system-ui'; g.textAlign='center'; g.textBaseline='middle'; g.fillStyle='#fff3d0'; g.fillText(ch,24,27); return c; }   // plain symbols (dice, notes) in light ink; colour emoji keep their colours
 const drawIcon=(ch,x,y,size)=>ctx.drawImage(iconImg(ch),x-size/2,y-size/2,size,size);
 // status effects: stun (can't act), sil = silence (can't cast), blind (50% of attacks miss),
 // slow (-40% move and attack speed), psn = poison (damage over time)
@@ -3368,7 +3378,7 @@ function render(){
         ctx.save(); ctx.rotate(Math.sin(age*20)*.05); ctx.fillStyle='#ffd23f'; ctx.strokeStyle='#7a2a00'; ctx.lineWidth=2; ctx.beginPath();
         for(let i=0;i<20;i++){ const an=i/20*Math.PI*2+age*2, rr=i%2?13:24; ctx.lineTo(Math.cos(an)*rr*1.25,Math.sin(an)*rr*.8-7); } ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
         ctx.font="32px 'Jersey 10',system-ui"; ctx.lineJoin='round'; ctx.lineWidth=5; ctx.strokeStyle='#2a0800'; ctx.strokeText(f.txt,0,0); ctx.fillStyle='#ff3a2a'; ctx.fillText(f.txt,0,0);
-        ctx.font="12px 'Jersey 10',system-ui"; ctx.lineWidth=3; ctx.strokeText('CRITICAL',0,-24); ctx.fillStyle='#fff3c0'; ctx.fillText('CRITICAL',0,-24); ctx.restore(); continue; }
+        drawIcon('💥',0,-27,16); ctx.restore(); continue; }
       if(f.icon){ ctx.fillStyle='rgba(15,15,25,.8)'; ctx.strokeStyle=f.c; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(0,-7,13,0,Math.PI*2); ctx.fill(); ctx.stroke(); drawIcon(f.icon,0,-7,19); ctx.restore(); continue; }
       ctx.font=f.big?"23px 'Jersey 10',system-ui":"20px 'Jersey 10',system-ui";
       ctx.fillStyle='#000'; ctx.fillText(f.txt,1,1); ctx.fillStyle=f.c; ctx.fillText(f.txt,0,0); ctx.restore(); }
