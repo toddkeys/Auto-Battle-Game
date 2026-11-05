@@ -34,4 +34,7 @@ def spec(cid,size):
     parts['cape']=part([(.83,.42),(1,.48),(1,.94),(.85,.9),(.76,.66)],(.8,.5))
     parts['cloth']=part([(.44,.68),(.73,.68),(.8,.84),(.36,.85)],(.57,.69))
     return {'parts':parts,'order':['cape','body','legL','legR','cloth','head','armL','weapon','foreR','armR'],
-            'nofill':['weapon','foreR','armR','armL','legL','legR','cape','cloth'],'fill':2}
+            # Overlap at joints covers the area a limb exposes while turning. Keep the
+            # weapon and outer cape empty so the rest silhouette cannot leave a ghost.
+            'nofill':['weapon','foreR','armR','armL','legL','legR','cape','cloth'],
+            'seams':{'foreR':5,'armR':8,'armL':7,'legL':7,'legR':7,'cloth':6},'fill':2}

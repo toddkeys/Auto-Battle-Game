@@ -102,6 +102,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 #cards[hidden]{display:none}
 .cardsbox{width:min(760px,calc(100vw - 32px));text-align:center}.cardsbox h2{margin:0;font:400 clamp(32px,7vw,52px) var(--pixel);color:var(--gold);text-shadow:0 3px 0 #7a4a10,0 6px 0 var(--ink)}
 .cardsbox p{color:var(--muted);margin:6px 0 22px}
+.bless .bp{font-size:13px;color:#dcc49b;margin-top:12px;line-height:1.3}
+.buildnote{font-size:13px;line-height:1.35;color:#63401c;margin-top:8px;padding-top:6px;border-top:1px solid #b78b52}
 #bBlessSkip{max-width:100%;white-space:normal;line-height:1.15}
 #bBlessSkip[hidden]{display:none}
 .cardrow{display:flex;gap:22px;justify-content:center}
@@ -719,7 +721,7 @@ const subOf=(k,lv=ILV(k))=>lv>=4&&ITEM_SUB[k.split(':')[0]]?{s:SUBS[ITEM_SUB[k.s
 const INAME=k=>IT(k).name+(ILV(k)>1?` +${ILV(k)-1}`:''), IDESC=k=>IT(k).desc(IK(k));
 const MAX_ILV=6;   // +5
 const MANA_ATTACK = 12, MANA_HIT = 4;   // mana gained per attack / per hit taken
-const ATK_T = .3, CAST_T = .35, DIE_T = .6, REL_T = .45;   // animation lengths (s): attack swing, skill charge-up, death fade, skill release
+const ATK_T = .3, CAST_T = .35, DIE_T = .6, REL_T = .45, HURT_T = .24;   // animation lengths (s): attack swing, skill charge-up, death fade, skill release
 const easeOut=q=>1-(1-q)**3, easeInOut=q=>q<.5?4*q*q*q:1-(-2*q+2)**3/2;
 
 // ====== blessings: after every boss round you pick 1 of 3 (they stack) ======
@@ -739,11 +741,22 @@ const BLESSINGS={
   mending:{name:'Gentle Hands',icon:'👐',desc:'Your heroes give 10% more healing and healing over time',total:n=>`+${10*n}% healing given`,hero:x=>{ x.healOut+=.1; }},
   bastion:{name:'First Light',icon:'🌅',desc:'Your heroes start battle with a physical shield worth 10% of max HP',total:n=>`physical shield worth ${10*n}% of max HP`,hero:x=>{ x.shield+=x.max*.1; }},
   meditation:{name:'Patient Study',icon:'📚',desc:'Your heroes gain +2 mana per attack',total:n=>`+${2*n} mana per attack`,hero:x=>{ x.manaAtk+=2; }},
+  rhythm:{name:'Arcane Rhythm',icon:'🎼',desc:'After casting, your next 3 basic attacks each restore 3 extra mana',total:n=>`after casting, next 3 attacks each restore ${3*n} extra mana (refreshes, does not stack)`,hero:x=>{ x.rhythmK=(x.rhythmK||0)+3; }},
+  riposte:{name:'Shield Riposte',icon:'🛡️',desc:'When a shield absorbs a hit, your next basic attack deals 20% more damage',total:n=>`shield absorption primes +${20*n}% damage on the next basic attack (one charge)`,hero:x=>{ x.riposteK=(x.riposteK||0)+.2; }},
+  overflow:{name:'Crimson Reserve',icon:'🩸',desc:'Excess lifesteal fills a physical shield up to 6% of max HP',total:n=>`excess lifesteal fills a physical shield up to ${6*n}% of max HP`,hero:x=>{ x.bloodWard=(x.bloodWard||0)+.06; }},
   bounty:{name:'Bounty',icon:'💰',desc:'+2 gold every round',total:n=>`+${2*n} gold every round`,now:()=>{ S.bounty=(S.bounty||0)+2; }},
   treasure:{name:'Treasure Map',icon:'🗺️',desc:'Get a rare item right now',total:n=>`${n} rare item${n>1?'s':''} gained`,now:()=>{ S.inv.push(pick(RARE)); }},
   merc:{name:'Mercenary',icon:'🎖️',desc:'A random 4-gold hero joins your bench now',total:n=>`${n} hero${n>1?'es':''} recruited`,now:()=>{ const i=freeBench(); if(i<0){ S.gold+=8; return msg('Bench full: took 8 gold instead'); }
     S.units.push({uid:S.uid++,type:pick(UNITS.filter(u=>u.cost===4)).id,star:1,items:[],bought:-1,loc:{w:'bench',i}}); merge(); }},
 };
+// These are play styles, not a bonus for owning a prescribed set: every effect works on its own.
+const BUILD_PATHS=[
+  {name:'Spellweaver',bless:'rhythm',items:['stormcore','grimoire','hourglass','font','crystal'],pairs:'Storm Core, Runebound Grimoire or Chrono Seal'},
+  {name:'Counterguard',bless:'riposte',items:['buckler','spellward','bell','plate','thorns'],pairs:'Dawn Buckler, Spellward Charm or Warding Bell'},
+  {name:'Bloodbound',bless:'overflow',items:['fang','heartwood','wound'],pairs:'Vampire Fang, Heartwood Pendant or Crimson Pact'}
+];
+const buildForItem=k=>BUILD_PATHS.find(p=>p.items.includes(k.split(':')[0]));
+const blessingPair=k=>BUILD_PATHS.find(p=>p.bless===k);
 const BLESS_MAX=3;   // a blessing stacks up to x3
 const blessOwned=k=>S.buffs.filter(x=>x===k).length;
 const availableBlessings=()=>Object.keys(BLESSINGS).filter(k=>blessOwned(k)<BLESS_MAX);
@@ -757,7 +770,7 @@ function offerBlessings(){
   $('#blessNote').textContent=keys.length?'The boss is down! Pick one blessing for the rest of the run.':'All blessings are maxed. Continue without taking another blessing.';
   $('#bBlessSkip').hidden=keys.length>0;
   $('#cardrow').innerHTML=keys.map(k=>{ const b=BLESSINGS[k],n=blessOwned(k);
-    return `<button class="bless" data-k="${k}"><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>
+    return `<button class="bless" data-k="${k}"><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>${blessingPair(k)?`<div class="bp">${blessingPair(k).name} · Pairs with ${blessingPair(k).pairs}</div>`:''}
       <div class="bs">${n?`<b>Stacks!</b> You have ×${n} → ×${n+1}:<br>${b.total(n+1)}`:`Stacks up to ×${BLESS_MAX}`}</div></button>`;
   }).join('');
   $('#cards').hidden=false;
@@ -1890,7 +1903,7 @@ function mkF(type,star,cx,cy,team,mult=1){
   return {type,star,team,x:cx+.5,y:cy+.5,hp:b.hp*m,max:b.hp*m,atk:b.atk*m,heal:(b.heal||0)*m,range:b.range,as:b.as,ms:b.ms,
     splash:b.splash||0,cd:Math.random()*.5,tgt:null,red:0,crit:0,dmgM:1,asM:1,regen:0,lunge:0,flash:0,face:1,
     mp:0,mpMax:SKILLS[type].mp,skPow:1,skHeal:1,stun:0,shield:0,mshield:0,psn:null,brn:null,glow:0,
-    atkT:0,castT:0,castTgt:null,kx:0,ky:0,hpLag:b.hp*m,mg:0,quickcastK:0,quickcastT:0,dieT:0,dead:false,walk:0,moving:0,ph:Math.random()*6.28,
+    atkT:0,castT:0,castTgt:null,kx:0,ky:0,hpLag:b.hp*m,mg:0,quickcastK:0,quickcastT:0,attackN:0,impactT:0,impactK:0,impactX:0,impactY:0,rhythmLeft:0,riposteReady:0,dieT:0,dead:false,walk:0,moving:0,ph:Math.random()*6.28,
     dd:0,dtk:0,hl:0,healOut:0,fontK:0,bellK:0,bannerK:0,thorns:0,manaAtk:0,siphon:0,wound:0,shred:0,drain:0,wnd:0,exec:0,frostOn:0,phoenix:0,cloak:0,spellblade:0,sb:0,coin:0,frz:0,sil:0,blind:0,slow:0,spawnT:0,leapDelay:0,leap:null,leapP:0};
 }
 // duplicates count once: 2 Swordsmen = 1 Warrior. 2 different units = tier 1, 3 = tier 2
@@ -2140,7 +2153,7 @@ function hot(u,total,secs,src){ if(u.hp<=0) return; const k=src?(src.hotBoost||1
 function ward(u,secs,src){ if(u.hp<=0) return; secs+=(src&&src.wardPlus)||0; u.ward=Math.max(u.ward||0,secs); u.wardM=u.ward; u.wardSrc=src;
   pop(u,'Ice Ward','#dff8ff',true); SND.play('freeze'); FX('nova',u.x,u.y-.3,{s:1,tint:'#cff6ff',m:.5}); }
 // strip an enemy's buffs: shields, Quicksilver charges, Spellblade charges
-function dispel(u){ if(u.hp<=0) return; u.haste=0; u.quickcastT=0; u.hotT=0; u.furyT=0; if(u.mshield>1){ u.mshield=0; pop(u,'Dispelled','#d0a0ff'); } if(u.shield>1||u.cloak>0||u.sb>0){ pop(u,'Dispelled','#d0a0ff'); burst(u.x,u.y-.3,'#d0a0ff',10,3,3,-1); } u.shield=0; u.cloak=0; u.sb=0; }   // can still move and cast, but not attack   // can't act at all, but any direct damage shatters it
+function dispel(u){ if(u.hp<=0) return; u.haste=0; u.quickcastT=0; u.riposteReady=0; u.rhythmLeft=0; u.hotT=0; u.furyT=0; if(u.mshield>1){ u.mshield=0; pop(u,'Dispelled','#d0a0ff'); } if(u.shield>1||u.cloak>0||u.sb>0){ pop(u,'Dispelled','#d0a0ff'); burst(u.x,u.y-.3,'#d0a0ff',10,3,3,-1); } u.shield=0; u.cloak=0; u.sb=0; }   // can still move and cast, but not attack   // can't act at all, but any direct damage shatters it
 // a Berserker starting to spin throws off its debuffs (it is immune until the spin ends)
 function spinStart(a){ for(const k of ['stun','sil','blind','slow','dis','shred','drain','wnd','shock','root','frz','taunt','crs']) if(a[k]>0) a[k]=0; a.psn=null; a.brn=null; a.tauntBy=null; }
 function inflict(u,k,s){ if(u.hp<=0||u.spin) return; s=STATUS[k].dur||s;   // spinning Berserkers shrug off every debuff
@@ -2225,11 +2238,23 @@ function deal(t,dmg,crit,src){
   const raw=dmg;
   const sk=isMagic(src)?'mshield':'shield';   // gold shields stop physical damage, violet ones stop magic
   if(t[sk]>0){ const ab=Math.min(t[sk],dmg); t[sk]-=ab; dmg-=ab; }
-  t.hp-=dmg; t.flash=1; gainMp(t,MANA_HIT);
+  if(raw>dmg&&t.riposteK&&src&&src.team!==t.team)t.riposteReady=1;
+  t.hp-=dmg; t.flash=1;
+  if(src&&raw>0){ const d=dist(src,t)||1;
+    t.impactT=HURT_T; t.impactK=Math.min(1,(.25+raw/t.max*3+(crit?.18:0))*(dmg>0?1:.45));
+    t.impactX=(t.x-src.x)/d; t.impactY=(t.y-src.y)/d;
+  }
+  gainMp(t,MANA_HIT);
   if(t.blinkSave&&t.hp>0&&t.hp<t.max*.3){ t.blinkSave=0; const s=safest(t); blinkTo(t,s.x,s.y); t.tgt=null; pop(t,'Blink!','#7fe0e0',true); }   // Teleporter bonus: escape once
   if(t.thorns&&src&&src.hp>0&&src.range<=1) deal(src,dmg*t.thorns,false,null);   // Thorn Mail: no src, so it never bounces back
   if(src&&src.taunt>0&&src.tauntBy===t&&src.hp>0){ deal(src,raw,false,null); burst(src.x,src.y-.3,'#ffe27a',5,2,2,0); }   // Taunt: 100% reflected
-  if(src&&src.leech&&src.hp>0){ const h=Math.min(dmg*src.leech*healMul(src),src.max-src.hp); src.hp+=h; src.hl+=h; }
+  if(src&&src.leech&&src.hp>0){
+    const amount=Math.max(0,dmg*src.leech*healMul(src)), h=Math.min(amount,Math.max(0,src.max-src.hp));
+    src.hp+=h; src.hl+=h; if(h>0)src.hg=Math.max(src.hg||0,.2);
+    if(src.bloodWard){ const extra=Math.min(amount-h,Math.max(0,src.max*src.bloodWard-src.shield));
+      if(extra>0)src.shield+=extra;
+    }
+  }
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
   burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.impact(src,t,crit);
@@ -2274,13 +2299,15 @@ function flankOf(a,t){ if(t.face===undefined) return 0;
   const fx=(a.x-t.x)*t.face, fy=Math.abs(a.y-t.y); if(Math.hypot(fx,fy)<.05) return 0;
   const ang=Math.atan2(fy,fx)*180/Math.PI; return ang>120?2:ang>60?1:0; }
 function hit(a,t,mult=1,canCrit=mult===1){
-  let dmg=a.atk*a.dmgM*mult*(CASTER===a?a.skPow||1:1)*(1+(a.bannerAmp||0)); const crit=canCrit&&(Math.random()<a.crit||a.firstCrit); if(canCrit) a.firstCrit=false; if(crit) dmg*=2+(a.critX||0);
+  const basic=mult===1&&CASTER!==a, counter=basic&&a.riposteReady?(a.riposteK||0):0;
+  if(counter)a.riposteReady=0;
+  let dmg=(1+counter)*a.atk*a.dmgM*mult*(CASTER===a?a.skPow||1:1)*(1+(a.bannerAmp||0)); const crit=canCrit&&(Math.random()<a.crit||a.firstCrit); if(canCrit) a.firstCrit=false; if(crit) dmg*=2+(a.critX||0);
   if(a.bushido&&a.hp<a.max*.5) dmg*=1+a.bushido;            // Samurai bonus
   if(a.furyT>0) dmg*=1.25;                                   // Lucky Roll 4
   if(a.exec&&t.hp<t.max*.35) dmg*=1+a.exec;                 // Executioner's Axe
   if(mult===1&&a.sb>0){ dmg*=1.6; a.sb--; }                 // Spellblade charges
   const fl=flankOf(a,t); dmg*=1+[0,SIDE_BONUS,BACK_BONUS][fl];   // side and back attacks hit harder
-  const basic=mult===1&&CASTER!==a, mk=MONKEY_PASSIVE[a.type];
+  const mk=MONKEY_PASSIVE[a.type];
   if(mk&&basic&&a.mkEmp>0) dmg*=1+(mk.dmg||0);   // Wukong: empowered hit
   BACKHIT=fl; const hp0=t.hp; deal(t,dmg,crit,a); BACKHIT=0;
   if(mk) monkeyAfterHit(a,basic,Math.max(0,hp0-Math.max(0,t.hp)));
@@ -2291,6 +2318,12 @@ function hit(a,t,mult=1,canCrit=mult===1){
   if(mult===1&&a.siphon&&t.mp>0){ const m=Math.min(t.mp,a.siphon); t.mp-=m; gainMp(a,m); }   // Soul Siphon
   if(a.wound&&t.hp>0) inflict(t,'wnd',a.wound);              // Grievous Blade (attacks and skills)
   if(a.splash&&mult===1) for(const o of S.fight.f) if(o!==t&&o.team!==a.team&&o.hp>0&&dist(o,t)<=a.splash+.2) deal(o,dmg*.5,false,a);
+}
+function beginAttack(a){
+  a.atkT=ATK_T; a.attackN++;
+  const extra=a.rhythmLeft>0?(a.rhythmK||0):0;
+  if(extra)a.rhythmLeft--;
+  gainMp(a,(MANA_ATTACK+a.manaAtk+extra)*(a.manaMul||1));
 }
 // full mana: charge up for CAST_T seconds, then releaseCast fires the skill
 function tryCast(a,t,inRange){
@@ -2346,6 +2379,7 @@ function releaseCast(a){
   FXS=1; CASTER=null;
   if(a.bellK){ for(const b of friends(a)) if(dist(a,b)<=2){ b.shield+=b.max*.08*a.bellK; V({k:'dome',x:b.x,y:b.y,c:'#ffe27a',r:.55,m:.5}); } SND.play('shield'); }   // Warding Bell
   if(a.quickcastK>0)a.quickcastT=3;
+  if(a.rhythmK)a.rhythmLeft=3;
   if(a.castShield) a.shield+=a.max*a.castShield;   // Warrior 3-star
   if(a.nDodge) a.nDodgeT=2;   // Ninja bonus
 }
@@ -2436,7 +2470,7 @@ function step(dt){
     if(a.heal){
       if(tryCast(a,null,true)) continue;
       const hurt=alive.filter(b=>b.team===a.team&&b.hp>0&&b.hp<b.max*.8&&dist(a,b)<=a.range+.5).sort(byHurt)[0];
-      if(hurt){ if(a.cd<=0){ a.cd=a.as; a.atkT=ATK_T; gainMp(a,(MANA_ATTACK+a.manaAtk)*(a.manaMul||1));
+      if(hurt){ if(a.cd<=0){ a.cd=a.as; beginAttack(a);
         later(ATK_T*.45,()=>{ if(a.hp>0){ if(U[a.type].hot) hot(hurt,a.heal*1.2,3,a); else heal(hurt,a.heal,a); } }); } continue; }
     }
     if(a.taunt>0&&a.tauntBy&&a.tauntBy.hp>0) a.tgt=a.tauntBy;   // Taunted: forced onto the taunter
@@ -2448,7 +2482,7 @@ function step(dt){
     const d=dist(a,t), inRange=d<=a.range+.5;
     if(tryCast(a,t,inRange)) continue;
     if(inRange){
-      if(a.cd<=0&&!(a.dis>0)){ a.cd=a.as; a.atkT=ATK_T; gainMp(a,(MANA_ATTACK+a.manaAtk)*(a.manaMul||1));
+      if(a.cd<=0&&!(a.dis>0)){ a.cd=a.as; beginAttack(a);
         // damage lands on the strike frame of the swing, not when it starts
         later(ATK_T*.45,()=>{ if(a.hp<=0||t.hp<=0) return;
           if(a.blind>0&&Math.random()<.5){ pop(t,'Miss','#c8c8c8'); return; }
@@ -2487,6 +2521,7 @@ function step(dt){
 function tickFx(dt){
   const F=S.fight; tickDebris(dt);
   for(const a of F.f){
+    a.impactT=Math.max(0,(a.impactT||0)-dt);
     a.kx*=Math.exp(-dt*10); a.ky*=Math.exp(-dt*10); a.flash=Math.max(0,a.flash-dt*5);
     if(a.hpLag>a.hp) a.hpLag=Math.max(a.hp,a.hpLag-Math.max(a.max*.4*dt,(a.hpLag-a.hp)*3*dt)); else a.hpLag=a.hp;
     if(a.wind&&a.hp>0&&a.hp<a.max*.3){ heal(a,a.max*a.wind,null); a.wind=0; pop(a,'Second Wind','#bff2ff',true); }   // blessing
@@ -2555,18 +2590,27 @@ function endFight(win){
 
 // ====== drawing ======
 // body motion for this frame: breathing, walk hop, attack swing, skill charge, hit recoil, death
+// Cast damage happens at release, so release starts at the strike pose and settles.
+const releasePhase=o=>.52+.48*Math.max(0,Math.min(1,1-o.rel/REL_T));
+const planted=o=>o.atkT>0||o.cast>0||o.rel>0;
+function hurtMotion(o){
+  if(!(o.hurt>0)||o.frz>0||o.ward>0||o.die!==undefined)return 0;
+  const q=1-Math.min(1,o.hurt);return Math.sin(q*Math.PI)*(1-q)*(o.hurtK||0)*(calmMotion?.35:1);
+}
 function pose(o,b,rigged){
   const face=o.face||1, br=o.frz>0?0:Math.sin(ANIM*3.2+(o.ph||0));
   let dx=0, dy=0, rot=0, sx=1-br*.02*!rigged, sy=1+br*.025*!rigged, lift=0, alpha=o.ghost?.3:1;
-  if(o.moving){ const s=Math.sin((o.walk||0)*5); lift=Math.abs(s)*(rigged?1:4); rot=s*(rigged?.02:.07); }
-  if(o.rel>0){ const q=1-o.rel/REL_T; lift+=Math.sin(Math.min(1,q/.6)*Math.PI)*7; }   // skill release hop
-  if(o.atkT>0){
+  if(o.moving&&!planted(o)){ const s=Math.sin((o.walk||0)*5); lift=Math.abs(s)*(rigged?1:4); rot=s*(rigged?.02:.07); }
+  if(o.rel>0){ const q=1-o.rel/REL_T, settle=(1-q)**2;
+    if(b.range<=1){ dx+=face*3*settle;dy+=1.2*settle; } else lift+=2.5*settle;
+  }
+  if(o.atkT>0&&!(o.rel>0)){
     const p=1-o.atkT/ATK_T, reach=b.range>1?.4:1; let f;
-    if(p<.35){ const q=p/.35; f=-5*easeOut(q); sx*=1+.06*q; sy*=1-.06*q; }                       // wind-up
-    else if(p<.55){ const q=(p-.35)/.2; f=-5+17*easeOut(q); sx*=1.06-.12*q; sy*=.94+.12*q; rot+=face*.2*q*(rigged?.4:1); }  // strike
-    else { const q=(p-.55)/.45; f=12*(1-easeInOut(q)); rot+=face*.2*(1-q)*(rigged?.4:1); }                       // recover
+    if(p<.3){ const q=p/.3; f=-5*easeOut(q); sx*=1+.06*q; sy*=1-.06*q; }                       // wind-up
+    else if(p<.45){ const q=(p-.3)/.15; f=-5+17*easeOut(q); sx*=1.06-.12*q; sy*=.94+.12*q; rot+=face*.2*q*(rigged?.4:1); }  // strike
+    else { const q=(p-.45)/.55; f=12*(1-easeInOut(q)); rot+=face*.2*(1-q)*(rigged?.4:1); }                       // recover
     const t=o.ref&&o.ref.tgt;
-    if(b.range<=1&&t&&t.hp>0){ const ux=t.x-o.ref.x, uy=t.y-o.ref.y, d=Math.hypot(ux,uy)||1, reachPx=Math.max(0,d-.42)*CELL*.9;   // lunge into the target
+    if(b.range<=1&&t&&t.hp>0){ const ux=t.x-o.ref.x, uy=t.y-o.ref.y, d=Math.hypot(ux,uy)||1, reachPx=Math.min(10,Math.max(0,d-.42)*CELL*.35);   // lunge into the target
       dx+=ux/d*reachPx*f/12; dy+=uy/d*reachPx*f/12; }
     else dx+=f*reach*face*(rigged?.6:1);
   }
@@ -2574,12 +2618,13 @@ function pose(o,b,rigged){
     if(b.range<=1){ dy+=3*q; sx*=1+.05*q; sy*=1-.05*q; } else lift+=8*q;   // melee crouches to wind up; casters float
     rot+=Math.sin(ANIM*45)*.03; }
   if(o.spin>0){ rot+=Math.sin(ANIM*18)*.09; lift+=Math.abs(Math.sin(ANIM*18))*2; }   // keep the silhouette solid during the whirlwind
-  if(rigged&&o.moving&&!o.spin){ const stride=Math.sin((o.walk||0)*5); lift+=Math.abs(stride)*2; rot+=stride*.025; }
+  if(rigged&&o.moving&&!planted(o)&&!o.spin){ const stride=Math.sin((o.walk||0)*5); lift+=Math.abs(stride)*2; rot+=stride*.025; }
   if(o.leapP){ lift+=Math.sin(o.leapP*Math.PI)*48; rot+=face*.35*Math.sin(o.leapP*Math.PI); }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); lift+=q*q*90; alpha*=o.spawn>1?0:1-q*.5; }
   if(o.cheer) lift+=Math.abs(Math.sin(ANIM*7+(o.ph||0)))*10;
   dx+=(o.kx||0)*CELL; dy+=(o.ky||0)*CELL;
-  if(o.flash){ sy*=1-.08*o.flash; sx*=1+.06*o.flash; }
+  const hurt=hurtMotion(o);dx+=(o.hurtX||0)*hurt*5;dy+=(o.hurtY||0)*hurt*3;rot+=(o.hurtX||0)*hurt*.055;
+  if(o.flash){ sy*=1-.035*o.flash; sx*=1+.025*o.flash; }
   if(o.die!==undefined){ const q=1-o.die; alpha=o.die; sy*=1-.5*q; sx*=1+.2*q; dy+=q*6; rot-=face*.3*q; }
   return {dx,dy,rot,sx,sy,lift,alpha};
 }
@@ -2600,17 +2645,22 @@ function swing(R,p,K){ const arm=KF(p,K.arm), blade=KF(p,K.blade); R.armR.r+=arm
   R.armL.r+=KF(p,[[0,0],[.35,.4],[.52,-.3],[1,0]]); R.head.r+=KF(p,[[0,0],[.35,-.08],[.52,.1],[1,0]]); }
 // 1 = full guard stance, 0 = neutral (the pose the swing / thrust keyframes start from)
 function guardOf(o){ const out=p=>KF(p,[[0,1],[.2,0],[.8,0],[1,1]]);
-  if(o.rel>0) return out(1-o.rel/REL_T); if(o.atkT>0) return out(1-o.atkT/ATK_T); if(o.cast>0) return 1-easeOut(Math.min(1,(1-o.cast/CAST_T)*3)); return 1; }
+  if(o.rel>0) return out(releasePhase(o)); if(o.atkT>0) return out(1-o.atkT/ATK_T); if(o.cast>0) return 1-easeOut(Math.min(1,(1-o.cast/CAST_T)*3)); return 1; }
 function thrust(R,p,k){ R.weapon.r+=KF(p,[[0,-1.4],[.3,-1.45],[.45,-1.55],[.7,-1.55],[1,-1.4]]); R.armR.r+=KF(p,[[0,.4],[.3,.6],[.45,-.1],[1,.4]]);   // starts and ends in the guard
   R.armR.x+=k*KF(p,[[0,0],[.3,1.5],[.45,-3.5],[.65,-3],[1,0]]); R.body.x+=k*KF(p,[[0,0],[.3,.8],[.45,-1.5],[1,0]]); R.armL.r+=KF(p,[[0,0],[.3,.3],[.45,-.3],[1,0]]); }
 // 3-beat move: ease toward `wind` (anticipation), snap to `hit`, settle back to 0
-function beats(p,wind,hit){ return p<.35?wind*easeOut(p/.35) : p<.55?wind+(hit-wind)*easeOut((p-.35)/.2) : hit*(1-easeInOut((p-.55)/.45)); }
+function beats(p,wind,hit){ return p<.3?wind*easeOut(p/.3) : p<.45?wind+(hit-wind)*easeOut((p-.3)/.15) : p<.56?hit : hit*(1-easeInOut((p-.56)/.44)); }
 // joint offsets for this frame: {group:{x,y,r}} in sprite pixels / radians. The sprite faces left, so forward = -x.
 // Arm rotation: armR negative = raise, armL positive = raise.
 // Separate anticipation, action and recovery poses for each combat discipline.
 const ACTION_STYLE={warrior:'cut',crusader:'thrust',samurai:'cut',rogue:'stab',ninja:'stab',berserker:'cut',monkey:'thrust',monk:'punch',archer:'bow',gunner:'gun',engineer:'gun',grapple:'thrust',bard:'song',alchemist:'throw',gambler:'throw'};
-function articulateAttack(R,p,style,big){
+function articulateAttack(R,p,style,big,alternate=false){
   const k=big?1.25:1,B=(wind,hit)=>beats(p,wind,hit)*k;
+  // Cloth follows the limbs, then settles after the hand returns to guard.
+  const drag=beats(Math.max(0,p-.09),.08,-.18)*k;
+  R.cloth.r+=drag;R.cape.r-=drag*.7;R.head.y+=B(.35,-.2);
+  if(alternate&&!big){R.armL.r+=B(-.12,.2);R.armR.r+=B(.1,-.12);R.foreR.r+=B(-.1,.15);}
+
   R.foreR.r+=B(.35,-.25);
   R.body.x+=B(1,-2);R.body.y+=B(1,-.8);R.head.r+=B(-.06,.08);
   R.legL.r+=B(.18,-.2);R.legR.r+=B(-.14,.15);R.cloth.r+=B(-.06,.1);R.cape.r+=B(.12,-.18);
@@ -2632,8 +2682,8 @@ function rigPose(o,type,b){
   R.wingL=J(); R.wingR=J(); R.cloth=J(0,0,Math.sin(t*2.1)*.025);
   if(st==='roster'){
     R.armR.r=br*.025; R.armL.r=-br*.02; R.weapon.r=0;
-    const style=ACTION_STYLE[b.cls]||'cast', big=o.rel>0, p=big?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
-    if(p>=0) articulateAttack(R,p,style,big);
+    const style=ACTION_STYLE[b.cls]||'cast', big=o.rel>0, p=big?releasePhase(o):o.atkT>0?1-o.atkT/ATK_T:-1;
+    if(p>=0) articulateAttack(R,p,style,big,o.swing===1);
     if(o.cast>0){const q=easeOut(1-o.cast/CAST_T);
       R.foreR.r-=.25*q;R.armR.r-=(style==='cast'?.55:.35)*q; R.armL.r+=.28*q;
       R.body.y+=1.5*q;R.legL.r+=.18*q;R.legR.r-=.18*q; R.head.y+=.5*q;
@@ -2641,7 +2691,7 @@ function rigPose(o,type,b){
   }
   if(st==='reaper'){
     R.armR.r=-.15+br*.04; R.armL.r=.15-br*.04;
-    const q=o.rel>0?1-o.rel/REL_T:o.atkT>0?1-o.atkT/ATK_T:-1;
+    const q=o.rel>0?releasePhase(o):o.atkT>0?1-o.atkT/ATK_T:-1;
     if(q>=0){ const slash=beats(q,.65,-.85); R.armR.r+=slash; R.armL.r-=slash*.75; R.body.x+=beats(q,1,-1.8); R.head.r-=slash*.06; }
     if(o.cast>0){ const q=1-o.cast/CAST_T; R.armR.r-=q*.5; R.armL.r+=q*.5; R.body.y+=q; }
   }
@@ -2654,14 +2704,14 @@ function rigPose(o,type,b){
     R.armR.r+=br*.03; R.armL.r-=br*.02;
     const chop=(p,big)=>{ R.armR.r+=KF(p,[[0,0],[.35,big?2.2:1.8],[.52,-.55],[.62,-.6],[1,0]]); R.weapon.r+=KF(p,[[0,0],[.35,.35],[.52,-.35],[1,0]]);
       R.armL.r+=KF(p,[[0,0],[.35,-.12],[.52,.1],[1,0]]); R.body.x+=KF(p,[[0,0],[.35,1],[.52,-1.5],[1,0]]); R.head.r+=KF(p,[[0,0],[.35,-.05],[.52,.06],[1,0]]); };
-    if(o.rel>0) chop(1-o.rel/REL_T,true); else if(o.atkT>0) chop(1-o.atkT/ATK_T,false);
+    if(o.rel>0) chop(releasePhase(o),true); else if(o.atkT>0) chop(1-o.atkT/ATK_T,false);
     else if(o.cast>0){ const q=easeOut(1-o.cast/CAST_T); R.armR.r+=1.6*q; R.armL.r-=.15*q; } }
   if(st==='arthalberd'){   // the hand-made Valkyrie: halberd held level, blade forward; wind it up, sweep it down through the target
     R.weapon.r+=br*.03;
     const sweep=(p,big)=>{ const k=big?1.5:1;
       R.weapon.r+=KF(p,[[0,0],[.35,.9*k],[.52,-.45*k],[.65,-.5*k],[1,0]]); R.armR.r+=KF(p,[[0,0],[.35,-.25*k],[.52,.2*k],[1,0]]); R.armL.r+=KF(p,[[0,0],[.35,.2*k],[.52,-.15*k],[1,0]]);
       R.body.x+=KF(p,[[0,0],[.35,1],[.52,-2*k],[1,0]]); R.body.y+=KF(p,[[0,0],[.35,-1*k],[.52,1],[1,0]]); R.head.r+=KF(p,[[0,0],[.35,-.05],[.52,.05],[1,0]]); R.cape.r+=KF(p,[[0,0],[.35,.1],[.52,-.08],[1,0]]); };
-    if(o.rel>0) sweep(1-o.rel/REL_T,true); else if(o.atkT>0) sweep(1-o.atkT/ATK_T,false);
+    if(o.rel>0) sweep(releasePhase(o),true); else if(o.atkT>0) sweep(1-o.atkT/ATK_T,false);
     else if(o.cast>0){ const q=easeOut(1-o.cast/CAST_T); R.weapon.r+=1.2*q; R.armR.r-=.3*q; R.body.y+=1.5*q; } }
   if(st==='artkatana'){   // the hand-made Shadowstep: katana held low; it draws back past the hip and up behind the head, then circles over the top into the target
     R.armR.r+=br*.03; R.armL.r-=br*.02;
@@ -2669,14 +2719,14 @@ function rigPose(o,type,b){
       R.armR.r+=KF(p,[[0,0],[.35,-1.1*k],[.52,.6*k],[.62,.5*k],[1,0]]); R.weapon.r+=KF(p,[[0,0],[.35,-2.1],[.52,-6.6],[.62,-6.78],[1,-6.283]]);
       R.armL.r+=KF(p,[[0,0],[.35,-.12],[.52,.1],[1,0]]); R.body.x+=KF(p,[[0,0],[.35,1.2],[.52,-1.8*k],[1,0]]); R.body.y+=KF(p,[[0,0],[.35,-.8],[.52,1],[1,0]]);
       R.head.r+=KF(p,[[0,0],[.35,-.05],[.52,.06],[1,0]]); };
-    if(o.rel>0) cut(1-o.rel/REL_T,true); else if(o.atkT>0) cut(1-o.atkT/ATK_T,false);
+    if(o.rel>0) cut(releasePhase(o),true); else if(o.atkT>0) cut(1-o.atkT/ATK_T,false);
     else if(o.cast>0){ const q=easeOut(1-o.cast/CAST_T); R.armR.r-=1.1*q; R.weapon.r-=2.1*q; R.body.y+=q; } }
   if(st==='artstaff'){   // the hand-made Stormweaver: raise the staff a little, then point it forward at the target to cast
     R.armR.r+=br*.03; R.armL.r-=br*.02;
     const cast=(p,big)=>{ const k=big?1.35:1;
       R.armR.r+=KF(p,[[0,0],[.35,.55*k],[.52,-.75*k],[.7,-.7*k],[1,0]]); R.weapon.r+=KF(p,[[0,0],[.35,.2],[.52,-.25*k],[1,0]]);
       R.body.x+=KF(p,[[0,0],[.35,.6],[.52,-1*k],[1,0]]); R.head.r+=KF(p,[[0,0],[.35,-.03],[.52,.04],[1,0]]); R.armL.r+=KF(p,[[0,0],[.35,.15],[.52,-.1],[1,0]]); };
-    if(o.rel>0) cast(1-o.rel/REL_T,true); else if(o.atkT>0) cast(1-o.atkT/ATK_T,false);
+    if(o.rel>0) cast(releasePhase(o),true); else if(o.atkT>0) cast(1-o.atkT/ATK_T,false);
     else if(o.cast>0){ const q=easeOut(1-o.cast/CAST_T); R.armR.r+=.7*q; R.weapon.r+=.15*q; R.body.y+=q; } }
   if(st==='artpunch'){   // the hand-made Worldbreaker: guard up and bouncing; the front fist jabs out, the back fist pulls in
     R.armR.y+=br*.4; R.armL.y-=br*.4;
@@ -2685,22 +2735,22 @@ function rigPose(o,type,b){
       R.armR.x+=KF(p,[[0,0],[.3,1.5],[.45,-3.5*k],[.62,-3*k],[1,0]]); R.armR.r+=KF(p,[[0,0],[.3,-.3],[.45,sw],[.62,sw*.9],[1,0]]);
       R.armL.x+=KF(p,[[0,0],[.3,-.5],[.45,1.5*k],[1,0]]); R.body.x+=KF(p,[[0,0],[.3,1],[.45,-1.8*k],[1,0]]); R.body.y+=KF(p,[[0,0],[.3,.8],[.45,-.6*k],[1,0]]);
       R.head.r+=KF(p,[[0,0],[.3,.04],[.45,-.05],[1,0]]); R.head.x+=KF(p,[[0,0],[.45,-.8*k],[1,0]]); };
-    if(o.rel>0) punch(1-o.rel/REL_T,true); else if(o.atkT>0) punch(1-o.atkT/ATK_T,false);
+    if(o.rel>0) punch(releasePhase(o),true); else if(o.atkT>0) punch(1-o.atkT/ATK_T,false);
     else if(o.cast>0){ const q=easeOut(1-o.cast/CAST_T); R.armR.x+=3*q; R.armR.y-=1*q; R.body.y+=1.5*q; R.body.x+=1*q; } }
   if(st==='gun'){ R.front=1; if(o.atkT>0){ const p=1-o.atkT/ATK_T; R.armR.x+=KF(p,[[0,0],[.4,0],[.5,2.5],[1,0]]); R.weapon.r+=KF(p,[[0,0],[.4,0],[.5,-.25],[1,0]]); } }   // cannon: recoil
   if(st==='golem'){ R.armL.r=Math.sin(t*1.6)*.06; R.armR.r=-Math.sin(t*1.6)*.06; }
   if(st==='blob') R.head.r=Math.sin(t*2.5)*.12;
-  if(o.moving){   // walk cycle: legs step in turn, arms swing against them, body bobs, cape trails
+  if(o.moving&&!planted(o)){   // walk cycle: legs step in turn, arms swing against them, body bobs, cape trails
     const w=(o.walk||0)*5, s=Math.sin(w), c=Math.cos(w);
     R.legL.r=s*.55; R.legR.r=-s*.55; R.legL.y=Math.min(0,c)*2.7; R.legR.y=Math.min(0,-c)*2.7;
     R.foreR.r+=s*.15;R.legL.x=-s*.8;R.legR.x=s*.8;R.legL.sy=1+Math.min(0,c)*.12;R.legR.sy=1+Math.min(0,-c)*.12;R.cloth.r+=s*.09;
     R.body.y-=Math.abs(c)*1.2; R.armL.r-=s*.4; R.armR.r-=s*.35; R.cape.r+=.12+s*.05; R.head.r+=s*.03;
     if(st==='blob') R.head.r+=s*.15;
   }
-  if(o.rel>0&&st==='slash'){ const p=1-o.rel/REL_T; swing(R,p,SWING_BIG); R.body.y+=KF(p,[[0,0],[.35,-3],[.5,1.5],[1,0]]); R.legL.r+=KF(p,[[0,0],[.35,.3],[.5,-.25],[1,0]]); R.legR.r+=KF(p,[[0,0],[.35,-.3],[.5,.25],[1,0]]); }
-  else if(o.rel>0&&st==='spear'){ const p=1-o.rel/REL_T; thrust(R,p,1.6); R.legL.r+=KF(p,[[0,0],[.3,.2],[.45,-.3],[1,0]]); }
+  if(o.rel>0&&st==='slash'){ const p=releasePhase(o); swing(R,p,SWING_BIG); R.body.y+=KF(p,[[0,0],[.35,-3],[.5,1.5],[1,0]]); R.legL.r+=KF(p,[[0,0],[.35,.3],[.5,-.25],[1,0]]); R.legR.r+=KF(p,[[0,0],[.35,-.3],[.5,.25],[1,0]]); }
+  else if(o.rel>0&&st==='spear'){ const p=releasePhase(o); thrust(R,p,1.6); R.legL.r+=KF(p,[[0,0],[.3,.2],[.45,-.3],[1,0]]); }
   else if(o.rel>0&&st!=='roster'&&st!=='reaper'&&st!=='artsword'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
-    const p=1-o.rel/REL_T, B=(w,h)=>beats(p,w,h);
+    const p=releasePhase(o), B=(w,h)=>beats(p,w,h);
     R.armR.r+=B(-2.1,1.4); R.armL.r+=B(1.5,-.8); R.body.y+=B(-3,1.5); R.head.r+=B(-.12,.12);
     R.legL.r+=B(.3,-.2); R.legR.r+=B(-.3,.2); R.wingL.r+=B(-.8,.6); R.wingR.r+=B(.8,-.6); R.cape.r+=B(.25,-.1);
   } else if(o.atkT>0&&st!=='roster'&&st!=='reaper'&&st!=='arthalberd'&&st!=='artpunch'&&st!=='artstaff'&&st!=='artkatana'){
@@ -2747,11 +2797,17 @@ function rigPose(o,type,b){
   }
   if(SPR[type]&&SPR[type].art){
     R.head.s=HERO_HEAD_SCALE[type]||1;
-    if(o.moving&&!o.spin){ const stride=Math.sin((o.walk||0)*5); R.body.y-=Math.abs(stride)*.8; R.head.r-=stride*.025;
+    if(o.moving&&!planted(o)&&!o.spin){ const stride=Math.sin((o.walk||0)*5); R.body.y-=Math.abs(stride)*.8; R.head.r-=stride*.025;
       R.cape.r+=Math.sin(t*8)*.12; R.armL.r+=stride*.08; }
     if(o.cast>0){ const q=Math.sin((1-o.cast/CAST_T)*Math.PI); R.head.y-=q*.6; R.cape.r+=Math.sin(t*9)*.08*q; }
-    if(o.rel>0){ const q=Math.sin((1-o.rel/REL_T)*Math.PI); R.body.x-=q*.7; R.cape.r+=q*.12; }
+    if(o.rel>0){ const q=Math.sin((releasePhase(o))*Math.PI); R.body.x-=q*.7; R.cape.r+=q*.12; }
   }
+  if(st==='roster'){
+    // Shoulder stays rooted; the elbow bends instead of the whole arm sliding off.
+    R.armR.x*=.3;R.armR.y*=.35;R.armL.x*=.35;R.foreR.r*=.45;
+  }
+  const hurt=hurtMotion(o), turn=(o.hurtX||0)*(o.face||1);
+  if(hurt){ R.head.r-=turn*hurt*.2;R.head.y+=hurt*.65;R.armL.r+=hurt*.2;R.armR.r-=hurt*.13;R.foreR.r+=hurt*.18;R.cape.r-=turn*hurt*.25;R.cloth.r+=turn*hurt*.1; }
   if(st==='arthalberd'&&GRIPS[type]) gripShaft(R,GRIPS[type]);   // two-handed: the back hand stays on the shaft whatever the front hand does
   return R;
 }
@@ -2916,6 +2972,9 @@ function drawUnit(type,star,px,py,o={}){
     ctx.fillStyle='#fff6d0'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hpLag),5);   // recent damage drains away
     ctx.fillStyle=o.team===1?'#ff5a5a':'#4fdc6a'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hp),5);
     ctx.fillStyle=o.mp>=1?'#bfe6ff':'#4aa8ff'; ctx.fillRect(px-22,py-31,44*Math.min(1,o.mp),3);
+    if(o.ref&&o.ref.riposteReady){ctx.strokeStyle='#f8d887';ctx.lineWidth=1.5;ctx.strokeRect(px-24,py-38,48,12);}
+    if(o.ref&&o.ref.rhythmLeft>0){ctx.fillStyle='#9bd9ff';for(let i=0;i<o.ref.rhythmLeft;i++)ctx.fillRect(px-6+i*5,py-25,3,2);}
+
   }
 }
 function starPath(x,y,r){ ctx.beginPath(); for(let i=0;i<10;i++){ const a=-Math.PI/2+i*Math.PI/5, d=i%2?r*.45:r; ctx.lineTo(x+Math.cos(a)*d,y+Math.sin(a)*d); } ctx.closePath(); }
@@ -3115,7 +3174,7 @@ function render(){
     ctx.restore();
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
-    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,hg:a.hg,mg:a.mg,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
+    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,swing:a.attackN%2,hurt:a.impactT/HURT_T,hurtK:a.impactK,hurtX:a.impactX,hurtY:a.impactY,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,hg:a.hg,mg:a.mg,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
       ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.mkEmp>0?.35:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
@@ -3213,7 +3272,10 @@ function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
     (fuse?`<div class="fzi">Also counts as <span style="color:${colorOf(fuse)}">${CLASSES[U[fuse].cls].name}</span> · ${ORIGINS[U[fuse].org].icon} ${ORIGINS[U[fuse].org].name} · holds 2 items</div>`:'')+
     (items&&items.length?`<div class="held">Holding: ${items.map(k=>`<span class="hi" data-item="${k}">${IT(k).icon} ${INAME(k)}</span>`).join(' ')}</div>`:'');
 }
-const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare?' <span class="rare">RARE</span>':''}<div>${IDESC(k)}</div>${subOf(k)?`<div class="sub">Sub-stat: ${subOf(k).s.d(subOf(k).t)}</div>`:''}${IT(k).use?'':ILV(k)<MAX_ILV?`<div class="next">Next +${ILV(k)}: ${IT(k).desc(IK_TAB[ILV(k)])}${subOf(k,ILV(k)+1)?` · sub-stat ${subOf(k,ILV(k)+1).s.d(subOf(k,ILV(k)+1).t)}`:ILV(k)+1<4&&ITEM_SUB[k.split(':')[0]]?` · sub-stat unlocks at +3`:''}</div><div class="ench">Combine with another ${IT(k).name} to enchant it</div>`:'<div class="ench">Fully enchanted</div>'}<div class="ench">Sells for ${itemValue(k)} gold (drag to the shop or right-click)</div></div>`;
+function itemBuildTip(k){const p=buildForItem(k);if(!p)return '';const n=blessOwned(p.bless);
+  return `<div class="buildnote">${p.name} · Pairs with ${BLESSINGS[p.bless].name}${n?` (owned ×${n})`:''}<br>${BLESSINGS[p.bless].total(n||1)}</div>`;
+}
+const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare?' <span class="rare">RARE</span>':''}<div>${IDESC(k)}</div>${itemBuildTip(k)}${subOf(k)?`<div class="sub">Sub-stat: ${subOf(k).s.d(subOf(k).t)}</div>`:''}${IT(k).use?'':ILV(k)<MAX_ILV?`<div class="next">Next +${ILV(k)}: ${IT(k).desc(IK_TAB[ILV(k)])}${subOf(k,ILV(k)+1)?` · sub-stat ${subOf(k,ILV(k)+1).s.d(subOf(k,ILV(k)+1).t)}`:ILV(k)+1<4&&ITEM_SUB[k.split(':')[0]]?` · sub-stat unlocks at +3`:''}</div><div class="ench">Combine with another ${IT(k).name} to enchant it</div>`:'<div class="ench">Fully enchanted</div>'}<div class="ench">Sells for ${itemValue(k)} gold (drag to the shop or right-click)</div></div>`;
 // a speech-bubble tooltip next to the element (items in the inventory and in the hero panel)
 let bubbleFor=null;
 const hideBubble=()=>{ $('#bubble').hidden=true; bubbleFor=null; };

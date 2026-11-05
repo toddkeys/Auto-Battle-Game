@@ -197,3 +197,41 @@ python tools/check_progression.py
 Checks partial/full blessing exhaustion, double-click protection, the actual boss
 reward transition and next battle, new blessing stacks, loot pools, item
 equipping/enchanting/combining/stripping, Storm Core cooldowns, and mana feedback.
+
+## Conditional builds and grounded combat motion
+
+Three additional blessings support distinct play styles using the existing items:
+
+| Build | Blessing (per stack, up to three) | Useful pairings |
+| --- | --- | --- |
+| Spellweaver | Arcane Rhythm: after casting, the next three basic attacks each restore 3 extra mana | Storm Core speeds those attacks; Grimoire strengthens skills; Chrono Seal starts the loop sooner |
+| Counterguard | Shield Riposte: shield absorption primes +20% damage on the next basic attack | Dawn Buckler, Spellward Charm, Warding Bell or First Light provide shields |
+| Bloodbound | Crimson Reserve: excess lifesteal fills a physical shield up to 6% max HP | Vampire Fang or Crimson Pact supply lifesteal; Heartwood increases the HP-based reserve |
+
+These effects work independently; owning a named set is not required. Rhythm
+refreshes to three charges, Riposte holds one charge, and Reserve cannot grow
+past its cap or reduce an existing larger shield. Mana gain reductions still
+apply, wounds reduce lifesteal before conversion, and dispelling clears pending
+Rhythm/Riposte charges. Spell damage does not consume Riposte. Pairing hints
+appear on blessing cards and item tooltips; blue pips show remaining Rhythm
+attacks and a gold bar outline indicates a ready Riposte.
+
+Basic attacks keep their original strike time, with planted feet, a shorter
+lunge, separate wind-up/strike/recovery poses and alternating arm accents.
+Skill release starts on the strike pose rather than winding up after its damage
+has already landed. Head, elbow, cape and cloth movement support the action;
+short directional hit reactions are visual offsets and do not move combat
+positions or interrupt actions. Reduced-motion preferences soften those offsets.
+All 72 hero rigs have more overlap at joint seams to prevent gaps when pieces
+turn, while artwork proportions and summon sizes retain their existing values.
+
+```bash
+python tools/check_builds_motion.py
+# Optional visual review sheet and reward-screen capture:
+python tools/check_builds_motion.py --preview /tmp/builds-motion.png
+```
+
+Checks real conditional procs, caps, dispelling, mana/wound reductions, actual
+strike timing, all 72 heroes in 3,168 motion states, phone reward selection and
+build tooltip layout. Regenerate rigs from the art using `tools/build_sprites.py`,
+then run `tools/build_game.py` to embed the results.
