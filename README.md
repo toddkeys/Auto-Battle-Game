@@ -168,7 +168,8 @@ Night Reaper's refund, and fades between fights. Damage and gold numbers remain.
 
 Boss rewards draw up to three blessings that are below the three-stack cap.
 Maxed blessings never take a card slot. Once every blessing is maxed, the reward
-screen offers **Continue without a blessing**, so the next round stays playable.
+screen offers small mastery rewards (listed below) and a **Skip reward** button,
+so the next round stays playable.
 Daily-mode choices use the run seed.
 
 Eight new blessings add regeneration (Living Roots), crit (True Aim), movement
@@ -235,3 +236,37 @@ Checks real conditional procs, caps, dispelling, mana/wound reductions, actual
 strike timing, all 72 heroes in 3,168 motion states, phone reward selection and
 build tooltip layout. Regenerate rigs from the art using `tools/build_sprites.py`,
 then run `tools/build_game.py` to embed the results.
+
+
+## Rewards after mastering every blessing
+
+When the entire blessing pool reaches three stacks, each blessing reward screen
+offers one of these small bonuses instead of more permanent hero stats:
+
+| Reward | Effect |
+| --- | --- |
+| Victory Purse | Gain 3 gold |
+| Catch Your Breath | Restore 2 **player** HP, capped at 100 |
+| Scout Ahead | Get 2 free shop rerolls for the current preparation phase |
+
+At full player HP, recovery is replaced with **Scout's Purse**: 1 gold and 1 free
+shop reroll for the current preparation phase. The player can also skip the
+reward. Selecting a reward closes the screen before granting it, so double
+clicks cannot claim multiple bonuses. Blessing stacks and normal boss loot stay
+unchanged. Partially mastered runs still choose from their remaining blessings.
+
+Free rolls use the normal shop reroll button, which displays the remaining
+credits. Credits are spent before gold, preserve Daily-mode shop seeding, and
+unlock the shop just like paid rolls. After they are spent, rerolls cost the
+usual 2 gold. Unused credits expire when a battle successfully starts; an empty
+board does not waste them. Starting a new run clears all credits.
+
+```bash
+python tools/check_mastery_rewards.py
+# Optional reward screen capture:
+python tools/check_mastery_rewards.py --preview /tmp/mastery-rewards.png
+```
+
+Checks reward amounts, HP caps/full-HP replacement, duplicate claims, free/paid
+rolling at zero gold, shop locks, credit expiry, skipping, restarts, Daily seeds,
+the real boss reward transition, next-battle progression and phone layout.

@@ -406,6 +406,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Gamblers</b> roll dice and draw cards: random, sometimes huge, outcomes. <b>Ice Wall</b> (Glacier Warden) stops enemy projectiles until it breaks.</li>
         <li><b>Samurai</b> hit harder below half HP (Bushido). <b>Frost Healers</b> heal over time and raise <b>Ice Walls</b>: enemy projectiles that fly into a wall hit it instead, and when a wall breaks or melts it shatters, damaging and slowing enemies next to it. The 2💰 Glacier Warden raises one, the 3💰 Frost Oracle one in front of the ally in danger (plus a shield), the 4💰 Winter Queen one great wall (twice as tough, plus a shield) that can Freeze enemies.</li>
         <li><b>Occultists</b> curse enemies: armor break (+25% damage taken), mana drain, slows, and Dispel strips shields and buffs.</li>
+        <li>When every blessing reaches its cap, boss rewards offer 3 gold, 2 player HP, or 2 free shop rerolls instead. At full HP, recovery becomes 1 gold + 1 free reroll. Choose one or skip; free rolls expire when battle starts.</li>
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Flank attacks</b>: hitting a hero or monster from the <b>side</b> (above or below it) deals 10% more damage (yellow numbers), from <b>behind</b> (the side it isn't facing) 20% more (orange numbers). Assassins who leap behind the enemy and Grapplers who drag enemies past them make good use of it.</li>
         <li><b>Right-click an item</b> to <b>🎲 reroll</b> it into another random item of the same rarity, keeping its enchant level (30 gold), or to sell it. <b>Sell items</b> by dragging them onto the shop or right-clicking: 5 gold per item (an enchanted item counts every item that went into it). During battle you can still combine items in your bag.</li>
@@ -760,15 +761,33 @@ const blessingPair=k=>BUILD_PATHS.find(p=>p.bless===k);
 const BLESS_MAX=3;   // a blessing stacks up to x3
 const blessOwned=k=>S.buffs.filter(x=>x===k).length;
 const availableBlessings=()=>Object.keys(BLESSINGS).filter(k=>blessOwned(k)<BLESS_MAX);
+// Mastered runs receive a small tactical reward instead of more permanent stats.
+const MASTERY_REWARDS={
+  gold:{name:'Victory Purse',icon:'💰',desc:'Gain 3 gold.',apply:()=>{S.gold+=3;}},
+  recovery:{name:'Catch Your Breath',icon:'❤️',desc:'Restore 2 player HP, up to 100. This heals your run, not your heroes.',apply:()=>{S.hp=Math.min(100,S.hp+2);}},
+  scouting:{name:'Scout Ahead',icon:'🔎',desc:'Get 2 free shop rerolls. Use them during this preparation phase; unused rolls expire when battle starts.',apply:()=>{S.freeRerolls+=2;}},
+  scoutpurse:{name:"Scout's Purse",icon:'🧭',desc:'Gain 1 gold and 1 free shop reroll for this preparation phase. Replaces recovery while player HP is full.',apply:()=>{S.gold++;S.freeRerolls++;}}
+};
+const masteryChoices=()=>['gold',S.hp<100?'recovery':'scoutpurse','scouting'];
+function offerMasteryRewards(){
+  $('#blessTitle').textContent='All blessings mastered';
+  $('#blessNote').textContent='Choose one bonus reward for this round, or skip.';
+  $('#bBlessSkip').hidden=false; $('#bBlessSkip').textContent='Skip reward';
+  $('#cardrow').innerHTML=masteryChoices().map(k=>{const r=MASTERY_REWARDS[k];
+    return `<button class="bless" data-reward="${k}"><div class="bi">${r.icon}</div><div class="bn">${r.name}</div><div class="bd">${r.desc}</div><div class="bs">Choose one · No permanent stat increase</div></button>`;
+  }).join('');
+  $('#cards').hidden=false;
+}
 function offerBlessings(){
   const keys=seeded('blessings:'+S.round+':'+S.buffs.length,()=>{
     const pool=availableBlessings();
     for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
     return pool.slice(0,3);
   });
-  $('#blessTitle').textContent=keys.length?'Choose a blessing':'All blessings mastered';
-  $('#blessNote').textContent=keys.length?'The boss is down! Pick one blessing for the rest of the run.':'All blessings are maxed. Continue without taking another blessing.';
-  $('#bBlessSkip').hidden=keys.length>0;
+  if(!keys.length)return offerMasteryRewards();
+  $('#blessTitle').textContent='Choose a blessing';
+  $('#blessNote').textContent='The boss is down! Pick one blessing for the rest of the run.';
+  $('#bBlessSkip').hidden=true;
   $('#cardrow').innerHTML=keys.map(k=>{ const b=BLESSINGS[k],n=blessOwned(k);
     return `<button class="bless" data-k="${k}"><div class="bi">${b.icon}</div><div class="bn">${b.name}</div><div class="bd">${b.desc}</div>${blessingPair(k)?`<div class="bp">${blessingPair(k).name} · Pairs with ${blessingPair(k).pairs}</div>`:''}
       <div class="bs">${n?`<b>Stacks!</b> You have ×${n} → ×${n+1}:<br>${b.total(n+1)}`:`Stacks up to ×${BLESS_MAX}`}</div></button>`;
@@ -1828,7 +1847,7 @@ function showSummary(){
   if(rec) SND.play('star');
   lbRunOver();
 }
-function newGame(mode='normal',mod){ SND.reset(); $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
+function newGame(mode='normal',mod){ SND.reset(); $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -1980,7 +1999,9 @@ function sellUnit(u){
   msg(`Sold ${U[u.type].name} for ${val} gold`+(u.items.length?' (items returned)':'')); render(); renderUI();
 }
 function sell(){ sellUnit(S.units.find(v=>v.uid===S.sel)); }
-function reroll(){ if(S.phase!=='prep') return; if(S.gold<2) return msg('Not enough gold'); S.gold-=2; S.locked=false; SND.play('reroll'); rollShop(); renderUI(); }   // rerolling also releases the lock
+function reroll(){ if(S.phase!=='prep') return;
+  if(S.freeRerolls>0)S.freeRerolls--; else {if(S.gold<2)return msg('Not enough gold');S.gold-=2;}
+  S.locked=false; SND.play('reroll'); rollShop(); renderUI(); }   // rerolling also releases the lock
 
 // ====== clicking the field ======
 function canvasPos(e){ const r=cv.getBoundingClientRect(); return {x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*H/r.height}; }
@@ -2181,7 +2202,7 @@ function startFight(){
   if(S.phase!=='prep') return;
   const auto=autoFill(); if(auto.length) msg(`Auto-placed ${auto.join(', ')} from the bench`);
   if(!onBoard().length) return msg('Place units on the field first');
-  S.sel=null; S.selItem=null;
+  S.sel=null; S.selItem=null; S.freeRerolls=0;   // preparation-only mastery rewards expire on a successful battle start
   const kind=roundKind(S.round);
   for(const u of onBoard()){ const b=U[u.type]; S.clsUse[b.cls]=(S.clsUse[b.cls]||0)+1; S.orgUse[b.org]=(S.orgUse[b.org]||0)+1; }   // for the end-of-run summary
   const f=onBoard().map(u=>{ const x=Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items}); if(u.fuse) fuseFighter(x,u.fuse); return x; });
@@ -3572,6 +3593,8 @@ function renderUI(){ AURA_ON=hasReward(readRewards(),'aura');
   const marks=readMarks();
   $('#shop').innerHTML=S.shop.map((id,k)=>id?`<button class="su c${U[id].cost}${marks.includes(id)?' marked':''}" data-k="${k}" data-id="${id}" ${!prep||S.gold<U[id].cost?'disabled':''} style="--cc:${colorOf(id)}">
     <div class="th">${thumbHTML(id,30)}</div><div class="nm">${U[id].name}</div><div class="cl">${ORIGINS[U[id].org].icon} ${CLASSES[U[id].cls].name}</div><div class="c">${U[id].cost}</div></button>`:`<div></div>`).join('');
+  $('#bReroll').textContent=S.freeRerolls>0?`Reroll FREE ×${S.freeRerolls}`:'Reroll · 2';
+  $('#bReroll').title=S.freeRerolls>0?'Free shop rerolls expire when battle starts.':'Reroll the shop for 2 gold.';
   $('#bReroll').disabled=!prep; $('#bSell').disabled=!prep||!S.sel; $('#bFight').disabled=!prep;
   $('#bLock').textContent=S.locked?'Locked':'Lock'; $('#bLock').title=S.locked?'Shop stays the same next round. Click to unlock.':'Keep these shop units for next round';
   $('#shop').classList.toggle('locked',S.locked);
@@ -3627,6 +3650,11 @@ $('#shop').addEventListener('pointerup',e=>{ const d=shopDrag; shopDrag=null; if
 $('#shop').addEventListener('pointercancel',()=>{ if(shopDrag&&shopDrag.ghost) shopDrag.ghost.remove(); shopDrag=null; render(); });
 $('#shop').addEventListener('mouseover',e=>{ const b=e.target.closest('.su'); const id=b?b.dataset.id:null; if(id!==hoverId){ hoverId=id; renderInfo(); } });
 $('#shop').addEventListener('mouseleave',()=>{ hoverId=null; renderInfo(); });
+// Claim at most one reward: hide the overlay before granting it to reject double clicks.
+$('#cardrow').addEventListener('click',e=>{ const c=e.target.closest('[data-reward]');
+  if(!c||$('#cards').hidden||S.phase!=='prep'||availableBlessings().length||!masteryChoices().includes(c.dataset.reward))return;
+  const r=MASTERY_REWARDS[c.dataset.reward];$('#cards').hidden=true;r.apply();SND.play('star');msg(`${r.icon} ${r.name}: ${r.desc}`);render();renderUI();
+});
 // pick a blessing card
 $('#cardrow').addEventListener('click',e=>{ const c=e.target.closest('.bless'); if($('#cards').hidden||!c||c.disabled||!BLESSINGS[c.dataset.k]||blessOwned(c.dataset.k)>=BLESS_MAX) return; const b=BLESSINGS[c.dataset.k];
   S.buffs.push(c.dataset.k); if(b.now) b.now(); $('#cards').hidden=true; SND.play('star'); msg(`${b.icon} ${b.name}: ${b.desc}`); render(); renderUI(); });

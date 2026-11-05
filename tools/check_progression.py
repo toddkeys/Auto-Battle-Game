@@ -42,7 +42,7 @@ async def main(server):
         await page.locator('.bless[data-k=renewal]').click()
         await page.evaluate("check(blessOwned('renewal')===3,'third stack');offerBlessings();check($('#cardrow').children.length===1,'only one remaining reward')")
         await page.locator('.bless[data-k=precision]').click()
-        await page.evaluate("offerBlessings();check($('#cardrow').children.length===0,'no capped rewards');window.beforeSkip=[S.round,S.gold,S.buffs.length]")
+        await page.evaluate("offerBlessings();check(!$('#cardrow').querySelector('[data-k]'),'no capped blessings');check($('#cardrow').querySelectorAll('[data-reward]').length===3,'mastery rewards replace capped blessings');window.beforeSkip=[S.round,S.gold,S.buffs.length]")
         assert await page.locator('#bBlessSkip').is_visible()
         await page.set_viewport_size({'width': 390, 'height': 844})
         assert await page.evaluate('''() => [...document.querySelectorAll('.cardsbox h2,.cardsbox p,#bBlessSkip')].every(e=>{
