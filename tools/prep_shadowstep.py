@@ -5,7 +5,7 @@ import os
 import sys
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 from scipy import ndimage
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -52,6 +52,7 @@ def main():
     hero = cut_dark(sheet, (152, 884, 292, 1232))        # standing pose, three-quarter view turned forward (2nd in the bottom row)
     back = cut_dark(sheet, (412, 884, 542, 1232))        # back view
     sword = cut_dark(sheet, (812, 888, 912, 1218), dark=20)   # the separate glowing katana: hilt at the top, tip at the bottom
+    sword = ImageOps.mirror(sword)   # so the angled tip and the edge face down toward the ground in his low grip
     sa = np.asarray(sword)
     ys, xs = np.nonzero(sa[..., 3] > 0)
     top = ys.min()
@@ -59,7 +60,7 @@ def main():
     k = .56   # short enough that the tip stays above his feet
     sw = sword.resize((round(sword.width * k), round(sword.height * k)), Image.LANCZOS)
     hx, hy = hx * k, (top + 4) * k
-    ang = -25   # hilt up by the hand, blade down and forward (to the left)
+    ang = -48   # hilt up by the hand, blade down and forward (to the left)
     cx, cy = sw.width / 2, sw.height / 2
     rot = sw.rotate(ang, expand=True, resample=Image.BICUBIC)
     t = np.radians(ang)
