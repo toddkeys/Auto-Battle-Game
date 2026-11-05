@@ -1,1 +1,1 @@
-{"layers": ["legL", "legR", "body", "armL", "body", "armR", "armL", "head", "body", "head", "fx"], "piv": {"head": [28, 27], "body": [28, 44], "cape": [28, 28], "legL": [24.7, 40], "legR": [31.7, 40], "armR": [35, 30], "armL": [21, 30]}, "k": 2, "faceLayer": 9, "expr": {"angry": 11, "hurt": 12, "dizzy": 13, "shock": 14, "sil": 15, "blind": 16, "sick": 17, "happy": 18, "ko": 19}}
+{"layers": ["body", "head", "armL", "armR"], "piv": {"body": [28, 44], "cape": [28, 28], "armR": [22.0, 20.0], "armL": [32.0, 20.0], "head": [26.666666666666668, 18.333333333333332]}, "k": 3}
