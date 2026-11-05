@@ -35,6 +35,27 @@ ART_RIGS = {
             'weapon': {'poly': [(135, 97.5), (55, 96.5), (55, 72), (-1, 70), (-1, 130), (55, 130), (55, 104.5), (135, 104.5)], 'piv': (69, 100)},
         },
     },
+    # Wukong (2g): staff held upright in the front fist; it lifts and chops like the Paladin's sword
+    'stonemonkey': {
+        'fill': 9, 'fillTop': 80,   # the staff crosses his body and tail below the shoulders
+        'order': ['body', 'head', 'armL', 'weapon', 'armR'],
+        'parts': {
+            'armR': {'poly': [(28, 84), (50, 80), (54, 96), (46, 108), (28, 108)], 'piv': (48, 84)},
+            'weapon': {'poly': [(8, 0), (30, 0), (42, 90), (42, 162), (25, 162), (17, 90)], 'piv': (36, 98)},
+            'head': {'poly': [(10, 20), (30, 0), (95, 5), (102, 40), (96, 70), (80, 82), (60, 85), (45, 78), (38, 60), (15, 40)], 'piv': (62, 82)},
+            'armL': {'poly': [(76, 82), (106, 84), (106, 112), (84, 115), (76, 98)], 'piv': (78, 86)},
+        },
+    },
+    # Mythic Wukong (4g): staff held level in both hands, front end forward; it sweeps like the Valkyrie's halberd
+    'wukong': {
+        'order': ['body', 'head', 'weapon', 'armL', 'armR'],
+        'parts': {
+            'head': {'poly': [(10, 40), (20, 5), (60, 0), (110, 20), (112, 60), (104, 80), (70, 92), (45, 90), (30, 82), (5, 70)], 'piv': (68, 92)},
+            'armR': {'poly': [(12, 90), (50, 86), (58, 100), (48, 116), (10, 116)], 'piv': (52, 98)},
+            'armL': {'poly': [(100, 78), (126, 78), (128, 100), (112, 104), (100, 96)], 'piv': (98, 86)},
+            'weapon': {'polys': [[(-1, 86), (13, 86), (13, 114), (-1, 114)], [(126, 84), (171, 84), (171, 110), (126, 110)]], 'piv': (25, 103)},
+        },
+    },
 }
 
 
@@ -51,7 +72,8 @@ def build(cid, art_dir, rig_dir):
     layers, taken, blade = {}, np.zeros(opaque.shape, bool), None
     for name, part in spec['parts'].items():
         m = Image.new('L', (cw, H), 0)
-        ImageDraw.Draw(m).polygon([(x + ox, y + oy) for x, y in part['poly']], fill=255)
+        for poly in part.get('polys', [part.get('poly')]):   # a piece can be several shapes (a staff that passes behind the body)
+            ImageDraw.Draw(m).polygon([(x + ox, y + oy) for x, y in poly], fill=255)
         mask = (np.asarray(m) > 0) & opaque & ~taken
         taken |= mask
         if name == 'weapon':
@@ -64,7 +86,11 @@ def build(cid, art_dir, rig_dir):
     # fill what the moving pieces covered with the nearest body colour; a bare blade out over the background stays empty
     has = body[..., 3] > 0
     dist, (iy, ix) = ndimage.distance_transform_edt(~has, return_indices=True)
-    fill = taken & ((dist <= 3) | ~(blade if blade is not None else taken))
+    wide = dist <= spec.get('fill', 3)   # 'fill': how wide a weapon lying over the body can be
+    if 'fillTop' in spec:   # ...but only from this picture row down (above it the weapon is out in the open)
+        rows = np.arange(H)[:, None] >= spec['fillTop'] + oy
+        wide = (dist <= 3) | (wide & rows)
+    fill = taken & (wide | ~(blade if blade is not None else taken))
     body[fill] = body[iy[fill], ix[fill]]
     layers['body'] = body
     strip = Image.new('RGBA', (cw * len(spec['order']), H), (0, 0, 0, 0))

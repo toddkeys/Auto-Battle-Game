@@ -2406,7 +2406,7 @@ function pose(o,b,rigged){
 // ====== rig: each sprite is split into pieces (legs, body, arms + weapons, head, cape...) that turn on their joints ======
 // attack style per unit: how the arms move on a basic attack
 const CLS_ANIM={mimic:'staff',mesmer:'staff',monkey:'slash',gunner:'staff',grapple:'stab',ninja:'slash',gravity:'staff',druid:'staff',berserker:'slash',bard:'staff',alchemist:'staff',necro:'staff',engineer:'staff',monk:'stab',chrono:'staff',gambler:'staff',samurai:'slash',frost:'staff',occultist:'staff',warrior:'slash',rogue:'stab',archer:'bow',holy:'staff',magic:'staff',summoner:'staff',crusader:'slash'};
-const MON_ANIM={aegispaladin:'artsword',starwarden:'arthalberd',thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',arctower:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
+const MON_ANIM={aegispaladin:'artsword',starwarden:'arthalberd',stonemonkey:'artsword',wukong:'arthalberd',thornmother:'staff',stormdjinn:'bat',colossus:'golem',beastmaster:'slash',tinkerer:'slash',mechanist:'gun',dancer:'stab',turret:'blob',arctower:'blob',mossling:'blob',shroomkin:'blob',emberbat:'bat',golem:'golem',wisp:'blob',wolf:'stab',guardian:'golem',drake:'bat',skeleton:'slash',lich:'staff',wyrm:'bat'};
 const animOf=(type,b)=>MON_ANIM[type]||(type==='nightreaper'?'slash':type==='templar'?'spear':CLS_ANIM[b.cls]);
 // keyframes [[p,value],...]: eases between them (the last segment settles with ease-in-out)
 function KF(p,ks){ for(let i=1;i<ks.length;i++){ const [p0,v0]=ks[i-1],[p1,v1]=ks[i]; if(p<=p1){ const q=(p-p0)/(p1-p0); return v0+(v1-v0)*(i===ks.length-1?easeInOut(q):easeOut(q)); } } return ks[ks.length-1][1]; }
@@ -2492,12 +2492,12 @@ function rigPose(o,type,b){
   if(o.leapP){ const q=Math.sin(o.leapP*Math.PI); R.legL.r+=.8*q; R.legR.r-=.5*q; R.armR.r+=.8*q; R.armL.r-=.8*q; }
   if(o.spawn>0){ const q=Math.min(1,o.spawn); R.armR.r-=.9*q; R.armL.r+=.9*q; R.legL.r+=.3*q; R.legR.r-=.3*q; }
   if(o.die!==undefined){ const q=1-o.die; R.armR.r+=q*.9; R.armL.r-=q*.9; R.head.r+=q*.5; R.legL.r-=q*.3; R.legR.r+=q*.3; R.wingL.r+=q; R.wingR.r-=q; }
-  if(st==='arthalberd') gripShaft(R,HALBERD_GRIP);   // two-handed: the back hand stays on the shaft whatever the front hand does
+  if(st==='arthalberd'&&GRIPS[type]) gripShaft(R,GRIPS[type]);   // two-handed: the back hand stays on the shaft whatever the front hand does
   return R;
 }
 const LOOSE={legL:1,legR:1,fx:1,body:1};
 // two-handed weapons in hand-made art: where the front hand's shoulder and wrist are, and where the back hand grips the shaft (design pixels)
-const HALBERD_GRIP={sh:[22.5,28.67],wr:[18.5,33.33],hand:[34.5,33]};
+const GRIPS={starwarden:{sh:[22.5,28.67],wr:[18.5,33.33],hand:[34.5,33]},wukong:{sh:[16.83,32.67],wr:[7.83,34.33],hand:[37.5,30.67]}};
 function gripShaft(R,G){ const a=R.armR.r, w=R.weapon.r, c=Math.cos, s=Math.sin;
   const vx=G.wr[0]-G.sh[0], vy=G.wr[1]-G.sh[1], wx=G.sh[0]+vx*c(a)-vy*s(a)+R.armR.x, wy=G.sh[1]+vx*s(a)+vy*c(a)+R.armR.y;   // where the front hand is now
   const dx=G.hand[0]-G.wr[0], dy=G.hand[1]-G.wr[1], t=a+w, px=wx+dx*c(t)-dy*s(t), py=wy+dx*s(t)+dy*c(t);   // that point of the shaft, turned with it
