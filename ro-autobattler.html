@@ -152,7 +152,7 @@ button.go:disabled{animation:none}
 .dragghost.hero{font-size:0;width:56px;height:54px}.dragghost.hero img{width:56px;height:54px;image-rendering:pixelated}
 .stl{margin-top:6px;font-size:12px;line-height:1.35;color:var(--muted)}.stl div{opacity:.6}.stl div.on{opacity:1;color:#ffe27a}.stl b{color:var(--text)}
 .tipi .next{color:#9dffb0;margin-top:4px}.tipi .sub{color:#ffd27a;margin-top:2px}
-.hudbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}#bShake.off{opacity:.65}.hudbtns .b{font-size:14px;padding:3px 9px 4px;white-space:nowrap}
+.hudbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.hudbtns .b{font-size:14px;padding:3px 9px 4px;white-space:nowrap}
 .overlay{position:fixed;inset:0;z-index:56;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(30,18,8,.78),rgba(0,0,0,.9))}
 .overlay[hidden]{display:none}
 .sumbox.wide{width:min(760px,94vw)}
@@ -365,7 +365,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
-      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button><button class="b" id="bShake" title="Turn screen shake on or off">📳 Shake on</button></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
     </div>
     <div class="board"><canvas id="cv"></canvas><div id="msg"></div><div id="timer" hidden title="Time left in this battle"></div></div>
   </main>
@@ -806,7 +806,7 @@ const bossFor=r=>{ const B=S.bossOrder||BOSSES; return B[((r-15)/5)%B.length]; }
 const BOSS_ENRAGE={
   thornmother:a=>{ a.asM*=1.3; a.regen+=.004; for(let i=0;i<3;i++) summon(a,'shroomkin',6); },
   stormdjinn:a=>{ a.asM*=1.4; for(let i=0;i<6;i++) later(.4+i*.6,()=>{ const es=foes(a); if(!es.length||a.hp<=0) return; const t=pick(es);   // lightning from above
-    V({k:'bolt',x:t.x,y:t.y-4,x2:t.x,y2:t.y,c:'#ffe45a',m:.3}); V({k:'flash',x:0,y:0,c:'#fff7c0',m:.15}); hit(a,t,1.5); inflict(t,'shock'); burst(t.x,t.y,'#fff3a0',12,3,3,2); }); },
+    V({k:'bolt',x:t.x,y:t.y-4,x2:t.x,y2:t.y,c:'#ffe45a',m:.3}); hit(a,t,1.5); inflict(t,'shock'); burst(t.x,t.y,'#fff3a0',12,3,3,2); }); },
   colossus:a=>{ a.asM*=1.5; build(a,4); build(a,4); },
   golem:a=>{ a.asM*=1.5; a.atk*=1.3; summon(a,'mossling',4); summon(a,'mossling',4); },
   lich:a=>{ a.asM*=1.3; a.manaMul=2; for(let i=0;i<3;i++) summon(a,'skeleton',6); },
@@ -821,7 +821,7 @@ const densest=(a,r)=>foes(a).sort((p,q)=>foes(a).filter(e=>dist(e,q)<=r).length-
 const SKILLS = {
   swordsman:{name:'Crushing Blow', mp:60, desc:'Leaps and brings the sword down on the target for 260% damage and a 1s stun; the shockwave hits enemies next to it for 100%.',
     cast(a,t){ hit(a,t,2.6); stun(t); for(const e of foes(a)) if(e!==t&&dist(e,t)<=1.2) hit(a,e,1);
-      V({k:'arc',x:t.x,y:t.y,c:'#fff3c0',r:1.2,dir:a.face,m:.32}); V({k:'quake',x:t.x,y:t.y+.3,r:1.1,m:.7}); burst(t.x,t.y+.2,'#d8c8a0',12,3,3,5); hitStop(.08); addTrauma(.25); }},
+      V({k:'arc',x:t.x,y:t.y,c:'#fff3c0',r:1.2,dir:a.face,m:.32}); V({k:'quake',x:t.x,y:t.y+.3,r:1.1,m:.7}); burst(t.x,t.y+.2,'#d8c8a0',12,3,3,5); hitStop(.08); }},
   knight:{name:'Shield Charge', mp:70, desc:'Slams the target and enemies next to it for 200% damage, stunning them for 1s.',
     cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=1.3){ hit(a,e,2); stun(e); } V({k:'ring',x:t.x,y:t.y,r:1.3,c:'#9cc7ff'}); }},
   lordknight:{name:'Valor Blade', mp:80, desc:'Hits for 300% damage (150% to enemies around the target), slows them for 2s and heals itself for 15% max HP.',
@@ -888,7 +888,7 @@ const SKILLS = {
       V({k:'arc',x:a.x,y:a.y,c:'#ffd0b0',r:1.3,dir:i%2?-1:1,m:.22}); FX('slash',a.x,a.y-.25,{s:.7,tint:'#ffb090',flip:i%2===1,rot:i*.8,m:.3}); }); }},
   shogun:{name:'Armor Breaker', mp:90, desc:'A great cleave through the target and the enemies beside it: 250% damage, and their armour is broken for 4s (they take 25% more damage).',
     cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=1.3){ hit(a,e,2.5); inflict(e,'shred',4); V({k:'shards',x:e.x,y:e.y,c:'#c8c0b0',r:.6,n:6,m:.4}); }
-      FX('slash',t.x,t.y-.25,{s:1.2,tint:'#ff8060',flip:a.face<0,m:.5}); addTrauma(.3); hitStop(.07); }},
+      FX('slash',t.x,t.y-.25,{s:1.2,tint:'#ff8060',flip:a.face<0,m:.5}); hitStop(.07); }},
   snowmender:{name:'Chill Mend', mp:55, desc:'Wraps the two most injured allies in healing frost: they recover 160% of its heal over 4s and are cleansed (restoring 15% mana).',
     cast(a){ for(const b of friends(a).sort(byHurt).slice(0,2)){ hot(b,a.heal*1.6,4,a); cleanse(b); FX('nova',b.x,b.y-.3,{s:.7,tint:'#bff2ff',m:.5}); } }},
   frostoracle:{name:'Frost Bastion', mp:75, desc:'Raises an ice wall (3 cells) in front of the most endangered ally, facing the enemy attacking it, for 6s, and gives that ally a frost shield worth 150% of the oracle\'s heal. The wall can take 100% of the oracle\'s max HP and shatters for 130% damage and a slow. Allies within 2 cells recover 100% of its heal over 4s.',
@@ -896,8 +896,7 @@ const SKILLS = {
       iceWall(a,{at:w,t2:foe,hp:1,shatter:1.3}); w.shield+=a.heal*1.5*(a.skHeal||1); V({k:'dome',x:w.x,y:w.y,c:'#bff2ff',r:.7,m:.8});
       for(const b of friends(a)) if(dist(a,b)<=2) hot(b,a.heal,4,a); V({k:'ring',x:a.x,y:a.y,r:2,c:'#bff2ff',m:.6}); }},
   winterqueen:{name:'Glacial Fortress', mp:95, desc:'Raises one great ice wall (3 cells) in front of the most endangered ally for 6s and gives that ally a frost shield worth 150% of her heal. Every ally recovers 120% of her heal over 5s, and enemies within 1.5 cells of the wall have a 60% chance to Freeze for 2s. Her wall can take 200% of her max HP and shatters for 220% damage and a slow.',
-    cast(a){ V({k:'flash',x:0,y:0,c:'#dff8ff',m:.3});
-      const w=friends(a).sort(byHurt)[0]||a, foe=foes(a).filter(e=>e.tgt===w).sort((p,q)=>dist(p,w)-dist(q,w))[0], wall=iceWall(a,{at:w,t2:foe,hp:2,shatter:2.2});
+    cast(a){       const w=friends(a).sort(byHurt)[0]||a, foe=foes(a).filter(e=>e.tgt===w).sort((p,q)=>dist(p,w)-dist(q,w))[0], wall=iceWall(a,{at:w,t2:foe,hp:2,shatter:2.2});
       if(wall) for(const e of foes(a)) if(segDist(e.x,e.y,wall.x1,wall.y1,wall.x2,wall.y2)<=1.5) freeze(e,.6,2);
       w.shield+=a.heal*1.5*(a.skHeal||1); V({k:'dome',x:w.x,y:w.y,c:'#bff2ff',r:.7,m:.8});
       for(const b of friends(a)) hot(b,a.heal*1.2,5,a); FX('strike',a.x,a.y+.3,{s:.9,tint:'#cff6ff',m:.6}); }},
@@ -920,7 +919,7 @@ const SKILLS = {
     cast(a,t){ if(!raise(a,1,.5)&&t){ hit(a,t,2); FX('smoke',t.x,t.y-.2,{s:1,add:false,m:.5}); } }},
   bonelord:{name:'Army of the Dead', mp:100, desc:'Raises up to two fallen enemies with 65% of their strength, then every raised ally heals 30% max HP. With no one to raise, calls two skeletons.',
     cast(a){ const n=raise(a,2,.65); for(const b of friends(a)) if(b.raised) heal(b,b.max*.3,a);
-      if(!n){ summon(a,'skeleton',4); summon(a,'skeleton',4); } V({k:'flash',x:0,y:0,c:'#6a5aff',m:.25}); }},
+      if(!n){ summon(a,'skeleton',4); summon(a,'skeleton',4); } }},
   tinkerer:{name:'Overclock', mp:60, desc:'Your turrets fire 60% faster for 5s and repair 30% of their max HP. With no turret standing, builds a new one.',
     cast(a){ const ts=friends(a).filter(x=>TOWERS[x.type]&&x.owner&&x.owner.team===a.team); if(!ts.length) build(a,1);
       for(const x of ts){ x.overT=5; heal(x,x.max*.3,a); FX('spark',x.x,x.y-.3,{s:.6,tint:'#ffd27a',m:.4}); } }},
@@ -931,7 +930,7 @@ const SKILLS = {
       V({k:'ring',x:a.x,y:a.y+.3,r:1.2,c:'#9ff6ff',m:.5}); SND.play('zap'); }},
   mechanist:{name:'Minefield', mp:85, desc:'Plants mines under three enemies; 0.6s later each explodes for 180% damage to enemies within 1 cell, and the first blast stuns for 1s.',
     cast(a){ foes(a).sort(()=>Math.random()-.5).slice(0,3).forEach((e,i)=>{ const x=e.x, y=e.y; V({k:'reticle',x,y,c:'#ffb040',m:.6});
-      later(.6,()=>{ FX('boom',x,y-.2,{s:.9,m:.5}); addTrauma(.15); for(const o of foes(a)) if(Math.hypot(o.x-x,o.y-y)<=1){ hit(a,o,1.8); if(i===0) stun(o); } }); }); }},
+      later(.6,()=>{ FX('boom',x,y-.2,{s:.9,m:.5}); for(const o of foes(a)) if(Math.hypot(o.x-x,o.y-y)<=1){ hit(a,o,1.8); if(i===0) stun(o); } }); }); }},
   brawler:{name:'Hundred Fists', mp:55, desc:'Five rapid punches at the target for 55% damage each; every punch adds a combo stack.',
     cast(a,t){ for(let i=0;i<5;i++) later(i*.09,()=>{ if(t.hp>0&&a.hp>0){ hit(a,t,.55,false); combo(a); burst(t.x,t.y-.25,'#ffe0a0',4,2.5,2); } }); }},
   grandmaster:{name:'Palm of Heaven', mp:90, desc:'An open-palm strike: 380% damage, a 1s stun and a knockback. Then the Worldbreaker reaches full combo and dodges an extra 50% of attacks for 3s.',
@@ -949,7 +948,7 @@ const SKILLS = {
       const base=a.team===0?Math.PI/2:-Math.PI/2, step=Math.PI*2/Math.max(6,grp.length);
       grp.forEach((b,i)=>{ warpTo(b,t,base+(i-(grp.length-1)/2)*step,.85); warpBuff(b,a); });
       const x=t.x, y=t.y, k=3.2;
-      later(.12,()=>{ V({k:'ring',x,y,r:1.6,c:'#7fe0e0',m:.6}); V({k:'flash',x:0,y:0,c:'#bff6ff',m:.2}); FX('sigil',x,y-.1,{s:1,tint:'#7fe0e0',m:.6}); hitStop(.06);
+      later(.12,()=>{ V({k:'ring',x,y,r:1.6,c:'#7fe0e0',m:.6}); FX('sigil',x,y-.1,{s:1,tint:'#7fe0e0',m:.6}); hitStop(.06);
         for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.6){ hit(a,e,k); stun(e); } }); }},
   maskedmagus:{name:'Spell Steal', mp:60, desc:'Steals the skill of a random living enemy (bosses too, a different one than last time when possible): the victim takes 220% damage and is silenced for 2s, then the Magus casts the stolen skill as its own with 25% more damage. If no enemy has a skill to steal, blasts the target area instead.',
     cast(a,t){ mimicCast(a,t,true); }},
@@ -961,9 +960,8 @@ const SKILLS = {
       FX('sigil',e.x,e.y-.6,{s:.5,tint:'#d0a0ff',m:.6}); }},
   rimedragoness:{name:'Wyrm\'s Curse', mp:75, desc:'Curses the enemy standing among the most foes: it takes 200% damage and is locked in ice, unable to act, for 2.5s, and every other enemy within 2.5 cells takes 60% damage and is Mesmerized for 2s — forced to attack the cursed one.',
     cast(a){ const es=foes(a); if(!es.length) return; const c=[...es].sort((p,q)=>es.filter(e=>dist(e,q)<=2.5).length-es.filter(e=>dist(e,p)<=2.5).length)[0];
-      V({k:'flash',x:0,y:0,c:'#bfefff',m:.3}); V({k:'ring',x:c.x,y:c.y,r:2.5,c:'#bfefff',m:.7}); V({k:'dome',x:c.x,y:c.y,c:'#bfefff',r:.8,m:2.5});
-      FX('nova',c.x,c.y,{s:1.1,tint:'#bfefff',m:.8}); hit(a,c,2); if(c.hp>0&&!c.spin){ c.stun=Math.max(c.stun||0,2.5); pop(c,'Cursed','#bfefff',true); } SND.play('freeze'); addTrauma(.2);
-      for(const e of es) if(e!==c&&dist(e,c)<=2.5){ hit(a,e,.6); mesmerize(e,c,2,a); } }},
+      V({k:'ring',x:c.x,y:c.y,r:2.5,c:'#bfefff',m:.7}); V({k:'dome',x:c.x,y:c.y,c:'#bfefff',r:.8,m:2.5});
+      FX('nova',c.x,c.y,{s:1.1,tint:'#bfefff',m:.8}); hit(a,c,2); if(c.hp>0&&!c.spin){ c.stun=Math.max(c.stun||0,2.5); pop(c,'Cursed','#bfefff',true); } SND.play('freeze');       for(const e of es) if(e!==c&&dist(e,c)<=2.5){ hit(a,e,.6); mesmerize(e,c,2,a); } }},
   wukong:{name:'Ruyi Smash', mp:95, desc:'Grows his staff and slams it down in a straight line toward the target, 5.5 cells long: 160% damage that always crits and a 1s stun to every enemy on the line.',
     cast(a,t){ if(!t) return; const d=dist(a,t)||1, ux=(t.x-a.x)/d, uy=(t.y-a.y)/d, x1=a.x+ux*5.5, y1=a.y+uy*5.5;
       V({k:'beam',x:a.x,y:a.y-.2,x2:x1,y2:y1,c:'#ffd060',m:.25});
@@ -995,7 +993,7 @@ const SKILLS = {
       for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=2){ pull(e,x,y,a); later(.25,()=>{ if(e.hp>0) hit(a,e,1.1); }); } }},
   eclipsewitch:{name:'Event Horizon', mp:110, desc:'Channels a black hole on the largest group of enemies for 2.5s: enemies within 2 cells are dragged to its centre, can\'t act, and take 50% of her attack as damage every half second.',
     cast(a){ const c=densest(a,2); if(!c) return; S.fight.holes.push({x:c.x,y:c.y,r:2,t:2.5,T:2.5,src:a,tick:0}); a.chan=2.5;
-      V({k:'flash',x:0,y:0,c:'#2a0a4a',m:.35}); addTrauma(.3); }},
+      }},
   thornweaver:{name:'Entangling Roots', mp:65, desc:'Thorny roots burst from the ground: enemies within 1.5 cells of the target take 120% damage and are rooted for 2s (they can only attack what is already in range, and can\'t use moving skills).',
     cast(a,t){ const x=t.x, y=t.y; V({k:'quake',x,y:y+.3,r:1.5,c:'#4a8a2a',m:.8});
       for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.5){ hit(a,e,1.2); root(e,2,a); FX('geyser',e.x,e.y+.3,{s:.5,tint:'#7ad66a',m:.5}); } }},
@@ -1006,7 +1004,7 @@ const SKILLS = {
   axebrute:{name:'Whirlwind', mp:70, desc:'Spins for 1.5s, moving toward the target: enemies within 1.4 cells are hit 5 times for 60% damage. While spinning it takes 40% less damage and is immune to debuffs. Can\'t be cast while rooted.',
     cast(a){ spinStart(a); a.spin={t:1.5,T:1.5,r:1.4,m:.6,every:.3,acc:0}; }},
   chieftain:{name:'Cyclone of Ruin', mp:100, desc:'Spins for 2.4s, chasing the target: enemies within 1.7 cells are hit 8 times for 70% damage, then a ground slam deals 120% and stuns them for 1s. While spinning it takes 40% less damage and is immune to debuffs. Can\'t be cast while rooted.',
-    cast(a){ spinStart(a); a.spin={t:2.4,T:2.4,r:1.7,m:.7,every:.3,acc:0,slam:1}; addTrauma(.2); }},
+    cast(a){ spinStart(a); a.spin={t:2.4,T:2.4,r:1.7,m:.7,every:.3,acc:0,slam:1}; }},
   arctower:{name:'Overload', mp:80, desc:'Discharges: 150% damage to every enemy within 2 cells, Shocking them.',
     cast(a){ for(const e of foes(a)) if(dist(e,a)<=2){ hit(a,e,1.5); inflict(e,'shock'); V({k:'bolt',x:a.x,y:a.y-.8,x2:e.x,y2:e.y-.3,c:'#9ff6ff',m:.3}); } V({k:'ring',x:a.x,y:a.y,r:2,c:'#9ff6ff',m:.5}); }},
   turret:{name:'Volley', mp:70, desc:'Fires three quick shots at the target for 60% damage each.',
@@ -1025,7 +1023,7 @@ const SKILLS = {
   highroller:{name:'All In', mp:85, desc:'Rolls two dice: every enemy within 2 cells of the target takes (total × 30%) of its attack as damage, doubled on a 12. Snake eyes (2) heals every ally for 20% max HP instead.',
     cast(a,t){ const d1=roll(a), d2=roll(a), n=d1+d2; dieFx(a,d1,-.35); dieFx(a,d2,.35);
       if(n===2){ for(const b of friends(a)) heal(b,b.max*.2,a); pop(a,'Snake eyes!','#ff9ad0',true); return; }
-      const m=n*.3*(n===12?2:1); later(.35,()=>{ for(const e of foes(a)) if(dist(e,t)<=2) hit(a,e,m); FX('boom',t.x,t.y-.2,{s:n/6,m:.6}); if(n===12){ pop(a,'JACKPOT!','#ffe27a',true); V({k:'flash',x:0,y:0,c:'#ffd040',m:.35}); addTrauma(.4); } }); }},
+      const m=n*.3*(n===12?2:1); later(.35,()=>{ for(const e of foes(a)) if(dist(e,t)<=2) hit(a,e,m); FX('boom',t.x,t.y-.2,{s:n/6,m:.6}); if(n===12){ pop(a,'JACKPOT!','#ffe27a',true); } }); }},
   glacierwarden:{name:'Ice Wall', mp:65, desc:'Raises a wall of ice (3 cells wide) between your team and the nearest ranged enemy for 6s. Projectiles that fly into it hit the wall instead; it can take 80% of the warden\'s max HP. When it breaks or melts it shatters: 100% damage and a slow to enemies next to it. Allies within 2.5 cells recover 60% of its heal over 4s.',
     cast(a){ iceWall(a,{hp:.8,shatter:1}); for(const b of friends(a)) if(dist(a,b)<=2.5) hot(b,a.heal*.6,4,a); }},
   hexer:{name:'Hex', mp:60, desc:'Curses the target for 160% damage: for 4s it takes 25% more damage and gains 50% less mana.',
@@ -1035,17 +1033,16 @@ const SKILLS = {
       V({k:'ring',x:t.x,y:t.y,r:1.8,c:'#6a9a30',m:.9}); FX('nova',t.x,t.y-.1,{s:2,tint:'#70b030',m:.7}); burst(t.x,t.y,'#8ac040',18,2,3,-1); }},
   doomherald:{name:'Unmake', mp:85, desc:'Dispels every enemy within 2 cells of the target (removes shields and buffs), deals 150% damage and breaks their armor for 5s (+25% damage taken).',
     cast(a,t){ for(const e of foes(a)) if(dist(e,t)<=2){ dispel(e); hit(a,e,1.5); inflict(e,'shred',5); FX('strike',e.x,e.y+.3,{s:.55,tint:'#b040ff',m:.5}); }
-      V({k:'flash',x:0,y:0,c:'#6020a0',m:.25}); V({k:'rays',x:t.x,y:t.y+.3,c:'#9040d0',r:2,m:.7}); hitStop(.06); }},
+      V({k:'rays',x:t.x,y:t.y+.3,c:'#9040d0',r:2,m:.7}); hitStop(.06); }},
   bulwark:{name:'Bastion', mp:65, desc:'Gains a physical shield worth 30% of its max HP and shields its linked ally and allies within 2 cells for 15% of its max HP. Guardian Link: takes 30% of the damage its linked back-line ally would take.',
-    cast(a){ a.shield+=a.max*.3; V({k:'dome',x:a.x,y:a.y,c:'#ffe0a0',r:.75,m:.8}); FX('nova',a.x,a.y-.3,{s:1.2,tint:'#ffd890',m:.55}); addTrauma(.2);
-      for(const b of friends(a)) if(b!==a&&(b.guard===a||dist(a,b)<=2)){ b.shield+=a.max*.15; V({k:'dome',x:b.x,y:b.y,c:'#ffe0a0',r:.6,m:.7}); } }},
+    cast(a){ a.shield+=a.max*.3; V({k:'dome',x:a.x,y:a.y,c:'#ffe0a0',r:.75,m:.8}); FX('nova',a.x,a.y-.3,{s:1.2,tint:'#ffd890',m:.55});       for(const b of friends(a)) if(b!==a&&(b.guard===a||dist(a,b)<=2)){ b.shield+=a.max*.15; V({k:'dome',x:b.x,y:b.y,c:'#ffe0a0',r:.6,m:.7}); } }},
   templar:{name:'Holy Charge', mp:80, desc:'Charges the enemy closest to your back line: 220% damage, a 1s stun, and enemies within 1.5 cells must attack it. Guardian Link: takes 30% of its linked ally\'s damage.',
     cast(a){ const back=friends(a).filter(b=>b.back), t=foes(a).sort((p,q)=>Math.min(...back.map(b=>dist(b,p)),99)-Math.min(...back.map(b=>dist(b,q)),99))[0]; if(!t) return;
       V({k:'burst',x:a.x,y:a.y,r:.7,c:'#ffe0a0'}); a.x=Math.min(COLS-.5,Math.max(.5,t.x+(a.x<t.x?-.7:.7))); a.y=t.y; a.tgt=t; a.face=t.x<a.x?-1:1;
       hit(a,t,2.2,true); stun(t); for(const e of foes(a)) if(dist(e,a)<=1.5) e.tgt=a; FX('slash',t.x,t.y-.25,{s:.9,tint:'#ffe0a0',flip:a.face<0});
       V({k:'arc',x:t.x,y:t.y,c:'#ffe0a0',r:1.2,dir:a.face,m:.35}); V({k:'cross',x:a.x,y:a.y,c:'#ffe0a0',m:.6}); hitStop(.06); }},
   aegispaladin:{name:'Sacred Aegis', mp:85, desc:'Slams a holy nova: 160% damage and a 1s stun to enemies within 1.6 cells. Every ally gains a physical shield worth 12% of its max HP (25% in the back rows) and enemies near back-row allies are knocked back for 100% damage; heals itself for 25% max HP. Guardian Link: takes 40% of its linked ally\'s damage.',
-    cast(a){ V({k:'flash',x:0,y:0,c:'#fff0c0',m:.3}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe0a0',r:1.6,m:.8}); heal(a,a.max*.25,a); FX('geyser',a.x,a.y+.3,{s:1.2,tint:'#fff0c0',m:.7});
+    cast(a){ V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe0a0',r:1.6,m:.8}); heal(a,a.max*.25,a); FX('geyser',a.x,a.y+.3,{s:1.2,tint:'#fff0c0',m:.7});
       for(const e of foes(a)) if(dist(e,a)<=1.6){ hit(a,e,1.6); stun(e); } V({k:'ring',x:a.x,y:a.y+.3,r:1.6,c:'#fff0c0',m:.5});
       for(const b of friends(a)) if(!b.back&&b!==a) b.shield+=b.max*.12;
       for(const b of friends(a)) if(b.back){ b.shield+=b.max*.25; V({k:'dome',x:b.x,y:b.y,c:'#fff0c0',r:.7,m:.9}); FX('strike',b.x,b.y+.3,{s:.55,tint:'#fff0c0',m:.55});
@@ -1076,11 +1073,10 @@ const SKILLS = {
     cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ a.shield=Math.min(a.max*.15,a.shield+a.max*.07); a.mshield=Math.min(a.max*.15,a.mshield+a.max*.07); for(const e of foes(a)) if(dist(a,e)<=2) e.tgt=a;
         V({k:'dome',x:a.x,y:a.y,c:'#7ff0ff',r:1,m:1}); SND.play('shield'); return; }
       const t=foes(a).sort((p,q)=>dist(q,a)-dist(p,a))[0]; if(!t) return; const d=dist(a,t)||1, x1=a.x+(t.x-a.x)/d*9, y1=a.y+(t.y-a.y)/d*9;
-      V({k:'bolt',x:a.x,y:a.y-.4,x2:x1,y2:y1,c:'#ff9a3a',m:.45}); V({k:'flash',x:0,y:0,c:'#ffb060',m:.25}); addTrauma(.3);
-      for(const e of foes(a)) if(segDist(e.x,e.y,a.x,a.y,x1,y1)<=.6){ hit(a,e,2.6); burst(e.x,e.y-.2,'#ffb060',10,3,3,2); } }},
+      V({k:'bolt',x:a.x,y:a.y-.4,x2:x1,y2:y1,c:'#ff9a3a',m:.45});       for(const e of foes(a)) if(segDist(e.x,e.y,a.x,a.y,x1,y1)<=.6){ hit(a,e,2.6); burst(e.x,e.y-.2,'#ffb060',10,3,3,2); } }},
   lich:{name:'Blizzard', names:['Blizzard','Raise Dead'], mp:70, desc:'Alternates Blizzard (180% ice damage around the most crowded spot; 30% chance to Freeze for 3s, otherwise slowed) and Raise Dead (2 skeletons). At half HP it enrages: more skeletons and casts twice as often.',
     cast(a){ if((a.alt=(a.alt|0)+1)%2===0){ summon(a,'skeleton',6); summon(a,'skeleton',6); return; }
-      const c=densest(a,1.6); if(!c) return; V({k:'flash',x:0,y:0,c:'#bfefff',m:.3}); FX('nova',c.x,c.y-.2,{s:2.3,tint:'#9ae8ff',m:.8}); FX('strike',c.x,c.y+.3,{s:.9,tint:'#bff2ff',m:.6}); V({k:'ring',x:c.x,y:c.y,r:1.8,c:'#bfefff'}); V({k:'shards',x:c.x,y:c.y,c:'#e8fbff',r:1.8,n:16,m:.5});
+      const c=densest(a,1.6); if(!c) return; FX('nova',c.x,c.y-.2,{s:2.3,tint:'#9ae8ff',m:.8}); FX('strike',c.x,c.y+.3,{s:.9,tint:'#bff2ff',m:.6}); V({k:'ring',x:c.x,y:c.y,r:1.8,c:'#bfefff'}); V({k:'shards',x:c.x,y:c.y,c:'#e8fbff',r:1.8,n:16,m:.5});
       burst(c.x,c.y-.5,'#e8fbff',24,3,3,2);
       for(const e of foes(a)) if(dist(e,c)<=1.8){ hit(a,e,1.8); if(!freeze(e,.3,3)) inflict(e,'slow',2); } }},
   wyrm:{name:'Inferno Breath', names:['Inferno Breath','Wing Gust'], mp:75, desc:'Alternates Inferno Breath (220% fire damage in a cone up to 3.5 cells + burning for 4s) and Wing Gust (120% damage, knocks back and blinds enemies within 2.2 cells). At half HP it enrages and calls down a meteor storm.',
@@ -1089,8 +1085,7 @@ const SKILLS = {
       if(!t) return; const an=Math.atan2(t.y-a.y,t.x-a.x);
       for(let i=1;i<=7;i++) later(i*.03,()=>burst(a.x+Math.cos(an)*i*.5,a.y+Math.sin(an)*i*.5,i%2?'#ff7a20':'#ffd040',6,2,4,-1));
       for(let i=1;i<=3;i++) later(i*.08,()=>FX('blaze',a.x+Math.cos(an)*i*1.05,a.y+Math.sin(an)*i*1.05-.2,{s:.55+i*.1,m:.5}));
-      V({k:'flash',x:0,y:0,c:'#ff7020',m:.3});
-      for(const e of foes(a)){ const d=dist(e,a), da=Math.abs(((Math.atan2(e.y-a.y,e.x-a.x)-an+Math.PI*3)%(Math.PI*2))-Math.PI);
+            for(const e of foes(a)){ const d=dist(e,a), da=Math.abs(((Math.atan2(e.y-a.y,e.x-a.x)-an+Math.PI*3)%(Math.PI*2))-Math.PI);
         if(d<=3.5&&da<=.5){ hit(a,e,2.2); burn(e,a.atk*.3,4,a); } } }},
   wisp:{name:'',mp:1e9,desc:'',cast(){}}, wolf:{name:'',mp:1e9,desc:'',cast(){}}, guardian:{name:'',mp:1e9,desc:'',cast(){}}, drake:{name:'',mp:1e9,desc:'',cast(){}}, skeleton:{name:'',mp:1e9,desc:'',cast(){}},
   highwizard:{name:'Meteor Rain', mp:90, desc:'Calls 5 meteors onto random enemies, each dealing 200% damage within 1.1 cells.',
@@ -2190,8 +2185,7 @@ function tickTimer(){   // battle clock: seconds left before the round times out
 function frame(now){
   const dt=Math.min((now-last)/1000,.05); last=now; ANIM+=dt;
   if(S&&S.fight){ if(S.phase!=='fight') tickFx(dt*speed*PACE); else if(S.fight.paused){} else if(S.fight.stop>0) S.fight.stop-=dt; else step(dt*speed*PACE); }
-  trauma=Math.max(0,trauma-dt*1.4); SND.update(dt);
-  if(S&&S.fight){ const F=S.fight, want=F.f.some(x=>x.hp>0&&x.castT>0&&bigCaster(x))?1:0; F.dim=(F.dim||0)+(want-(F.dim||0))*Math.min(1,dt*10); }
+  SND.update(dt);
   if(S&&S.inspect&&S.fight&&(ANIM*5|0)!==((ANIM-dt)*5|0)) renderInfo();   // live stats, 5x a second
   if(S&&S.ufx.length){ for(const u of S.ufx) u.t-=dt; S.ufx=S.ufx.filter(u=>u.t>0); }
   if(S) render();
@@ -2285,7 +2279,7 @@ function wallBreakFx(w,smashed){
     F.debris.push({x,y,ground:y+4+Math.random()*10,h:-(6+Math.random()*24),vx:Math.cos(a)*(30+Math.random()*90)*k,vh:-(60+Math.random()*120)*k,
       r:Math.random()*6,vr:(Math.random()-.5)*(i<6?7:14),s:(i<6?10+Math.random()*5:5+Math.random()*6)*(smashed?1:.75),c:cols[i%cols.length],t:0,life:1+Math.random()*.4}); }
   const mx=(w.x1+w.x2)/2, my=(w.y1+w.y2)/2;
-  if(smashed){ V({k:'ring',x:mx,y:my+.15,r:1.7,c:'#dff8ff',m:.55}); V({k:'quake',x:mx,y:my+.2,r:1.3,c:'#bfe8ff',m:.6}); pop({x:mx,y:my},'Shatter!','#dff8ff',true); addTrauma(.2); }
+  if(smashed){ V({k:'ring',x:mx,y:my+.15,r:1.7,c:'#dff8ff',m:.55}); V({k:'quake',x:mx,y:my+.2,r:1.3,c:'#bfe8ff',m:.6}); pop({x:mx,y:my},'Shatter!','#dff8ff',true); }
   else V({k:'ring',x:mx,y:my+.15,r:1,c:'#cfefff',m:.4});
 }
 function tickDebris(dt){ const F=S.fight; if(!F||!F.debris||!F.debris.length) return;
@@ -2362,16 +2356,13 @@ function poison(u,dps,s,src,lbl='Poisoned',c='#8be06a'){ if(u.hp<=0||u.spin) ret
 function cleanse(u){ const had=u.stun>0||u.sil>0||u.blind>0||u.slow>0||u.frz>0||u.dis>0||u.shred>0||u.drain>0||u.wnd>0||u.psn;
   u.stun=u.sil=u.blind=u.slow=u.frz=u.dis=u.shred=u.drain=u.wnd=u.shock=u.root=0; if(u.hp>0) u.mp=Math.min(u.mpMax,u.mp+u.mpMax*.15); u.psn=null; u.brn=null; if(had) pop(u,'Cleansed','#bfffe0'); }
 // hit-stop: freeze the battle for a split second on big hits (rate-limited so it never feels laggy)
-function hitStop(s){ const F=S.fight; addTrauma(s*5); if(s>=.07) SND.play('boom'); if(F.t-F.lastStop>.3){ F.stop=Math.max(F.stop,s); F.lastStop=F.t; } }
-let trauma=0;
-let shakeOn=!calmMotion; try{ const v=localStorage.getItem('ab_shake'); if(v!==null) shakeOn=v==='1'; }catch(e){}   // the player's choice beats the system setting
-function addTrauma(a){ if(shakeOn) trauma=Math.min(1,trauma+a); }
+function hitStop(s){ const F=S.fight; if(s>=.07) SND.play('boom'); if(F.t-F.lastStop>.3){ F.stop=Math.max(F.stop,s); F.lastStop=F.t; } }
 // particles: x/y in cells, g = gravity (negative floats upward)
 function burst(x,y,c,n,spd=2.5,size=3,g=6){
   for(let i=0;i<n;i++){ const an=Math.random()*Math.PI*2, v=spd*(.4+Math.random()*.8), life=.3+Math.random()*.3;
     S.fight.parts.push({x,y,vx:Math.cos(an)*v,vy:Math.sin(an)*v-(g>0?1.5:0),life,max:life,c,size,g}); }
 }
-function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); popNum(u,amt,'#7CFC9A','+'); SND.play('heal',{x:u.x}); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
+function heal(u,amt,src){ if(u.hp<=0) return; amt*=healMul(u)*(src&&CASTER===src?src.skHeal||1:1)*(1+(src&&src.healOut||0)); if(src) src.hl+=Math.min(amt,u.max-u.hp); u.hp=Math.min(u.max,u.hp+amt); u.hg=.6; SND.play('heal',{x:u.x}); burst(u.x,u.y,'#9dffb0',5,.8,3,-2.5); }
 const PROJ={maskedmagus:'p_arcane',mirrormage:'p_arcane',puppeteer:'p_dark',rimedragoness:'p_ice',thornmother:'p_plant',stormdjinn:'p_light',colossus:'p_light',cardshark:'card',fortuneteller:'card',highroller:'card',riftcaller:'p_arcane',eclipsewitch:'p_dark',thornweaver:'p_plant',galecaller:'p_light',minstrel:'p_light',piper:'p_light',apothecary:'p_plant',merchant:'p_light',gravecaller:'p_dark',bonelord:'p_dark',tinkerer:'p_light',mechanist:'p_light',chronomancer:'p_arcane',timekeeper:'p_arcane',turret:'p_light',glacierwarden:'p_ice',snowmender:'p_ice',frostoracle:'p_ice',winterqueen:'p_ice',hexer:'p_plant',bogwitch:'p_plant',doomherald:'p_dark',mage:'p_fire',highwizard:'p_fire',drake:'p_fire',emberbat:'p_fire',wyrm:'p_fire',wizard:'p_ice',lich:'p_ice',voidsage:'p_dark',
   acolyte:'p_light',priest:'p_light',highpriest:'p_light',dawnoracle:'p_light',spiritcaller:'p_arcane',starcaller:'p_arcane',stonebinder:'p_arcane',wisp:'p_arcane',shroomkin:'p_plant'};
 // basic ranged attacks fly as small missiles (skills keep the big spell sprites)
@@ -2482,27 +2473,26 @@ function tryCast(a,t,inRange){
 const SKILL_FX={
   swordsman:(a,t)=>{ V({k:'shards',x:t.x,y:t.y,c:'#fff3c0',r:1,n:8}); FX('slash',t.x,t.y-.25,{s:.75,flip:a.face<0,m:.5}); },
   knight:(a,t)=>{ FX('nova',t.x,t.y-.2,{s:1.1,tint:'#9cc7ff'}); V({k:'quake',x:t.x,y:t.y+.3,r:1.3,m:.8}); V({k:'shards',x:t.x,y:t.y,c:'#cfe2ff',r:1.3,n:8}); },
-  lordknight:(a,t)=>{ V({k:'flash',x:0,y:0,c:'#ffd23f',m:.3}); FX('slash',t.x,t.y-.25,{s:1.05,flip:a.face<0,m:.55}); V({k:'arc',x:t.x,y:t.y,c:'#ffd23f',r:1.6,dir:a.face,m:.45}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.2,m:.6}); },
+  lordknight:(a,t)=>{ FX('slash',t.x,t.y-.25,{s:1.05,flip:a.face<0,m:.55}); V({k:'arc',x:t.x,y:t.y,c:'#ffd23f',r:1.6,dir:a.face,m:.45}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.2,m:.6}); },
   archer:(a,t)=>V({k:'reticle',x:t.x,y:t.y,c:'#9dff9d',m:.5}),
   hunter:(a,t)=>{ V({k:'quake',x:t.x,y:t.y+.3,r:.7,c:'#6a4a2a',m:.7}); V({k:'shards',x:t.x,y:t.y,c:'#d8b070',r:.8,n:6}); },
-  sniper:a=>{ const w=foes(a).sort((p,q)=>p.hp-q.hp)[0]; if(w){ V({k:'reticle',x:w.x,y:w.y,c:'#8fe8ff',m:.6}); FX('spark',w.x,w.y-.3,{s:1.1,tint:'#8fe8ff'}); } V({k:'flash',x:0,y:0,c:'#bff4ff',m:.25}); },
+  sniper:a=>{ const w=foes(a).sort((p,q)=>p.hp-q.hp)[0]; if(w){ V({k:'reticle',x:w.x,y:w.y,c:'#8fe8ff',m:.6}); FX('spark',w.x,w.y-.3,{s:1.1,tint:'#8fe8ff'}); } },
   acolyte:a=>{ for(const b of friends(a).sort(byHurt).slice(0,2)){ V({k:'cross',x:b.x,y:b.y,c:'#9dffb0',m:.7}); FX('sigil',b.x,b.y-.1,{s:.45,tint:'#9dffb0',m:.7}); } },
   priest:a=>{ FX('sigil',a.x,a.y,{s:.9,m:.8}); V({k:'cross',x:a.x,y:a.y,c:'#b8ffcc',m:.8}); V({k:'rays',x:a.x,y:a.y+.3,c:'#d8ffe0',r:2.5,m:.7}); },
-  highpriest:a=>{ V({k:'flash',x:0,y:0,c:'#fff3c0',m:.3}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:2.2,m:.9}); for(const b of friends(a)){ V({k:'cross',x:b.x,y:b.y,c:'#ffe27a',m:.8}); FX('strike',b.x,b.y+.3,{s:.6,tint:'#ffe27a',m:.6}); } },
+  highpriest:a=>{ V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:2.2,m:.9}); for(const b of friends(a)){ V({k:'cross',x:b.x,y:b.y,c:'#ffe27a',m:.8}); FX('strike',b.x,b.y+.3,{s:.6,tint:'#ffe27a',m:.6}); } },
   thief:(a,t)=>{ FX('scissor',t.x,t.y-.3,{s:.5,tint:'#ffb060',m:.45}); burst(t.x,t.y,'#7af06a',14,2.5,3,-1.5); },
   assassin:(a,t)=>{ FX('scissor',t.x,t.y-.3,{s:.55,tint:'#c8a0ff',m:.5}); for(let i=0;i<4;i++) later(i*.09,()=>V({k:'arc',x:t.x,y:t.y,c:'#d8c8ff',r:.8,dir:i%2?-1:1,m:.22})); },
-  assassincross:(a,t)=>{ const w=foes(a).sort((p,q)=>p.hp-q.hp)[0]||t; V({k:'flash',x:0,y:0,c:'#ff2040',m:.2}); V({k:'arc',x:w.x,y:w.y,c:'#ff4060',r:1.3,dir:a.face,m:.4});
+  assassincross:(a,t)=>{ const w=foes(a).sort((p,q)=>p.hp-q.hp)[0]||t; V({k:'arc',x:w.x,y:w.y,c:'#ff4060',r:1.3,dir:a.face,m:.4});
     FX('smoke',a.x,a.y-.3,{s:1.4,add:false,m:.6}); FX('smoke',w.x,w.y-.3,{s:1.4,add:false,m:.6}); FX('slash',w.x,w.y-.25,{s:.8,tint:'#ff3050',flip:a.face<0}); },
   wizard:(a,t)=>{ FX('nova',t.x,t.y-.2,{s:2.2,tint:'#8fe0ff',m:.7}); V({k:'shards',x:t.x,y:t.y,c:'#dff6ff',r:1.8,n:14,m:.5}); V({k:'quake',x:t.x,y:t.y+.3,r:1.6,c:'#9fd8ff',m:.9}); },
-  highwizard:()=>V({k:'flash',x:0,y:0,c:'#ff8a3a',m:.3}),
-  golem:a=>{ FX('geyser',a.x,a.y+.4,{s:1.3,tint:'#c0a070',m:.7}); V({k:'quake',x:a.x,y:a.y+.4,r:2.2,m:1.2}); V({k:'shards',x:a.x,y:a.y+.3,c:'#a08060',r:2,n:12}); addTrauma(.5); },
+  highwizard:()=>{},
+  golem:a=>{ FX('geyser',a.x,a.y+.4,{s:1.3,tint:'#c0a070',m:.7}); V({k:'quake',x:a.x,y:a.y+.4,r:2.2,m:1.2}); V({k:'shards',x:a.x,y:a.y+.3,c:'#a08060',r:2,n:12}); },
   starwarden:a=>{ FX('geyser',a.x,a.y+.3,{s:1.1,tint:'#ffe27a',m:.7}); V({k:'dome',x:a.x,y:a.y,c:'#ffe27a',r:.75,m:.9}); V({k:'shards',x:a.x,y:a.y,c:'#fff3a0',r:2.5,n:10}); },
   stormranger:a=>{ const c=densest(a,2); if(c) V({k:'reticle',x:c.x,y:c.y,c:'#ffe45a',m:.45}); },
-  dawnoracle:a=>{ FX('geyser',a.x,a.y+.3,{s:1.4,tint:'#ffd27a',m:.8}); V({k:'flash',x:0,y:0,c:'#ffe0a0',m:.35}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffd27a',r:2.6,m:1.1}); },
+  dawnoracle:a=>{ FX('geyser',a.x,a.y+.3,{s:1.4,tint:'#ffd27a',m:.8}); V({k:'rays',x:a.x,y:a.y+.3,c:'#ffd27a',r:2.6,m:1.1}); },
   nightreaper:(a,t)=>{ V({k:'arc',x:t.x,y:t.y,c:'#ff5276',r:1.7,dir:a.face,m:.45}); FX('slash',t.x,t.y-.25,{s:1.1,tint:'#ff365e',flip:a.face<0,m:.5}); FX('smoke',t.x,t.y-.2,{s:1.2,add:false,m:.6}); },
   voidsage:a=>{ V({k:'rays',x:a.x,y:a.y+.3,c:'#b070ff',r:1.4,m:.6}); FX('spark',a.x,a.y-.5,{s:1.2,tint:'#c080ff',m:.6}); },
 };
-const bigCaster=x=>U[x.type].cost>=3||U[x.type].boss;   // these dim the field while they charge
 // a fused hero may carry a healer's heal stat and cast without an enemy target: a damage skill still needs a living enemy
 const skillTgt=(a,id,t)=>U[id].heal>0||(t&&t.hp>0&&t.team!==a.team)?t:foes(a).sort((p,q)=>dist(a,p)-dist(a,q))[0]||t;
 function releaseCast(a){
@@ -2594,8 +2584,8 @@ function step(dt){
           a.tgt=t; a.face=t.x<a.x?-1:1; } }
       continue; }
     if(a.hotT>0){ const h=Math.min(a.hotR*dt*healMul(a),a.max-a.hp); a.hp+=h; if(a.hotSrc) a.hotSrc.hl+=h; a.hotT-=dt;   // heal over time
-      a.hotAcc=(a.hotAcc||0)+h; if((a.hotTick=(a.hotTick||0)+dt)>=1.5){ if(a.hotAcc>=1) popNum(a,a.hotAcc,'#9ee8ff','+'); a.hotAcc=0; a.hotTick=0; } }
-    if(a.haste>0) a.haste-=dt; if(a.furyT>0) a.furyT-=dt; if(a.wAST>0) a.wAST-=dt;
+      a.hg=Math.max(a.hg||0,.15); }
+    if(a.haste>0) a.haste-=dt; if(a.hg>0) a.hg-=dt; if(a.furyT>0) a.furyT-=dt; if(a.wAST>0) a.wAST-=dt;
     if(a.ward>0){ a.ward-=dt; const h=Math.min(a.max*.08*dt*healMul(a),a.max-a.hp); a.hp+=h; if(a.wardSrc) a.wardSrc.hl+=h; continue; }   // encased: heals, can't act
     if(a.frz>0){ a.frz-=dt; continue; }
     if(a.stun>0){ a.stun-=dt; continue; }
@@ -2645,7 +2635,7 @@ function step(dt){
     const mv=Math.min((p.big?7:p.arrow?11:9)*dt,d), ox=p.bx, oy=p.by; p.bx+=(p.t.x-p.bx)/d*mv; p.by+=(p.t.y-p.by)/d*mv;
     const wall=F.walls&&F.walls.find(w=>w.team!==p.src.team&&segX(ox,oy,p.bx,p.by,w.x1,w.y1,w.x2,w.y2));   // flew into an enemy Ice Wall
     if(wall){ const dmg=p.src.atk*p.src.dmgM*p.mult; wall.hp-=dmg; pop({x:p.bx,y:p.by},Math.round(dmg),'#dff8ff'); burst(p.bx,p.by,'#e8fbff',6,2,2,3);
-      if(wall.hp<=0){ wall.t=0; const mx=(wall.x1+wall.x2)/2, my=(wall.y1+wall.y2)/2; SND.play('shatter'); addTrauma(.15);   // the blocks burst into ice chunks and the wall is gone
+      if(wall.hp<=0){ wall.t=0; const mx=(wall.x1+wall.x2)/2, my=(wall.y1+wall.y2)/2; SND.play('shatter');   // the blocks burst into ice chunks and the wall is gone
         for(let i=0;i<7;i++){ const q=(i+.5)/7, bx=wall.x1+(wall.x2-wall.x1)*q, by=wall.y1+(wall.y2-wall.y1)*q; burst(bx,by-.25,i%2?'#bfefff':'#ffffff',6,3,4,7); burst(bx,by-.2,'#e8fbff',3,1.5,2,-1); }
         FX('nova',mx,my-.2,{s:.9,tint:'#cff4ff',m:.4}); V({k:'shards',x:mx,y:my,c:'#e8fbff',r:1.4,n:16,m:.5}); }
       return false; }
@@ -2674,7 +2664,7 @@ function tickFx(dt){
     if(a.dieT>0) a.dieT-=dt;
     if(U[a.type].boss&&!a.enraged&&a.hp>0&&a.hp<a.max*.5){
       a.enraged=true; a.mp=a.mpMax; FX('geyser',a.x,a.y+.4,{s:1.6,tint:'#ff4020',m:.8}); pop(a,'ENRAGED','#ff5040',true); SND.play({golem:'roar_golem',lich:'roar_lich'}[a.type]||'roar');
-      V({k:'ring',x:a.x,y:a.y+.3,r:2.2,c:'#ff4030',m:.6}); V({k:'flash',x:0,y:0,c:'#ff3020',m:.35}); burst(a.x,a.y-.3,'#ff5040',20,4,4,0); hitStop(.1);
+      V({k:'ring',x:a.x,y:a.y+.3,r:2.2,c:'#ff4030',m:.6}); burst(a.x,a.y-.3,'#ff5040',20,4,4,0); hitStop(.1);
       BOSS_ENRAGE[a.type](a);
     }
   }
@@ -3039,7 +3029,7 @@ function drawUnit(type,star,px,py,o={}){
       ctx.beginPath(); ctx.arc(0,0,32+i*4,a,a+Math.PI*.85); ctx.stroke(); }
     ctx.restore(); }
   if(o.enraged){ ctx.fillStyle='#ff3020'; ctx.globalAlpha=P.alpha*(.35+.2*Math.sin(ANIM*10)); ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,34,13,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
-  if(o.glow||o.cast>0){ const g=o.cast>0?.5+.3*Math.sin(ANIM*30):o.glow*1.2;
+  if(o.glow||o.cast>0){ const g=o.cast>0?.45:o.glow*1.2;
     ctx.fillStyle=col; ctx.globalAlpha=P.alpha*g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,26,10,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
   if(sp&&sp.img.naturalWidth){
     const im=sp.img, bounds=sp.bounds||{bottom:im.naturalHeight,height:im.naturalHeight}, s=54/(native?im.naturalHeight:bounds.height)*sc, u=rig?(native?1:im.naturalHeight/bounds.height)*sc:0;
@@ -3055,7 +3045,7 @@ function drawUnit(type,star,px,py,o={}){
       ctx.save(); for(let i=2;i>0;i--){ctx.globalAlpha=P.alpha*.07*(3-i);ctx.translate((o.face<0?1:-1)*5,-.5);draw();}ctx.restore(); }
     draw();   // outlines are baked into the sprites (no per-frame filter: it was costly on the GPU)
     if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
-    if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.45,o.cast>0?.12+.08*Math.sin(ANIM*30):0); draw(); }   // soft, so the face still reads
+    if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max(o.flash*.15,o.cast>0?.12:0); draw(); }   // a soft hit blink and a steady casting glow (no strobing)   // soft, so the face still reads
   } else {
     ctx.fillStyle=o.flash?'#fff':col; ctx.beginPath(); ctx.arc(px+P.dx,py+2+P.dy-P.lift,19,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=2; ctx.stroke();
@@ -3083,6 +3073,7 @@ function drawUnit(type,star,px,py,o={}){
   else ctx.fillText('★'.repeat(star),px,py-38);   // stars sit on top of the health bar
   if(o.org&&ORIGINS[b.org]) drawIcon(ORIGINS[b.org].icon,px+sw+8,py-41,12);   // origin badge
   if(o.hp!==undefined){
+    if(o.hg>0){ ctx.fillStyle=`rgba(124,252,154,${Math.min(1,o.hg*2)*.85})`; ctx.fillRect(px-24,py-38,48,12); }   // being healed: a green glow around the bar (no heal numbers)
     ctx.fillStyle='#000'; ctx.fillRect(px-22,py-36,44,8);
     ctx.fillStyle='#fff6d0'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hpLag),5);   // recent damage drains away
     ctx.fillStyle=o.team===1?'#ff5a5a':'#4fdc6a'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hp),5);
@@ -3207,7 +3198,6 @@ function drawVfx(v){
   else if(v.k==='anim'){ const f=FXI[v.fx]; if(f){ const i=Math.min(f.n-1,Math.floor(p*f.n)), fr=fxFrame(v.fx,i,v.tint);
       if(fr){ ctx.globalAlpha=1; if(v.add) ctx.globalCompositeOperation='lighter'; ctx.translate(x,y); ctx.rotate(v.rot); ctx.scale(v.flip?-v.s:v.s,v.s);
         ctx.drawImage(fr[0],fr[1],fr[2],f.fw,f.fh,-f.fw*f.ax,-f.fh*f.ay,f.fw,f.fh); } } }
-  else if(v.k==='flash'){ ctx.globalAlpha=.2*(1-p); ctx.fillStyle=v.c; ctx.fillRect(-20,-20,W+40,BOARD_H+40); }   // soft, one-off: never strobes
   else if(v.k==='meteor'){ if(v.t<=v.m){ const q=1-v.t/v.m, my=y-(1-q)*260; ctx.globalAlpha=1;
       ctx.strokeStyle='rgba(255,170,80,.6)'; ctx.lineWidth=6; ctx.beginPath(); ctx.moveTo(x+40*(1-q)+30,my-40); ctx.lineTo(x+40*(1-q),my); ctx.stroke();
       ctx.fillStyle='#ff7a2a'; ctx.beginPath(); ctx.arc(x+40*(1-q),my,9,0,Math.PI*2); ctx.fill();
@@ -3278,7 +3268,6 @@ function render(){
     for(let i=1;i<ROWS;i++){ ctx.moveTo(0,i*CELL+.5); ctx.lineTo(W,i*CELL+.5); }
     ctx.stroke();
   }
-  if(S.fight&&S.fight.dim>.01){ ctx.fillStyle=`rgba(8,6,20,${S.fight.dim*.4})`; ctx.fillRect(0,0,W,BOARD_H); }
   for(let i=0;i<BENCH;i++){ ctx.fillStyle='rgba(0,0,0,.18)'; ctx.fillRect(i*CELL+4,BENCH_Y+2,CELL-8,CELL-4); }
   ctx.fillStyle='#f3e7cf'; ctx.font="17px 'Jersey 10',system-ui"; ctx.textAlign='left'; ctx.fillText('BENCH',6,BENCH_Y-6);
 
@@ -3327,7 +3316,6 @@ function render(){
   if(S.fight){
     const F=S.fight;
     ctx.save();
-    if(trauma>0){ const k=trauma*trauma, t=ANIM*30; ctx.translate(7*k*Math.sin(t*1.7),5*k*Math.sin(t*2.3)); }
     const UNDER=['ring','meteor','charge','rune','quake','rays','sigilBloom'];
     for(const w of F.walls||[]) drawIceWall(w);
     drawDebris();   // broken Ice Wall chunks
@@ -3337,7 +3325,7 @@ function render(){
     ctx.restore();
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
-    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
+    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,hg:a.hg,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
       ref:a,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.mkEmp>0?.35:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const p of F.proj){
@@ -3588,9 +3576,6 @@ $('#vSfx').onchange=()=>SND.play('buy');   // a sample at the new volume
 document.addEventListener('click',e=>{ if(e.target.closest('button.b,.su,.it')) SND.play('click'); });
 $('#bReroll').onclick=reroll; $('#bSell').onclick=sell; $('#bFight').onclick=startFight; $('#bCap').onclick=buyCap;
 $('#bCodex').onclick=openCodex; $('#bModes').onclick=()=>openModes();
-function showShake(){ const b=$('#bShake'); b.textContent='📳 Shake '+(shakeOn?'on':'off'); b.classList.toggle('off',!shakeOn); }
-$('#bShake').onclick=()=>{ shakeOn=!shakeOn; if(!shakeOn) trauma=0; try{ localStorage.setItem('ab_shake',shakeOn?'1':'0'); }catch(e){} showShake(); };
-showShake();
 $('#bSpeed').onclick=()=>{ speed=speed%3+1; $('#bSpeed').textContent='Speed x'+speed; };
 $('#bSpeed').oncontextmenu=e=>{ e.preventDefault(); speed=1; $('#bSpeed').textContent='Speed x1'; };   // right-click: back to x1
 $('#meter').addEventListener('click',e=>{ const h=e.target.closest('th[data-sort]'); if(!h) return; S.meterSort=h.dataset.sort; renderMeter(); });
