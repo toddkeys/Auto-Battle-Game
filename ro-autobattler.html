@@ -115,12 +115,12 @@ button.go:disabled{animation:none}
 .lockbtn{font-size:16px!important;padding:4px 9px 5px!important}
 .bigbtn{margin-left:6px;font-size:13px!important;padding:2px 8px 3px!important;vertical-align:middle}
 /* HUD over the board */
-.hud{display:flex;align-items:center;gap:14px;padding:8px 14px;border:2px solid var(--ink);border-radius:8px;
+.hud{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:8px 14px;border:2px solid var(--ink);border-radius:8px;
   background:linear-gradient(180deg,#3d2a1a,#20140c);box-shadow:inset 0 0 0 2px var(--brass-lo),0 6px 16px rgba(0,0,0,.5)}
 .crest{width:64px;height:68px;flex:none;display:grid;place-items:center;align-content:center;color:#2a1607;
   background:linear-gradient(180deg,#f7dc93,#c3913f);clip-path:polygon(0 0,100% 0,100% 62%,50% 100%,0 62%);filter:drop-shadow(0 2px 0 var(--ink))}
 .crest .lbl{font:400 14px/1 var(--pixel);letter-spacing:.1em}.crest .num{font:400 34px/0.9 var(--pixel)}
-.hpbar{position:relative;flex:1;height:30px;border:2px solid var(--ink);border-radius:6px;background:#2a0f0d;overflow:hidden;box-shadow:inset 0 3px 6px rgba(0,0,0,.6)}
+.hpbar{position:relative;flex:1 1 150px;min-width:150px;height:30px;border:2px solid var(--ink);border-radius:6px;background:#2a0f0d;overflow:hidden;box-shadow:inset 0 3px 6px rgba(0,0,0,.6)}
 .hpfill{position:absolute;inset:0 auto 0 0;background:linear-gradient(180deg,#ff7a6a,#d8382e 55%,#a51f1a);box-shadow:inset 0 2px 0 rgba(255,220,210,.45);transition:width .5s cubic-bezier(.2,.8,.2,1)}
 .hptxt{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;font:400 22px/1 var(--pixel);text-shadow:0 2px 0 rgba(0,0,0,.7)}
 .coins{display:flex;align-items:center;gap:7px;font:400 34px/1 var(--pixel);color:var(--gold);text-shadow:0 2px 0 #6a3a00}
@@ -304,6 +304,9 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 @media (max-width:1400px){.game{grid-template-columns:260px auto 360px;gap:12px;padding:10px}.logo .t{font-size:38px}
   .actions button.b{font-size:16px;padding:6px 4px 7px}button.go{font-size:26px}}
 @media (max-width:1400px){#meter th{font-size:14px}#meter td{padding:2px 3px;font-size:12px}}
+@media (max-width:1250px){.game{grid-template-columns:230px auto 310px;gap:10px;padding:8px}.col{zoom:.88}.hud{padding:6px 10px;gap:6px 10px}
+  .crest{width:54px;height:58px}.crest .num{font-size:28px}.next{font-size:12px}.hudbtns .b{font-size:13px;padding:3px 7px 4px}.snd input[type=range]{width:64px}}
+@media (max-width:1000px){.game{grid-template-columns:200px auto 270px}.col{zoom:.78}}
 @media (min-width:2200px){.game{grid-template-columns:375px auto 500px}.col{zoom:1.25}}
 @media (prefers-reduced-motion:reduce){.card,button.go,.items .it.rare{animation:none}}
 </style>
@@ -1072,6 +1075,15 @@ const $ = s=>document.querySelector(s);
 const cv=$('#cv'), ctx=cv.getContext('2d');
 const RES=2;   // backing pixels per game pixel: matches the 2x HD sprites exactly (the page scales the canvas crisply); 3 cost 2.25x the drawing on big screens
 cv.width=W*RES; cv.height=H*RES;
+function fitBoard(){   // the board takes whatever room the side panels and the HUD leave, in both directions
+  const g=$('.game'), hud=$('.hud'), L=$('.col.left'), Rc=$('.col.right'); if(!g||!hud) return;
+  const cs=getComputedStyle(g), gap=parseFloat(cs.columnGap)||0, pad=parseFloat(cs.paddingLeft)+parseFloat(cs.paddingRight), padV=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
+  const frame=24, side=(L?L.getBoundingClientRect().width:0)+(Rc?Rc.getBoundingClientRect().width:0);
+  const availW=document.documentElement.clientWidth-side-gap*2-pad-frame-4, availH=innerHeight-padV-hud.offsetHeight-10-frame;
+  const h=Math.max(240,Math.min(availH,availW*H/W)); cv.style.height=h+'px'; }
+addEventListener('resize',fitBoard);
+if(window.ResizeObserver) new ResizeObserver(fitBoard).observe(document.querySelector('.hud'));
+fitBoard(); addEventListener('load',fitBoard); if(document.fonts) document.fonts.ready.then(fitBoard);
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 
 // ====== sprites ======
