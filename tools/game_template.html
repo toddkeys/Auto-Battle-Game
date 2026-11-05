@@ -2036,6 +2036,7 @@ function iceWall(a,o={}){
   const L=(o.L||1.3)*(a.wallW||1), hp=a.max*(o.hp||.6)*(a.wallHp||1);
   F.walls=F.walls||[];
   const w={team:a.team,src:a,x1:cx-uy*L,y1:cy+ux*L,x2:cx+uy*L,y2:cy-ux*L,hp,max:hp,t:(o.t||6)+(a.wallT||0),shatter:o.shatter||0};
+  w.visualBorn=F.t;
   F.walls.push(w);
   V({k:'shards',x:cx,y:cy,c:'#dff8ff',r:L,n:12,m:.5}); SND.play('ice'); return w;
 }
@@ -2719,14 +2720,11 @@ function statusTints(o){ const pu=.75+.25*Math.sin(ANIM*8), A={stun:.32,sil:.32,
   A.root=.3; A.shock=.45; A.tstop=.45; const t=Object.keys(A).filter(k=>k==='psn'||k==='brn'?o[k]:o[k]>0).map(k=>[STATUS[k].tint,A[k]*pu]); if(o.raised) t.unshift(['#7a6aff',.35]); return t; }
 // Art-directed size corrections, reviewed side by side in the actual renderer.
 // Hair, hats, weapons and capes are not a reliable guide to perceived body size.
-const HERO_HEAD_SCALE={starwarden:1.2,nightreaper:1.35,voidsage:1.3,aegispaladin:1.18,grandmaster:1.25,shadowstep:1.15,stonemonkey:1.2,wukong:1.18,eclipsewitch:1.25,chieftain:1.25};
+const HERO_HEAD_SCALE={};
 const HERO_VISUAL_SCALE={
   mage:1.08,wizard:1.05,lordknight:1.05,highwizard:1.04,shogun:1.04,
   winterqueen:1.08,doomherald:1.08,maskedmagus:1.1,puppeteer:1.13,
   rimedragoness:1.08,bonelord:1.06,phantomblade:1.05,
-  starwarden:1,nightreaper:.98,voidsage:1.04,aegispaladin:1,
-  grandmaster:.98,shadowstep:1,stonemonkey:.97,wukong:.96,
-  eclipsewitch:1,chieftain:.98,
 };
 const CREATURE_SCALE={wisp:.8,wolf:.9,guardian:1.15,drake:1.1,skeleton:.9,turret:.9,arctower:1,mossling:.85,shroomkin:.9,emberbat:.9};
 function drawUnit(type,star,px,py,o={}){
@@ -2944,6 +2942,7 @@ function drawVfx(v){
       ctx.strokeStyle='rgba(255,120,60,.7)'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(x,y+10,CELL*.9,CELL*.5,0,0,Math.PI*2); ctx.stroke(); } }
   ctx.restore();
 }
+/*ICE_WALL_ART*/
 function render(){
   ctx.setTransform(RES,0,0,RES,0,0); ctx.clearRect(0,0,W,H);
   ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); drawSanctuary(); drawAmbient();
@@ -3009,12 +3008,7 @@ function render(){
     ctx.save();
     if(trauma>0){ const k=trauma*trauma, t=ANIM*30; ctx.translate(7*k*Math.sin(t*1.7),5*k*Math.sin(t*2.3)); }
     const UNDER=['ring','meteor','charge','rune','quake','rays','sigilBloom'];
-    for(const w of F.walls||[]){ const n=7, fade=Math.min(1,w.t/.4), hpk=w.hp/w.max;   // Ice Wall: a row of ice blocks, cracking as it weakens
-      for(let i=0;i<n;i++){ const q=(i+.5)/n, x=(w.x1+(w.x2-w.x1)*q)*CELL, y=(w.y1+(w.y2-w.y1)*q)*CELL, h=28+(i%2)*6;
-        ctx.globalAlpha=.75*fade; ctx.fillStyle=hpk>.5?'#bfefff':'#9fd8f0'; ctx.fillRect(x-7,y-h+8,14,h);
-        ctx.globalAlpha=.9*fade; ctx.fillStyle='#ffffff'; ctx.fillRect(x-5,y-h+10,3,h-6);
-        if(hpk<.5){ ctx.strokeStyle='#5a8aa8'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x-6,y-h/2); ctx.lineTo(x+2,y-h/2+6); ctx.lineTo(x-2,y); ctx.stroke(); } }
-      ctx.globalAlpha=1; }
+    for(const w of F.walls||[]) drawIceWall(w);
     for(const v of F.vfx) if(UNDER.includes(v.k)) drawVfx(v);
     ctx.save(); ctx.setLineDash([4,5]); ctx.lineDashOffset=-ANIM*20; ctx.strokeStyle='rgba(255,224,160,.45)'; ctx.lineWidth=2;
     for(const a of F.f) if(a.guard&&a.hp>0&&a.guard.hp>0){ ctx.beginPath(); ctx.moveTo(a.x*CELL,a.y*CELL+8); ctx.lineTo(a.guard.x*CELL,a.guard.y*CELL+8); ctx.stroke(); }

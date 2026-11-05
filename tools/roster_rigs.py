@@ -8,9 +8,9 @@ GROUPS=json.loads(MANIFEST.read_text())
 HEROES={cid:g['key'] for g in GROUPS for cid in g['ids']}
 STAFF={'acolyte','priest','highpriest','dawnoracle','snowmender','frostoracle','winterqueen',
        'mage','wizard','highwizard','hexer','bogwitch','doomherald','spiritcaller','stonebinder','starcaller',
-       'thornweaver','gravecaller','bonelord','timekeeper'}
+       'thornweaver','gravecaller','bonelord','timekeeper','stonemonkey','wukong','eclipsewitch','voidsage'}
 BOW={'archer','hunter','sniper','stormranger'}
-SHIELD={'knight','bulwark','templar','axebrute','glacierwarden'}
+SHIELD={'knight','bulwark','templar','axebrute','glacierwarden','aegispaladin'}
 
 def spec(cid,size):
     w,h=size

@@ -195,7 +195,7 @@ def build(cid, art_dir, rig_dir):
                 ('wingL',[(.25,0),(.6,0),(.65,.33),(.4,.4)],(.48,.32))]:
                 parts[name]={'poly':[(x*w,y*h) for x,y in poly],'piv':(piv[0]*w,piv[1]*h)}
         spec={'parts':parts,'order':[n for n in ('wingR','wingL') if n in parts]+['body']+[n for n in parts if not n.startswith('wing')],'nofill':list(parts),'seams':{'armR':8,'armL':8} if cid in ('golem','colossus') else {}}
-    if cid in _SKIN_PARTS:
+    if cid in _SKIN_PARTS and cid not in roster_rigs.HEROES:
         spec=copy.deepcopy(spec)
         w,h=pic.size
         extras={

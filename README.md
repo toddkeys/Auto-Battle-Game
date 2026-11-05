@@ -9,7 +9,10 @@ A single-file auto battler (original anime-style pixel art). Open `ro-autobattle
   `assets/rig/<id>.png` (one layer per piece) + `<id>.json` (piece groups and joints); the game turns each piece on its
   joint (`rigPose` in the template) for walking, attacks, casting, hits, cheering and dying.
 - Sprites: `tools/kit.py`, `tools/classes.py`, `tools/tier4.py`, `tools/crusaders.py`, `tools/occultists.py`, `tools/samurai.py`, `tools/frostkin.py`, `tools/gamblers.py`, `tools/newclasses.py`, `tools/newclasses2.py`, `tools/bosses.py`, `tools/summoners.py`, `tools/monsters.py`, `tools/creatures.py` (engine in `tools/pixel.py`; `R = 2` renders HD 112x108 sprites from the same 56x54 design grid, a full build takes ~12 min)
-- Hand-made hero pictures: put one in `assets/art/<id>.png` (prepared from a sheet with `tools/prep_art.py`) and it replaces that hero's drawn sprite; it animates as one piece unless `tools/art_rig.py` cuts it into rig pieces (sword, arms, shield, head), as it does for the Aegis Paladin. The Aegis Paladin uses `assets/art/src/aegispaladin_sheet.webp`, prepared with `python tools/prep_art.py assets/art/src/aegispaladin_sheet.webp aegispaladin 40 110 860 912 0,0,232,256 205,0,300,224 556,0,620,205 0,240,165,335 515,100,560,140` and `... aegispaladin_back 978 922 1245 1226`.
+- Custom hero pictures: `tools/prep_art.py` can import a pose into `assets/art/<id>.png`.
+  Shipped heroes should be rebuilt from the coordinated roster atlases below;
+  the original reference sheets remain archived in `assets/art/src`.
+
 
 Sound: `assets/audio` (credits in `assets/audio/CREDITS.txt`), rebuilt from the source packs with `python tools/build_audio.py <packs folder>` (needs ffmpeg).
 
@@ -22,29 +25,26 @@ python tools/build_game.py      # embed sprites into ro-autobattler.html
 
 ## Coordinated hero skins
 
-The first seven reworked skins live in `assets/art/src/hero_skins_atlas.png`:
-Wukong (`stonemonkey`), Mythic Wukong (`wukong`), Eclipse Witch (`eclipsewitch`),
-Stormweaver (`voidsage`), Crimson Ravager/Berserker (`chieftain`),
-Worldbreaker (`grandmaster`), and Shadowstep (`shadowstep`). Gameplay names,
-classes, and stats are unchanged. Paladin (`aegispaladin`) and Crimson Valkyrie
-(`starwarden`) use the matching `assets/art/src/holy_skins_atlas.png`. Only front
-artwork is used, mirrored for facing.
-
-To extract the skins, copy them into the unit assets, rebuild their animation rigs,
-and embed them into the game (requires ImageMagick plus the Python dependencies above):
+All 72 heroes now use the same compact chibi roster style and articulated rig
+format. `assets/art/src/roster/champions.png` replaces the ten earlier designs:
+Wukong, Mythic Wukong, Eclipse Witch, Stormweaver, Crimson Ravager, Worldbreaker,
+Shadowstep, Aegis Paladin, Crimson Valkyrie and Night Reaper. Their head/body
+proportions are drawn to match the other heroes; the earlier head-enlargement
+and per-character size overrides are removed. They turn left/right like the roster.
 
 ```bash
-python tools/prep_hero_skins.py
+python tools/prep_roster.py --group champions
 python tools/build_game.py
 ```
 
-The atlas cell boundaries are in `tools/prep_hero_skins.py`; the matching animation
-piece polygons are in `_SKIN_PARTS` in `tools/art_rig.py`. Adjust both when replacing
-the atlas. The full sprite build also uses these rig definitions for these heroes.
+`python tools/prep_hero_skins.py` is a compatibility entry point for the same
+champions group. The old seven-hero and holy-hero atlases remain archived and are
+not used by the standard rebuild commands. Atlas order is in
+`assets/art/src/roster/manifest.json`; animation masks are in `tools/roster_rigs.py`.
 
 ## Sanctuary visual upgrade
 
-Night Reaper and the six boss skins are extracted from
+The six boss skins are extracted from
 `assets/art/src/nightreaper_bosses_atlas.png`. Their animation pieces are defined
 in `tools/art_rig.py`. The sanctuary battlefield is `assets/scenery/sanctuary.jpg`;
 `build_game.py` embeds it with the sprites so the generated HTML still works
@@ -69,8 +69,8 @@ health bars follow the adjusted size. Bosses retain their separate larger scale.
 
 ## Full roster and interface
 
-All 72 playable heroes now have individual reworked skins. The 62 remaining
-heroes use eight coordinated source sheets in `assets/art/src/roster/`; the
+All 72 playable heroes now have individual reworked skins and use nine
+coordinated source sheets in `assets/art/src/roster/`; the
 manifest records their exact cell order. `tools/roster_rigs.py` defines their
 animation masks, and `art_rig.py` builds the same rig format used by the earlier
 reworks. Combat names, classes, stats and skills are unchanged.
@@ -89,8 +89,8 @@ restored. Narrow screens still stack the panels so controls remain reachable.
 
 Animation uses separate torso, head, arms, elbow/wrist, boots, cape and clothing
 pieces. Attacks have class-specific anticipation, action and recovery poses;
-bows draw, guns recoil, punches extend, and casters raise their staffs. The ten
-earlier skins also have animated lower-body and trailing-cloth pieces. Wolves,
+bows draw, guns recoil, punches extend, and casters raise their staffs. All 72
+heroes share the articulated lower-body, elbow and trailing-cloth rig format. Wolves,
 wisps, drakes, turrets and bosses have species-specific motion. Summons and small
 monsters use their native silhouettes and individual scale, rather than the hero
 height normalization. Combat definitions are unchanged.
@@ -142,3 +142,20 @@ python tools/check_audio.py
 Checks decode every signature, reject silent/clipped samples, exercise the global
 voice cap, verify music ducking and mute/preference persistence, and exercise the
 native-media fallback with Web Audio unavailable.
+
+## Ice Wall appearance by price
+
+`assets/vfx/ice_walls.js` renders the 2-gold Glacier Warden's frosted rampart,
+3-gold Frost Oracle's tall rune prisms, and 4-gold Winter Queen's crowned bastion.
+Damage adds branching cracks; walls rise into place and fade as they expire.
+Snowmender (1 gold) keeps its existing healing skill. Wall counts, width, HP,
+collision, damage, slow, freeze and lifetime are unchanged. `build_game.py` embeds
+this renderer into the generated HTML.
+
+```bash
+python tools/check_ice_walls.py
+```
+
+This exercises all three actual caster skills, confirms their wall widths and
+counts, checks rendering does not mutate wall state, and verifies enemy shots
+are blocked while friendly shots pass through.

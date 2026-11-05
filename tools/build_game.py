@@ -40,6 +40,8 @@ with open(os.path.join(ROOT,'assets','audio','skills','profiles.json'),encoding=
 out=out.replace('/*AUDIO_PROFILES*/','const AUDIO_PROFILES = '+json.dumps(profiles)+';',1)
 with open(os.path.join(ROOT,'assets','audio','mixer.js'),encoding='utf8') as f:
     out=out.replace('/*AUDIO_MIXER*/',f.read(),1)
+with open(os.path.join(ROOT,'assets','vfx','ice_walls.js'),encoding='utf8') as f:
+    out=out.replace('/*ICE_WALL_ART*/',f.read(),1)
 path = os.path.join(ROOT, 'ro-autobattler.html')
 open(path, 'w', encoding='utf8', newline='\n').write(out)
 print(f'built ro-autobattler.html with {len(data)} sprites ({len(out) // 1024} KB)')
