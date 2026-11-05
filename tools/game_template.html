@@ -2040,6 +2040,30 @@ function iceWall(a,o={}){
   F.walls.push(w);
   V({k:'shards',x:cx,y:cy,c:'#dff8ff',r:L,n:12,m:.5}); SND.play('ice'); return w;
 }
+// Ice Wall break: its blocks split into chunks that fly up, tumble, bounce once on the ground and fade.
+// smashed (destroyed): a big burst, a frost ring and "Shatter!"; melted (ran out): a smaller, slower crumble.
+function wallBreakFx(w,smashed){
+  const F=S.fight; F.debris=F.debris||[];
+  const st=ICE_WALL_STYLES[iceWallTier(w)]||{face:'#bfefff',side:'#7fbfe0',cap:'#ffffff'}, cols=[st.face,st.side,st.cap,'#ffffff'];
+  const n=smashed?30:14, k=smashed?1:.45;
+  for(let i=0;i<n;i++){ const q=Math.random(), x=(w.x1+(w.x2-w.x1)*q)*CELL, y=(w.y1+(w.y2-w.y1)*q)*CELL+8;
+    const a=-Math.PI/2+(Math.random()-.5)*2.2;
+    F.debris.push({x,y,ground:y+4+Math.random()*10,h:-(6+Math.random()*24),vx:Math.cos(a)*(30+Math.random()*90)*k,vh:-(60+Math.random()*120)*k,
+      r:Math.random()*6,vr:(Math.random()-.5)*(i<6?7:14),s:(i<6?10+Math.random()*5:5+Math.random()*6)*(smashed?1:.75),c:cols[i%cols.length],t:0,life:1+Math.random()*.4}); }
+  const mx=(w.x1+w.x2)/2, my=(w.y1+w.y2)/2;
+  if(smashed){ V({k:'ring',x:mx,y:my+.15,r:1.7,c:'#dff8ff',m:.55}); V({k:'quake',x:mx,y:my+.2,r:1.3,c:'#bfe8ff',m:.6}); pop({x:mx,y:my},'Shatter!','#dff8ff',true); addTrauma(.2); }
+  else V({k:'ring',x:mx,y:my+.15,r:1,c:'#cfefff',m:.4});
+}
+function tickDebris(dt){ const F=S.fight; if(!F||!F.debris||!F.debris.length) return;
+  for(const d of F.debris){ d.t+=dt; d.x+=d.vx*dt; d.h+=d.vh*dt; d.vh+=420*dt; d.r+=d.vr*dt;
+    if(d.h>=0&&d.vh>0){ d.h=0; d.vh*=-.35; d.vx*=.55; d.vr*=.5; if(Math.abs(d.vh)<25) d.vh=0; } }   // one small bounce, then they rest and fade
+  F.debris=F.debris.filter(d=>d.t<d.life); }
+function drawDebris(){ const F=S.fight; if(!F||!F.debris) return;
+  for(const d of F.debris){ const a=Math.min(1,(d.life-d.t)/.35); ctx.save(); ctx.globalAlpha=a*.35; ctx.fillStyle='#0a1e3c'; ctx.beginPath(); ctx.ellipse(d.x,d.ground,d.s*.8,d.s*.3,0,0,Math.PI*2); ctx.fill(); ctx.restore();   // its shadow
+    ctx.save(); ctx.globalAlpha=a; ctx.translate(d.x,d.ground+d.h-(d.ground-d.y)*(1-Math.min(1,d.t*3))); ctx.rotate(d.r); const s=d.s;
+    ctx.beginPath(); ctx.moveTo(-s,-s*.3); ctx.lineTo(-s*.2,-s); ctx.lineTo(s,-s*.4); ctx.lineTo(s*.6,s*.7); ctx.lineTo(-s*.5,s*.6); ctx.closePath();
+    ctx.fillStyle=d.c; ctx.fill(); ctx.strokeStyle='rgba(40,90,130,.8)'; ctx.lineWidth=.8; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.75)'; ctx.fillRect(-s*.5,-s*.6,s*.5,s*.25); ctx.restore(); } }
 function wallShatter(w){   // a wall that breaks or melts bursts into shards: damage and a slow to enemies next to it
   if(!w.shatter||!w.src) return; const mult=w.shatter*(w.src.wallShat||1), mx=(w.x1+w.x2)/2, my=(w.y1+w.y2)/2;
   V({k:'shards',x:mx,y:my,c:'#e8fbff',r:1.6,n:16,m:.5}); SND.play('shatter');
@@ -2370,7 +2394,7 @@ function step(dt){
   for(const a of alive) clampOnBoard(a);
   if(F.walls){ for(const w of F.walls){   // enemies pressed against an Ice Wall are slowed
       if(w.src&&w.src.wallChill) for(const e of alive) if(e.team!==w.team&&segDist(e.x,e.y,w.x1,w.y1,w.x2,w.y2)<=.55&&!(e.slow>.3)) inflict(e,'slow',.6); }
-    F.walls=F.walls.filter(w=>{ const keep=(w.t-=dt)>0&&w.hp>0; if(!keep) wallShatter(w); return keep; }); }
+    F.walls=F.walls.filter(w=>{ const keep=(w.t-=dt)>0&&w.hp>0; if(!keep){ wallBreakFx(w,w.hp<=0); wallShatter(w); } return keep; }); }
   F.proj=F.proj.filter(p=>{
     if(p.t.hp<=0) return false;
     const d=Math.hypot(p.t.x-p.bx,p.t.y-p.by); if(d<.25){ if(p.spr&&p.big) FX('blaze',p.t.x,p.t.y-.2,{s:.6,m:.45}); CASTER=p.big?p.src:null; hit(p.src,p.t,p.mult); if(p.onHit) p.onHit(p.t); CASTER=null; if(p.big){ V({k:'burst',x:p.t.x,y:p.t.y,r:.8,c:p.c}); burst(p.t.x,p.t.y,p.c,10,3,3,3); hitStop(.05); } return false; }
@@ -2392,7 +2416,7 @@ function step(dt){
 }
 // effects keep animating after the last blow (death fades, particles, floating numbers)
 function tickFx(dt){
-  const F=S.fight;
+  const F=S.fight; tickDebris(dt);
   for(const a of F.f){
     a.kx*=Math.exp(-dt*10); a.ky*=Math.exp(-dt*10); a.flash=Math.max(0,a.flash-dt*5);
     if(a.hpLag>a.hp) a.hpLag=Math.max(a.hp,a.hpLag-Math.max(a.max*.4*dt,(a.hpLag-a.hp)*3*dt)); else a.hpLag=a.hp;
@@ -3009,6 +3033,7 @@ function render(){
     if(trauma>0){ const k=trauma*trauma, t=ANIM*30; ctx.translate(7*k*Math.sin(t*1.7),5*k*Math.sin(t*2.3)); }
     const UNDER=['ring','meteor','charge','rune','quake','rays','sigilBloom'];
     for(const w of F.walls||[]) drawIceWall(w);
+    drawDebris();   // broken Ice Wall chunks
     for(const v of F.vfx) if(UNDER.includes(v.k)) drawVfx(v);
     ctx.save(); ctx.setLineDash([4,5]); ctx.lineDashOffset=-ANIM*20; ctx.strokeStyle='rgba(255,224,160,.45)'; ctx.lineWidth=2;
     for(const a of F.f) if(a.guard&&a.hp>0&&a.guard.hp>0){ ctx.beginPath(); ctx.moveTo(a.x*CELL,a.y*CELL+8); ctx.lineTo(a.guard.x*CELL,a.guard.y*CELL+8); ctx.stroke(); }
