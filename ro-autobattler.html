@@ -409,7 +409,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li>The 4💰 <b>Gearmaster</b> builds <b>Arc Towers</b> instead of turrets: their shots chain lightning to 2 more enemies. It starts every battle with one built, and its skill Storm Foundry builds more and supercharges them.</li>
         <li><b>🔫 Gunslingers</b>: the 2💰 Gunslinger fans 4 quick shots that can each crit; the 4💰 Deadshot snipes the farthest enemy with a piercing bullet. Their class bonus makes the whole team's critical hits hit harder. The 4💰 <b>Gearmaster</b> is the top Engineer: it builds two turrets at once and overclocks them.</li>
         <li><b>🪝 Grapplers</b> hook the enemy's back line and drag it in: the 2💰 Harpooner hooks the farthest enemy, the 4💰 Anchor Brute hooks the two farthest. Hooked enemies are stunned for 1s, and with the class bonus they take more damage for 3s. Bosses can't be dragged.</li>
-        <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%), <b>alternates both skills</b> and can hold <b>2 items</b> (both heroes keep theirs). Selling it returns both heroes' value.</li>
+        <li><b>⚭ Fusion</b> (from round 15, 100 gold): drag a ★★★ hero onto a ★★★ hero of another class. They become one hero that counts as <b>both classes and both origins</b>, has the best stats of the two (+10%), <b>casts both skills at once</b> (for 85% of their mana together) and can hold <b>2 items</b> (both heroes keep theirs). Selling it returns both heroes' value.</li>
         <li><b>Bosses</b> reward a choice of 3 <b>blessings</b> that last the whole run. <b>Picking the same blessing again stacks it</b> — the card and the blessing's tooltip show your total.</li>
         <li><b>Stars</b> upgrade each class in its own way (healers heal more, summoners get stronger summons, druids root longer…) — the hero card shows what the next star brings. <b>Items</b> enchant up to +5; from +3 they gain a sub-stat. Support items: 🪔 Holy Censer, ⛲ Mana Fountain, 🔔 Warding Bell, 🚩 War Banner.</li>
         <li><b>Right-click a hero in the shop</b> to mark it or remove its mark. <b>Mark heroes</b> you want in the 📖 Codex (☆, up to 10): they glow gold in the shop. <b>Click any hero</b> in the Codex or the Team Plan to see its full details.</li>
@@ -1813,6 +1813,7 @@ const MAX_ITEMS=1;   // one item per hero
 const itemSlots=u=>u.fuse?2:MAX_ITEMS;   // a fused hero carries both heroes' gear
 // ====== fusion (late game): two 3-star heroes of different classes become one hero with both classes, origins and skills ======
 const FUSE_COST=100, FUSE_ROUND=15;
+const fuseMana=(a,b)=>Math.round((SKILLS[a].mp+SKILLS[b].mp)*.85);   // a fused hero casts both skills at once for 85% of both manas (simulated: as strong as alternating them)
 const typesOf=u=>u.fuse?[u.type,u.fuse]:[u.type];   // what a hero counts as for class/origin bonuses
 const canTryFuse=(a,b)=>a&&b&&a!==b&&a.star===3&&b.star===3&&!a.fuse&&!b.fuse&&U[a.type].cls!==U[b.type].cls&&U[a.type].cost<5&&U[b.type].cost<5;
 function fuseError(){ if(S.round<FUSE_ROUND) return `Fusion unlocks at round ${FUSE_ROUND}`; if(S.gold<FUSE_COST) return `Not enough gold to fuse: it costs ${FUSE_COST} gold, you have ${S.gold}`; return null; }
@@ -1831,19 +1832,19 @@ function askFuse(e,a,b){
     c.innerHTML=`<div>⚭ Fuse <b>${U[a.type].name} ★★★</b> + <b>${U[b.type].name} ★★★</b>${err?'':` for <b>${FUSE_COST} gold</b>`}?</div>
     ${err?`<div style="font-size:13px;margin-top:4px;max-width:320px;color:#ff9a80">${err}</div>`:
       `<div class="fuselead">Lead: ${leadBtn(a)}${leadBtn(b)}</div>
-       <div style="font-size:12px;margin-top:4px;max-width:330px">Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), skills alternate, holds 2 items.</div>`}
+       <div style="font-size:12px;margin-top:4px;max-width:330px">Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), casts both skills at once (${fuseMana(lead.type,other.type)} mana), holds 2 items.</div>`}
     <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`; };
   draw(); c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
   c.onclick=ev=>{ const l=ev.target.closest('[data-lead]'); if(l){ lead=l.dataset.lead==='a'?a:b; draw(); return; }
     if(ev.target.closest('[data-yes]')&&!fuseError()&&S.units.includes(a)&&S.units.includes(b)){ fuse(a,b,lead); render(); renderUI(); } if(ev.target.closest('button')) c.hidden=true; };
 }
-// a fused fighter: the better of each stat from both heroes, +10%; skills alternate (see releaseCast)
+// a fused fighter: the better of each stat from both heroes, +10%; both skills in one cast (see releaseCast)
 function fuseFighter(x,fuseType,mult=1){
   const a=U[x.type], b=U[fuseType], m=STAR_MULT[2]*mult*1.1;
-  x.fuse=fuseType; x.fAlt=0;
+  x.fuse=fuseType;
   x.max=x.hp=x.hpLag=Math.max(a.hp,b.hp)*m; x.atk=Math.max(a.atk,b.atk)*m; x.heal=Math.max(a.heal||0,b.heal||0)*m;
   x.as=Math.min(a.as,b.as); x.ms=Math.max(a.ms,b.ms); x.splash=Math.max(a.splash||0,b.splash||0);
-  x.mpMax=Math.max(SKILLS[x.type].mp,SKILLS[fuseType].mp);
+  x.mpMax=fuseMana(x.type,fuseType);
 }
 // drop item S.inv[i] on a hero: equip it, enchant the same item it already holds, or (scroll) take its item off
 function giveItem(u,i){
@@ -2467,6 +2468,8 @@ const SKILL_FX={
   voidsage:a=>{ V({k:'rays',x:a.x,y:a.y+.3,c:'#b070ff',r:1.4,m:.6}); FX('spark',a.x,a.y-.5,{s:1.2,tint:'#c080ff',m:.6}); },
 };
 const bigCaster=x=>U[x.type].cost>=3||U[x.type].boss;   // these dim the field while they charge
+// a fused hero may carry a healer's heal stat and cast without an enemy target: a damage skill still needs a living enemy
+const skillTgt=(a,id,t)=>U[id].heal>0||(t&&t.hp>0&&t.team!==a.team)?t:foes(a).sort((p,q)=>dist(a,p)-dist(a,q))[0]||t;
 function releaseCast(a){
   let t=a.castTgt; if(t&&t.hp<=0) t=nearest(a,S.fight.f);
   if(!a.heal&&!t) return;
@@ -2479,9 +2482,9 @@ function releaseCast(a){
   if(t&&!(a.heal>0)) V({k:'impactBloom',x:t.x,y:t.y-.2,c:accent,r:U[a.type].boss?1.1:.65,m:.42});
   burst(a.x,a.y-.3,accent,10,3,3,0);
   V({k:'pillar',x:a.x,y:a.y+.35,c:colorOf(a.type),m:.4});   // light pillar on release
-  const skId=a.fuse&&(a.fAlt=(a.fAlt||0)+1)%2===0?a.fuse:a.type;   // fused heroes alternate their two skills
-  if(a.fuse) pop(a,'⚭','#ffe27a');
-  SKILLS[skId].cast(a,t); FXS=1; CASTER=null;
+  if(a.fuse){ pop({x:a.x,y:a.y-.6},'⚭ Combo!','#ffe27a',true); SKILLS[a.type].cast(a,skillTgt(a,a.type,t)); if(a.hp>0) SKILLS[a.fuse].cast(a,skillTgt(a,a.fuse,t)); }   // fused: both skills, lead first
+  else SKILLS[a.type].cast(a,t);
+  FXS=1; CASTER=null;
   if(a.bellK){ for(const b of friends(a)) if(dist(a,b)<=2){ b.shield+=b.max*.08*a.bellK; V({k:'dome',x:b.x,y:b.y,c:'#ffe27a',r:.55,m:.5}); } SND.play('shield'); }   // Warding Bell
   if(a.castShield) a.shield+=a.max*a.castShield;   // Warrior 3-star
   if(a.nDodge) a.nDodgeT=2;   // Ninja bonus
@@ -3389,7 +3392,7 @@ function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
     <div class="sk">${sk.mp<1e9?`<b>${sk.names?sk.names.join(' / '):sk.name}</b> <span class="mp">${Math.round(sk.mp*((starPerk(u.cls,star)||{}).mana||1))} mana</span><br>${sk.desc}`:'No skill — fights until the battle ends.'}</div>`+
     (u.cost>=1&&u.cost<5&&CLASS_STAR[u.cls]?`<div class="stl">${['Base',...CLASS_STAR[u.cls].map(p=>p[0])].map((t,i)=>`<div class="${i<star?'on':''}">${i===star?'<b>Next:</b> ':''}${'★'.repeat(i+1)} ${t}</div>`).join('')}</div>`:'')+
     (fuse?`<div class="sk">⚭ <b>Fused with ${U[fuse].name}</b> · <span style="color:${colorOf(fuse)}">${CLASSES[U[fuse].cls].name}</span> · ${ORIGINS[U[fuse].org].icon} ${ORIGINS[U[fuse].org].name}<br>
-      <b>${SKILLS[fuse].name}</b> <span class="mp">${SKILLS[fuse].mp} mana</span><br>${SKILLS[fuse].desc}<br><i>Counts as both classes and origins; the two skills alternate; holds 2 items.</i></div>`:'')+
+      <b>${SKILLS[fuse].name}</b> <span class="mp">${SKILLS[fuse].mp} mana</span><br>${SKILLS[fuse].desc}<br><i>Counts as both classes and origins; casts both skills at once for ${Math.round(fuseMana(id,fuse)*Math.min(...[id,fuse].map(t=>(starPerk(U[t].cls,star)||{}).mana||1)))} mana; holds 2 items.</i></div>`:'')+
     (items&&items.length?`<div class="held">Holding: ${items.map(k=>`<span class="hi" data-item="${k}">${IT(k).icon} ${INAME(k)}</span>`).join(' ')}</div>`:'');
 }
 const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare?' <span class="rare">RARE</span>':''}<div>${IDESC(k)}</div>${subOf(k)?`<div class="sub">Sub-stat: ${subOf(k).s.d(subOf(k).t)}</div>`:''}${IT(k).use?'':ILV(k)<MAX_ILV?`<div class="next">Next +${ILV(k)}: ${IT(k).desc(IK_TAB[ILV(k)])}${subOf(k,ILV(k)+1)?` · sub-stat ${subOf(k,ILV(k)+1).s.d(subOf(k,ILV(k)+1).t)}`:ILV(k)+1<4&&ITEM_SUB[k.split(':')[0]]?` · sub-stat unlocks at +3`:''}</div><div class="ench">Combine with another ${IT(k).name} to enchant it</div>`:'<div class="ench">Fully enchanted</div>'}<div class="ench">Sells for ${itemValue(k)} gold (drag to the shop or right-click)</div></div>`;
