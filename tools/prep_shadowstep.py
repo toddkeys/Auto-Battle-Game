@@ -43,10 +43,13 @@ def finish(pic, cid):
     print('saved', cid, pic.size)
 
 
+FIST = (7, 199)   # the front fist (left edge of the pose), in the cut-out's pixels
+
+
 def main():
     sheet = Image.open(SRC).convert('RGB')
     sheet.paste((5, 4, 7), (868, 1000, 915, 1220))   # the scarf drawn beside the katana's lower blade
-    hero = cut_dark(sheet, (8, 884, 152, 1232))          # standing pose, facing us
+    hero = cut_dark(sheet, (152, 884, 292, 1232))        # standing pose, three-quarter view turned forward (2nd in the bottom row)
     back = cut_dark(sheet, (412, 884, 542, 1232))        # back view
     sword = cut_dark(sheet, (812, 888, 912, 1218), dark=20)   # the separate glowing katana: hilt at the top, tip at the bottom
     sa = np.asarray(sword)
@@ -64,7 +67,9 @@ def main():
     rx, ry = dx * np.cos(t) + dy * np.sin(t), -dx * np.sin(t) + dy * np.cos(t)
     hx2, hy2 = rot.width / 2 + rx, rot.height / 2 + ry   # where the hilt end landed
     # the front fist (on the left of the picture): the hilt end goes a little below it so the grip sits in the hand
-    fist = (29, 205)
+    ys0, xs0 = np.nonzero(np.asarray(hero)[..., 3] > 0)
+    print('hero', hero.size)
+    fist = FIST
     pad = 160
     canvas = Image.new('RGBA', (hero.width + pad * 2, hero.height + pad * 2), (0, 0, 0, 0))
     canvas.alpha_composite(hero, (pad, pad))
