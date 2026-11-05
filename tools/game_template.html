@@ -23,7 +23,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 .col{display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;scrollbar-gutter:stable;padding:2px 6px 8px 2px}   /* the scrollbar's room is always kept: hovering a hero with a long skill text used to pop a scrollbar in, narrow the shop under the cursor and make it shake */
 .col::-webkit-scrollbar{width:10px}.col::-webkit-scrollbar-thumb{background:var(--brass-lo);border:2px solid var(--oak3);border-radius:6px}
 .col::-webkit-scrollbar-track{background:rgba(0,0,0,.25);border-radius:6px}
-.center{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-height:0}
+.center{min-width:0;display:flex;flex-direction:column;align-items:stretch;gap:10px;min-height:0}
 /* panels: oak board, brass inlay, rivets in the corners, gold plaque title */
 .card{position:relative;flex:none;background:linear-gradient(180deg,var(--oak) 0,var(--oak2) 55%,var(--oak3));border:2px solid var(--ink);border-radius:7px;
   padding:0 14px 13px;box-shadow:inset 0 0 0 2px var(--brass-lo),inset 0 0 0 3px #150d08,inset 0 3px 0 3px rgba(243,212,138,.12),0 8px 22px rgba(0,0,0,.55);
@@ -48,7 +48,7 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.18; 
 .syn .sh,#syn .sh{margin:6px 0 4px;font:400 17px var(--pixel);letter-spacing:.14em;color:var(--brass);text-transform:uppercase}
 .blesslist{display:flex;flex-wrap:wrap;gap:5px;font-size:13px}.blesslist .bl{padding:2px 8px;border:1px solid #6a5024;border-radius:12px;background:rgba(255,210,90,.1);cursor:help}
 .blesslist .none{color:var(--muted)}
-#confirm{position:fixed;z-index:40;padding:10px 12px;border:2px solid var(--ink);border-radius:8px;background:linear-gradient(180deg,var(--oak),var(--oak3));box-shadow:inset 0 0 0 2px var(--brass-lo),0 10px 24px #000a;font-size:14px}
+#confirm{position:fixed;z-index:80;max-width:calc(100vw - 16px);max-height:80vh;overflow:auto;padding:10px 12px;border:2px solid var(--ink);border-radius:8px;background:linear-gradient(180deg,var(--oak),var(--oak3));box-shadow:inset 0 0 0 2px var(--brass-lo),0 10px 24px #000a;font-size:14px}
 #confirm[hidden]{display:none}#confirm .row{margin-top:8px}#confirm button.b{font-size:18px;padding:5px 12px 6px}
 #confirm .fuselead{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:14px}
 #confirm .fl{display:flex;align-items:center;gap:4px;font-size:14px!important;padding:3px 8px!important;opacity:.6}
@@ -179,7 +179,7 @@ button.go:disabled{animation:none}
 .plhead{display:flex;align-items:center;gap:8px}.plhead b{font:400 26px var(--pixel);color:var(--gold)}.plhead span{flex:1;color:var(--muted);font-size:12px;line-height:1.2}
 .plnote{font-size:13px;color:#ff9a80}.plnote:empty{display:none}
 .plslots{flex:1 1 55%;min-height:120px;overflow:auto;display:flex;flex-direction:column;gap:5px;padding-right:4px}
-.pc{display:grid;grid-template-columns:22px 48px 1fr auto;gap:7px;align-items:start;padding:6px 8px;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.28);cursor:grab}
+.pc{flex-shrink:0;display:grid;grid-template-columns:22px 48px minmax(0,1fr) auto;gap:7px;align-items:start;padding:6px 8px;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.28);cursor:grab}
 .pc .no{color:var(--muted);font:400 18px var(--pixel);align-self:center;text-align:right}
 .pc .th{display:flex;align-items:flex-end;justify-content:center;height:50px}.pc .th img{max-width:48px;max-height:50px;image-rendering:pixelated}
 .pc.empty{display:flex;align-items:center;gap:10px;min-height:40px;border-style:dashed;color:var(--muted);cursor:default;font-size:13px}
@@ -220,7 +220,7 @@ button.go:disabled{animation:none}
   font:600 15px var(--body);color:#2a1607;text-align:center;background:linear-gradient(180deg,#fbe6b0,#e2bd70);box-shadow:0 4px 0 var(--ink),0 8px 20px rgba(0,0,0,.5);
   opacity:0;transition:opacity .2s,transform .2s}
 #msg.show{opacity:1;transform:translate(-50%,0)}
-.actions{display:flex;gap:7px;margin-top:12px}.actions button.b{flex:1;font-size:18px;padding:7px 6px 8px}
+.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.actions button.b{flex:1 1 90px;min-width:0;font-size:18px;padding:7px 6px 8px}
 button.go{display:block;width:100%;margin-top:10px}
 .card h3 .coins{margin-left:auto;font-size:28px;color:#4a2a00;text-shadow:0 1px 0 rgba(255,244,210,.6)}.card h3 .coin{width:20px;height:20px}
 /* shop: trading cards framed by cost (stone, jade, sapphire, amethyst) */
@@ -228,14 +228,14 @@ button.go{display:block;width:100%;margin-top:10px}
 .su{--fc:#9a9488;position:relative;min-width:0;min-height:122px;padding:6px 2px 6px;border:2px solid var(--ink);border-radius:7px;cursor:pointer;color:var(--text);font:inherit;
   background:radial-gradient(ellipse at 50% 32%,color-mix(in srgb,var(--cc) 40%,transparent),transparent 68%),linear-gradient(180deg,#2e1f13,#170f09);
   box-shadow:inset 0 0 0 2px var(--fc),inset 0 0 14px rgba(0,0,0,.7),0 3px 0 var(--ink);transition:transform .12s,box-shadow .12s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
-.su.marked{animation:markGlow 1.2s ease-in-out infinite}.su.marked:disabled{filter:grayscale(.3) brightness(.8)}
+.su.marked{animation:markGlow 1.2s ease-in-out infinite}.su.marked.unavailable{filter:grayscale(.3) brightness(.8)}
 .su.marked::before{content:'★';position:absolute;left:4px;top:2px;z-index:2;color:#ffe27a;font-size:15px;text-shadow:0 0 6px #ffb020,0 1px 0 #000}
 @keyframes markGlow{0%,100%{box-shadow:inset 0 0 0 2px #ffe27a,0 0 10px #ffc94a,0 3px 0 var(--ink)}50%{box-shadow:inset 0 0 0 2px #fff3b0,0 0 22px #ffd25a,0 3px 0 var(--ink)}}
 .cx{position:relative}.cx .mk{position:absolute;right:4px;top:3px;border:0;background:none;color:#ffe27a;font-size:18px;cursor:pointer;line-height:1;text-shadow:0 1px 0 #000}
 .cx .mk:hover{transform:scale(1.2)}.mkreset{font-size:13px;padding:2px 8px 3px;margin-left:6px}.cx.marked{border-color:#ffd25a;box-shadow:0 0 8px rgba(255,210,90,.45)}
 .su.c2{--fc:#4cc072}.su.c3{--fc:#4f95f0}.su.c4{--fc:#c07af0}
-.su:hover:not(:disabled){transform:translateY(-5px);box-shadow:inset 0 0 0 2px var(--fc),0 0 16px var(--fc),0 8px 0 var(--ink)}
-.su:disabled{filter:grayscale(.85) brightness(.5);cursor:default}
+.su:hover:not(.unavailable){transform:translateY(-5px);box-shadow:inset 0 0 0 2px var(--fc),0 0 16px var(--fc),0 8px 0 var(--ink)}
+.su.unavailable{filter:grayscale(.85) brightness(.5);cursor:default}
 .su .th{height:60px;display:flex;align-items:flex-end;justify-content:center;margin-bottom:3px}
 .su img{-webkit-user-drag:none;user-select:none;pointer-events:none}   /* the browser's own image drag would steal the shop drag */
 .su .th img{max-width:60px;max-height:60px;image-rendering:pixelated;filter:drop-shadow(0 2px 0 rgba(0,0,0,.6))}
@@ -343,6 +343,21 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 @media (prefers-reduced-motion:reduce){.card,button.go,.items .it.rare{animation:none}}
 @media(max-width:960px){body{overflow:auto}.game{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr) 270px}.center{grid-column:1;grid-row:1;min-width:0}.right{grid-column:2;grid-row:1}.left{grid-column:1/3;grid-row:2;display:grid;grid-template-columns:1fr 1fr;overflow:visible}.col{zoom:1;overflow:visible}.board{max-width:100%}}
 @media(max-width:600px){.game{display:flex;flex-direction:column;padding:8px}.center{order:0}.right{order:1}.left{order:2;display:flex}.sumbox{max-height:94vh;overflow:auto}.modegrid{grid-template-columns:1fr}.mode .md{min-height:0}.mode{padding:12px}.mode .mi{font-size:22px}.hudbtns{flex-wrap:wrap}.cardrow{flex-direction:column}.cardsbox{max-height:94vh;overflow:auto}.bless{width:100%;min-height:0}}
+
+button,.hi,.bl,.cx,.pt,.pc{touch-action:manipulation}
+.touch-help{display:none;font-size:12px;color:var(--muted);margin:6px 0 0}
+.touch-task{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--brass);border-radius:6px;background:#302111;color:var(--text);font-size:13px;margin:6px 0}
+.touch-task[hidden],#itemCard[hidden]{display:none}.touch-task button{flex:none}
+.su{touch-action:none}.su,.items .it,.pc,.pt,#cv,#cropCv{-webkit-touch-callout:none}
+#cropCv{touch-action:none}.pc img,.pt img{-webkit-user-drag:none;pointer-events:none}
+body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
+.itemcard{position:fixed;z-index:72;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,94vw);max-height:88vh;overflow:auto;padding:18px 14px 12px;border:3px solid var(--ink);border-radius:12px;background:linear-gradient(180deg,#3a2614,#1e1309);box-shadow:inset 0 0 0 2px var(--brass),0 18px 50px #000b;color:var(--text);font-size:14px}
+.itemcard .close-detail{float:right}.itemcard .tipi>b{display:block;font:400 26px var(--pixel);color:var(--gold);margin-right:36px}
+.itemcard .buildnote{color:#dcc49b}.itemcard .next,.itemcard .sub{margin-top:8px;color:#bce3ba}.itemcard .ench{margin-top:6px;font-size:12px;color:var(--muted)}
+.detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.detail-actions .b{font-size:18px}
+.pc>div{min-width:0;overflow-wrap:anywhere}.plan-order{display:flex;flex-direction:column;gap:2px}.touch-order{display:none}
+#bubble.touch-bubble{pointer-events:auto;max-height:80vh;overflow:auto}
+@media(any-pointer:coarse){.card h3{flex-wrap:wrap;row-gap:6px}.touch-help{display:block}.touch-order{display:inline-block}#heroCard .hcx,.close-detail{min-width:40px;min-height:40px}.detail-actions .b,.plan-order button{min-height:36px}.plan-order button{min-width:30px}#bubble{max-width:min(330px,90vw)}}
 </style>
 </head>
 <body>
@@ -373,13 +388,13 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
       <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bFrames" title="Drawing limit. Effects adjust automatically under load; battle speed stays the same.">FPS: 60</button><button class="b" id="bBossPact" hidden>Boss pact</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
     </div>
-    <div class="board"><canvas id="cv"></canvas><div id="msg"></div><div id="timer" hidden title="Time left in this battle"></div></div>
+    <div id="touchAction" class="touch-task" hidden></div><div class="board"><canvas id="cv"></canvas><div id="msg"></div><div id="timer" hidden title="Time left in this battle"></div></div>
   </main>
   <aside class="col right">
     <div class="card">
       <h3>Shop <button class="b bigbtn" id="bBig" data-tip="Big Shop (200 gold): show 10 heroes instead of 5 for the rest of this run">🛒 ×10 · 200💰</button><span class="coins" id="coins"><span class="coin"></span><span id="sGold"></span></span><button class="b lockbtn" id="bLock">🔓 Lock</button></h3>
       <div class="shop" id="shop"></div>
-      <div class="odds" id="odds"></div>
+      <div class="odds" id="odds"></div><p class="touch-help">Tap a hero for details. Drag to buy and place.</p>
       <div class="actions">
         <button class="b blue" id="bReroll">Reroll · 2</button>
         <button class="b" id="bSell">Sell</button>
@@ -388,7 +403,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <button class="b go" id="bFight">⚔ Start battle</button>
     </div>
     <div class="card"><h3>Hero</h3><div id="info"></div></div>
-    <div class="card"><h3 class="shophead">Items <span class="hint">drag onto a hero</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="items" class="items"></div></div>
+    <div class="card"><h3 class="shophead">Items <span class="hint">drag onto a hero</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="itemTask" class="touch-task" hidden></div><div id="items" class="items"></div></div>
     <div class="card">
       <details id="howto"><summary>How to play</summary>
       <ol class="help">
@@ -436,7 +451,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 
 <div id="tip" hidden></div>
 <div id="bubble" hidden></div>
-<div id="heroCard" hidden></div>
+<div id="heroCard" hidden></div><div id="itemCard" class="itemcard" hidden></div>
 <div id="confirm" hidden></div>
 <div id="summary" hidden></div>
 <aside id="planner" hidden>
@@ -1187,6 +1202,27 @@ const U = Object.fromEntries([...UNITS,...SUMMONS,...MONSTERS].map(u=>[u.id,u]))
 const colorOf=t=>(CLASSES[U[t].cls]||{color:U[t].cls==='summon'?'#7fe8d0':'#c8a070'}).color;
 const $ = s=>document.querySelector(s);
 const cv=$('#cv'), ctx=cv.getContext('2d');
+const directTouch=e=>e.pointerType==='touch'||e.pointerType==='pen';
+let touchInput=false;
+function setInputMode(e){touchInput=directTouch(e);document.body.classList.toggle('touch-input',touchInput);}
+document.addEventListener('pointerdown',setInputMode,true);
+document.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&touchInput)setInputMode(e);},true);
+// Activate touch buttons on a stationary release, then reject the compatibility
+// click. Some mobile browsers omit/delay that click after a popup scrolls/reflows.
+let buttonTap=null,lastButtonTap=null;
+function suppressTouchClick(e){lastButtonTap={b:null,at:performance.now(),x:e.clientX,y:e.clientY};e.preventDefault();}
+const touchButton=t=>t.closest('button')&&!t.closest('#shop,#items,#spl')?t.closest('button'):null;
+document.addEventListener('pointerdown',e=>{buttonTap=null;const b=touchButton(e.target);if(directTouch(e)&&e.isPrimary!==false&&b&&!b.disabled)buttonTap={b,id:e.pointerId,x:e.clientX,y:e.clientY};},true);
+document.addEventListener('pointermove',e=>{if(buttonTap&&buttonTap.id===e.pointerId&&Math.hypot(e.clientX-buttonTap.x,e.clientY-buttonTap.y)>9)buttonTap=null;},true);
+document.addEventListener('pointercancel',()=>{buttonTap=null;},true);
+document.addEventListener('pointerup',e=>{if(directTouch(e)&&e.isPrimary!==false&&e.target.closest('#shop,#items,#cv'))suppressTouchClick(e);const t=buttonTap;if(!t||t.id!==e.pointerId)return;buttonTap=null;
+  if(!t.b.isConnected||t.b.disabled||!t.b.contains(e.target))return;
+  lastButtonTap={b:t.b,at:performance.now(),x:e.clientX,y:e.clientY};e.preventDefault();t.b.click();
+},true);
+document.addEventListener('click',e=>{const t=lastButtonTap;if(t&&touchInput&&e.detail>0&&touchButton(e.target)&&performance.now()-t.at<750&&(t.b===e.target.closest('button')||Math.hypot(e.clientX-t.x,e.clientY-t.y)<28)){e.preventDefault();e.stopImmediatePropagation();}},true);
+const capturePointer=(el,e)=>{try{el.setPointerCapture(e.pointerId);}catch(err){}};
+function positionMenu(c,e){c.style.left=Math.max(8,Math.min(innerWidth-c.offsetWidth-8,e.clientX+8))+'px';c.style.top=Math.max(8,Math.min(innerHeight-c.offsetHeight-8,e.clientY+8))+'px';}
+
 const RES=2;   // backing pixels per game pixel: matches the 2x HD sprites exactly (the page scales the canvas crisply); 3 cost 2.25x the drawing on big screens
 cv.width=W*RES; cv.height=H*RES;
 function fitBoard(){
@@ -1416,23 +1452,83 @@ function openCodex(note){
 }
 // ====== Hero detail card: click a hero in the Codex or the Team Plan ======
 // closes on a click anywhere outside it, on its ✕, or on Escape
-let heroCardFor=null;
-function openHeroCard(id){ const u=U[id]; if(!u) return; const cl=CLASSES[u.cls], o=ORIGINS[u.org], n=readCodex()[id], m=readMarks().includes(id);
+let heroCardFor=null,heroCardContext=null,itemCardContext=null;
+function openHeroCard(id,context={}){closeItemCard(); const u=U[id]; if(!u) return; const cl=CLASSES[u.cls], o=ORIGINS[u.org], n=readCodex()[id], m=readMarks().includes(id);
+  const owned=context.uid&&S.units.find(v=>v.uid===context.uid),live=context.fighter;
   const tiers=d=>d.map((s,i)=>`<div>${['②','③'][i]||''} ${s}</div>`).join('');
-  $('#heroCard').innerHTML=`<button class="hcx" data-hcclose title="Close">✕</button>`+infoHTML(id,1)+
+  $('#heroCard').innerHTML=`<button class="hcx" data-hcclose title="Close">✕</button>`+infoHTML(id,live?live.star:owned?owned.star:1,live?live.items:owned?owned.items:null,live,owned&&owned.fuse)+
     `<div class="chips"><span>👟 move ${u.ms}</span>${u.splash?'<span>💥 splash attacks</span>':''}${u.guard?`<span>🛡 Guardian Link ${Math.round(u.guard*100)}%</span>`:''}</div>`+
     (cl?`<div class="bon"><b style="color:${cl.color}">${cl.name}</b> class bonus${tiers(cl.desc)}</div>`:'')+
     (o?`<div class="bon"><b style="color:${o.color}">${o.icon} ${o.name}</b> origin bonus${tiers(o.desc)}</div>`:'')+
     `<div class="hca"><button class="b" data-hcmark>${m?'★ Remove from plan':'☆ Add to plan'}</button><span>${n?`Fielded ${n}×`:'Not fielded yet'}</span></div>`;
-  $('#heroCard').hidden=false; heroCardFor=id; hideBubble(); }
-const closeHeroCard=()=>{ $('#heroCard').hidden=true; heroCardFor=null; };
-document.addEventListener('pointerdown',e=>{ if(heroCardFor&&!e.target.closest('#heroCard')) closeHeroCard(); },true);
+  if(context.shopK!==undefined){const can=S.phase==='prep'&&S.shop[context.shopK]===id&&S.gold>=u.cost;
+    $('#heroCard').insertAdjacentHTML('beforeend',`<div class="detail-actions"><button class="b" data-shop-buy ${can?'':'disabled'}>Buy · ${u.cost} gold</button><button class="b" data-shop-place ${can?'':'disabled'}>Buy and place</button></div>`);
+  }
+  if(owned&&S.phase==='prep')$('#heroCard').insertAdjacentHTML('beforeend',`<div class="detail-actions"><button class="b" data-unit-move>Move / swap / fuse</button><button class="b" data-unit-sell>Sell · ${sellValue(owned)} gold</button></div>`);
+  if(!UNITS.some(v=>v.id===id))$('#heroCard .hca').remove();
+  $('#heroCard').hidden=false;heroCardFor=id;heroCardContext=context;hideBubble(); }
+const closeHeroCard=()=>{ $('#heroCard').hidden=true;heroCardFor=null;heroCardContext=null; };
+document.addEventListener('pointerdown',e=>{ if(e.isPrimary!==false&&heroCardFor&&!e.target.closest('#heroCard')) closeHeroCard(); },true);
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&heroCardFor){ closeHeroCard(); e.stopPropagation(); } },true);
 $('#heroCard').addEventListener('click',e=>{
-  if(e.target.closest('[data-hcclose]')) return closeHeroCard();
+  if(e.target.closest('[data-hcclose]'))return closeHeroCard();
+  const context=heroCardContext||{},uid=context.uid,id=heroCardFor;
+  if(e.target.closest('[data-shop-buy],[data-shop-place]')){
+    if(S.phase!=='prep'||S.shop[context.shopK]!==id)return closeHeroCard();
+    const place=e.target.closest('[data-shop-place]');closeHeroCard();
+    if(place)beginTouchAction({kind:'buy',k:context.shopK,id});else buy(context.shopK);return;
+  }
+  if(e.target.closest('[data-unit-move],[data-unit-sell]')){const unit=S.units.find(v=>v.uid===uid);if(!unit||S.phase!=='prep')return closeHeroCard();
+    const move=e.target.closest('[data-unit-move]');closeHeroCard();
+    if(move)beginTouchAction({kind:'move',uid});else askSell(e,heroName(unit.type,unit.fuse),sellValue(unit),()=>sellUnit(unit));return;
+  }
   if(e.target.closest('[data-hcmark]')){ const id=heroCardFor, m=readMarks();
     if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS){ e.target.closest('[data-hcmark]').textContent=`Plan is full (${MAX_MARKS})`; return; } else m.push(id);
-    setMarks(m); openHeroCard(id); } });
+    setMarks(m);openHeroCard(id,context); } });
+function closeItemCard(){ $('#itemCard').hidden=true;itemCardContext=null; }
+function openItemCard(i,key){closeHeroCard();const k=key||S.inv[i];if(!k)return;hideBubble();
+  const bag=Number.isInteger(i),prep=S.phase==='prep';itemCardContext={i,key:k};
+  $('#itemCard').innerHTML=`<button class="b close-detail" data-item-close aria-label="Close item details">✕</button>${itemTip(k)}`+
+    (bag?`<div class="detail-actions"><button class="b" data-item-equip ${prep?'':'disabled'}>${IT(k).use?'Use scroll':'Equip / enchant'}</button>${IT(k).use?'':`<button class="b" data-item-combine>Combine</button><button class="b" data-item-reroll ${prep&&S.gold>=REROLL_COST?'':'disabled'}>Reroll · ${REROLL_COST} gold</button>`}<button class="b" data-item-sell ${prep?'':'disabled'}>Sell · ${itemValue(k)} gold</button></div>`:'<p class="help">Use an Unbinding Scroll to remove held equipment.</p>');
+  $('#itemCard').hidden=false;
+}
+document.addEventListener('pointerdown',e=>{if(e.isPrimary!==false&&itemCardContext&&!e.target.closest('#itemCard'))closeItemCard();},true);
+$('#itemCard').onclick=e=>{if(e.target.closest('[data-item-close]'))return closeItemCard();if(!e.target.closest('[data-item-equip],[data-item-combine],[data-item-reroll],[data-item-sell]'))return;const c=itemCardContext;
+  if(!c||!Number.isInteger(c.i)||S.inv[c.i]!==c.key)return closeItemCard();
+  if(e.target.closest('[data-item-equip]')){closeItemCard();beginTouchAction({kind:'item',i:c.i,key:c.key});}
+  else if(e.target.closest('[data-item-combine]')){closeItemCard();beginTouchAction({kind:'combine',i:c.i,key:c.key});}
+  else if(e.target.closest('[data-item-reroll]')){closeItemCard();rerollItem(c.i);}
+  else if(e.target.closest('[data-item-sell]')){closeItemCard();askSell(e,INAME(c.key),itemValue(c.key),()=>{if(S.inv[c.i]===c.key)sellItem(c.i);});}
+};
+function touchActionText(){const a=S.touchAction;if(!a)return '';
+  if(a.kind==='buy')return `Buy ${U[a.id].name}: tap an empty friendly cell or bench slot`;
+  if(a.kind==='move')return 'Tap a friendly cell or bench slot to move, swap or fuse';
+  return a.kind==='combine'?'Tap another matching item in your bag':`Tap a hero to ${a.key==='scroll'?'use the scroll':'equip or enchant'}`;
+}
+function renderTouchAction(){for(const name of ['touchAction','itemTask']){const el=$('#'+name),show=!!S.touchAction&&(name==='touchAction'||S.touchAction.kind==='combine');
+  el.hidden=!show;if(show)el.innerHTML=`<span>${touchActionText()}</span><button class="b" data-touch-cancel>Cancel</button>`;}}
+function beginTouchAction(action){if(S.phase!=='prep'&&action.kind!=='combine')return;S.touchAction=action;S.selItem=null;renderTouchAction();
+  if(action.kind!=='combine')$('.center').scrollIntoView({block:'start',behavior:'smooth'});
+  else $('#items').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function cancelTouchAction(){S.touchAction=null;renderTouchAction();}
+for(const name of ['touchAction','itemTask'])$('#'+name).onclick=e=>{if(e.target.closest('[data-touch-cancel]'))cancelTouchAction();};
+addEventListener('keydown',e=>{if(e.key==='Escape'){closeItemCard();if(S)cancelTouchAction();}});
+function applyTouchCell(e,l){const a=S.touchAction;if(!a)return false;
+  if(S.phase!=='prep'){cancelTouchAction();return true;}if(!l){msg('Tap your half of the field or the bench');return true;}
+  if(a.kind==='buy'){if(S.shop[a.k]!==a.id){cancelTouchAction();return true;}buyTo(a.k,l);if(S.shop[a.k]!==a.id)cancelTouchAction();}
+  else if(a.kind==='move'){const u=S.units.find(v=>v.uid===a.uid),target=S.units.find(v=>sameLoc(v.loc,l));
+    if(!u){cancelTouchAction();return true;}const error=placeError(u,l);if(error){msg(error);return true;}
+    cancelTouchAction();if(canTryFuse(u,target))askFuse(e,u,target);else place(u,l);S.sel=u.uid;hoverId=null;render();renderUI();
+  }else if(a.kind==='item'){if(S.inv[a.i]!==a.key){cancelTouchAction();return true;}const u=S.units.find(v=>sameLoc(v.loc,l));if(!u){msg('Tap one of your heroes');return true;}
+    const before=JSON.stringify(S.inv);giveItem(u,a.i);if(JSON.stringify(S.inv)!==before)cancelTouchAction();render();renderUI();
+  }else msg('Tap a matching item in your bag');return true;
+}
+function combineTouchItem(i){const a=S.touchAction;if(!a||a.kind!=='combine')return false;
+  if(S.inv[a.i]!==a.key){cancelTouchAction();return true;}const before=JSON.stringify(S.inv);combineItems(a.i,i);
+  if(JSON.stringify(S.inv)!==before)cancelTouchAction();renderUI();return true;
+}
+
 // ====== Team Plan side panel ======
 // The 10 plan slots are the marked heroes (they glow in the shop). Drag heroes from the list into a slot,
 // drag slots to reorder, drag a slot back to the list to remove it. Presets save and load whole plans.
@@ -1455,11 +1551,11 @@ function renderPlanner(note){
   $('#planCount').textContent=`${marks.length} / ${MAX_MARKS} planned — they glow in the shop`;
   $('#planNote').innerHTML=note||'';
   $('#planSlots').innerHTML=Array.from({length:MAX_MARKS},(_,i)=>{ const id=marks[i];
-    if(!id) return `<div class="pc empty" data-slot="${i}"><span class="no">${i+1}</span>Drag a hero here</div>`;
+    if(!id) return `<div class="pc empty" data-slot="${i}"><span class="no">${i+1}</span>${touchInput?'Tap a hero below → Add to plan':'Drag a hero here'}</div>`;
     const u=U[id], cl=CLASSES[u.cls], o=ORIGINS[u.org];
     return `<div class="pc" draggable="true" data-slot="${i}" data-hero="${id}"><span class="no">${i+1}</span><div class="th">${thumbHTML(id,40)}</div>
       <div><span class="nm">${u.name}</span> <span class="meta"><span style="color:${cl?cl.color:''}">${cl?cl.name:''}</span> · ${o?o.icon+' '+o.name:''} · ${u.cost}g · HP ${u.hp} · ATK ${u.atk} · R ${u.range}</span>
-      <div class="sk">${skillHTML(id)}</div></div><button class="rm" data-rm="${i}" title="Remove from plan">✕</button></div>`; }).join('');
+      <div class="sk">${skillHTML(id)}</div></div><div class="plan-order"><button class="rm touch-order" data-pup="${i}" ${i?'':'disabled'} aria-label="Move up">↑</button><button class="rm touch-order" data-pdown="${i}" ${i<marks.length-1?'':'disabled'} aria-label="Move down">↓</button><button class="rm" data-rm="${i}" title="Remove from plan">✕</button></div></div>`; }).join('');
   const used=[...new Set(UNITS.map(u=>u.cls))].filter(k=>CLASSES[k]);
   $('#planCls').innerHTML=['all',...used].map(k=>`<button class="b ${k===planCls?'on':''}" data-cls="${k}" ${k==='all'?'':`style="color:${CLASSES[k].color}"`}>${k==='all'?'All':CLASSES[k].name}</button>`).join('');
   const q=$('#planSearch').value.toLowerCase().trim(), has=s=>(s||'').toLowerCase().includes(q);
@@ -1486,6 +1582,7 @@ $('#planner').addEventListener('click',e=>{
   if(q('[data-pundo]')&&planUndo){ const u=planUndo; planUndo=null; return setMarks(u); }
   if(q('#planClear')){ if(!m.length) return; planUndo=m; return setMarks([],`Plan cleared ${undoBtn}`); }
   if(q('[data-cls]')){ planCls=q('[data-cls]').dataset.cls; return renderPlanner(); }
+  if(q('[data-pup],[data-pdown]')){const b=q('[data-pup],[data-pdown]'),from=+(b.dataset.pup??b.dataset.pdown),to=from+(b.dataset.pup!==undefined?-1:1);if(to>=0&&to<m.length){[m[from],m[to]]=[m[to],m[from]];setMarks(m);}return;}
   if(q('[data-rm]')){ m.splice(+q('[data-rm]').dataset.rm,1); return setMarks(m); }
   const tile=q('.pt[data-hero]')||q('.pc[data-hero]');
   if(tile) return openHeroCard(tile.dataset.hero);   // click a hero: show its details (add or remove it there, or drag it)
@@ -1501,7 +1598,7 @@ $('#planner').addEventListener('click',e=>{
 });
 // drag and drop between the hero list and the plan slots
 const clearOver=()=>document.querySelectorAll('#planner .over,#planner .dragging').forEach(x=>x.classList.remove('over','dragging'));
-$('#planner').addEventListener('dragstart',e=>{ const el=e.target.closest('[data-hero]'); if(!el) return;
+$('#planner').addEventListener('dragstart',e=>{if(touchInput){e.preventDefault();return;} const el=e.target.closest('[data-hero]'); if(!el) return;
   planDrag={id:el.dataset.hero,fromSlot:el.dataset.slot!==undefined}; e.dataTransfer.setData('text/plain',planDrag.id); e.dataTransfer.effectAllowed='move';
   hideBubble(); if(planDrag.fromSlot) el.classList.add('dragging'); });
 $('#planner').addEventListener('dragend',()=>{ planDrag=null; clearOver(); });
@@ -1687,7 +1784,7 @@ function showSummary(){
   if(rec) SND.play('star');
   lbRunOver();
 }
-function newGame(mode='normal',mod){ SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
+function newGame(mode='normal',mod){cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -1736,7 +1833,7 @@ function askFuse(e,a,b){
       `<div class="fuselead">Lead: ${leadBtn(a)}${leadBtn(b)}</div>
        <div style="font-size:12px;margin-top:4px;max-width:330px">Becomes the <b style="color:#ffe27a">${fusedName(lead.type,other.type)}</b> with the combo skill <b style="color:#ffe27a">${comboName(lead.type,other.type)}</b>. Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), casts both skills at once (${fuseMana(lead.type,other.type)} mana), holds 2 items.</div>`}
     <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`; };
-  draw(); c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
+  draw(); c.hidden=false;positionMenu(c,e);
   c.onclick=ev=>{ const l=ev.target.closest('[data-lead]'); if(l){ lead=l.dataset.lead==='a'?a:b; draw(); return; }
     if(ev.target.closest('[data-yes]')&&!fuseError()&&S.units.includes(a)&&S.units.includes(b)){ fuse(a,b,lead); render(); renderUI(); } if(ev.target.closest('button')) c.hidden=true; };
 }
@@ -1873,46 +1970,54 @@ function clickCell(l){
   S.sel=u&&u.uid!==S.sel?u.uid:null; S.selItem=null;
 }
 // press on a unit and drag it to a cell; a press without moving still works as a click
-let dragU=null;
+let dragU=null,canvasTap=null;
 const shopCard=document.getElementById('shop').closest('.card');
+function inspectFighter(e,touch){
+  const l=cellAt(e);hoverId=null;
+  if(l&&l.w==='bench'){const u=S.units.find(v=>sameLoc(v.loc,l));S.inspect=null;S.sel=u?u.uid:null;renderInfo();render();if(touch&&u)openHeroCard(u.type,{uid:u.uid});return;}
+  const {x,y}=canvasPos(e),cx=x/CELL,cy=(y+10)/CELL;
+  const f=S.fight.f.filter(u=>u.hp>0).sort((p,q)=>Math.hypot(p.x-cx,p.y-cy)-Math.hypot(q.x-cx,q.y-cy))[0];
+  S.inspect=f&&Math.hypot(f.x-cx,f.y-cy)<.8?f:null;S.sel=null;renderInfo();
+  if(touch&&S.inspect)openHeroCard(S.inspect.type,{fighter:S.inspect});
+}
 cv.addEventListener('pointerdown',e=>{
-  if(e.button===2) return;   // right button: handled by contextmenu (sell)
-  if(S.phase==='over'){ newGame(S.mode,S.mod); return; }
-  if(S.fight&&S.phase!=='prep'){   // battle: click a fighter (or a hero on the bench) to see its stats and skill
-    const bl=cellAt(e); if(bl&&bl.w==='bench'){ const u=S.units.find(v=>sameLoc(v.loc,bl)); S.inspect=null; S.sel=u?u.uid:null; hoverId=null; renderInfo(); render(); return; }
-    const {x,y}=canvasPos(e), cx=x/CELL, cy=(y+10)/CELL;
-    const f=S.fight.f.filter(u=>u.hp>0).sort((p,q)=>Math.hypot(p.x-cx,p.y-cy)-Math.hypot(q.x-cx,q.y-cy))[0];
-    S.inspect=f&&Math.hypot(f.x-cx,f.y-cy)<.8?f:null; S.sel=null; hoverId=null; renderInfo(); return; }
-  if(S.phase!=='prep') return;
-  const l=cellAt(e); if(!l){ S.sel=null; S.selItem=null; render(); renderUI(); return; }
-  const u=S.units.find(v=>sameLoc(v.loc,l));
-  if(u){ dragU={u,x0:e.clientX,y0:e.clientY,moved:false,pos:canvasPos(e),over:l}; cv.setPointerCapture(e.pointerId); return; }
-  clickCell(l); render(); renderUI();
+  if(e.button!==0||e.isPrimary===false)return;
+  if(S.phase==='over'){newGame(S.mode,S.mod);return;}
+  hoverId=null;
+  if(S.fight&&S.phase!=='prep'){
+    if(directTouch(e)){canvasTap={pointerId:e.pointerId,x:e.clientX,y:e.clientY,moved:false};capturePointer(cv,e);}else inspectFighter(e,false);return;
+  }
+  if(S.phase!=='prep')return;const l=cellAt(e);
+  if(S.touchAction){canvasTap={pointerId:e.pointerId,x:e.clientX,y:e.clientY,moved:false};capturePointer(cv,e);return;}
+  const u=l&&S.units.find(v=>sameLoc(v.loc,l));
+  if(u){dragU={u,pointerId:e.pointerId,touch:directTouch(e),clientX:e.clientX,clientY:e.clientY,x0:e.clientX,y0:e.clientY,moved:false,pos:canvasPos(e),over:l};capturePointer(cv,e);return;}
+  if(directTouch(e)){canvasTap={pointerId:e.pointerId,x:e.clientX,y:e.clientY,moved:false};capturePointer(cv,e);return;}
+  if(l)clickCell(l);else{S.sel=null;S.selItem=null;}render();renderUI();
 });
 // small "Sell X for N gold?" popup at the cursor
 function askSell(e,what,gold,onYes){
   const c=$('#confirm'); c.innerHTML=`<div>Sell <b>${what}</b> for <b>${gold} gold</b>?</div><div class="row"><button class="b" data-yes>Sell</button><button class="b" data-no>Cancel</button></div>`;
-  c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
+  c.hidden=false;positionMenu(c,e);
   c.onclick=ev=>{ if(ev.target.closest('[data-yes]')) onYes(); if(ev.target.closest('button')) c.hidden=true; };
 }
 cv.addEventListener('contextmenu',e=>{   // right-click a hero: confirm, then sell
-  e.preventDefault(); if(S.phase!=='prep') return;
+  e.preventDefault();if(touchInput||S.phase!=='prep')return;
   const l=cellAt(e), u=l&&S.units.find(v=>sameLoc(v.loc,l)); if(!u) return;
   askSell(e,`${U[u.type].name} ${'★'.repeat(u.star)}`,sellValue(u),()=>sellUnit(u));
 });
 // items sell for 2 gold (rare 4, scroll 1), times the enchant level: an enchanted item used up several copies
 const itemValue=k=>5*ILV(k);   // 5 gold per item (an enchanted item is made of several)
-function sellItem(i){ const k=S.inv[i]; if(!k) return; const v=itemValue(k); S.gold+=v; S.inv.splice(i,1); SND.play('sell');
+function sellItem(i){if(S.phase!=='prep')return;const k=S.inv[i]; if(!k) return; const v=itemValue(k); S.gold+=v; S.inv.splice(i,1); SND.play('sell');
   msg(`Sold ${IT(k).icon} ${INAME(k)} for ${v} gold`); renderUI(); }
 // right-click an item: reroll it into another random item (same rarity and enchant level) for 30 gold, or sell it
 const REROLL_COST=30;
-function rerollItem(i){ const k=S.inv[i]; if(!k||IT(k).use) return; if(S.gold<REROLL_COST) return msg(`Rerolling an item costs ${REROLL_COST} gold`);
+function rerollItem(i){if(S.phase!=='prep')return;const k=S.inv[i]; if(!k||IT(k).use) return; if(S.gold<REROLL_COST) return msg(`Rerolling an item costs ${REROLL_COST} gold`);
   const base=k.split(':')[0], pool=(ITEMS[base].rare?RARE:COMMON).filter(b=>b!==base), nb=pool[Math.floor(Math.random()*pool.length)], nk=ILV(k)>1?nb+':'+ILV(k):nb;
   S.gold-=REROLL_COST; S.inv[i]=nk; SND.play('reroll'); msg(`🎲 ${IT(k).icon} ${INAME(k)} → ${IT(nk).icon} ${INAME(nk)}`); renderUI(); }
-function askItem(e,i){ const k=S.inv[i], c=$('#confirm'), can=!IT(k).use;
+function askItem(e,i){if(S.phase!=='prep')return;const k=S.inv[i];if(!k)return;const c=$('#confirm'),can=!IT(k).use;
   c.innerHTML=`<div><b>${IT(k).icon} ${INAME(k)}</b></div><div class="row">${can?`<button class="b" data-reroll ${S.gold<REROLL_COST?'disabled':''}>🎲 Reroll (${REROLL_COST} gold)</button> `:''}<button class="b" data-sell>Sell (${itemValue(k)} gold)</button> <button class="b" data-no>Cancel</button></div>`+
     (can?`<div style="font-size:12px;margin-top:6px;max-width:300px">Reroll turns it into another random ${IT(k).rare?'rare ':''}item and keeps its enchant level.</div>`:'');
-  c.hidden=false; c.style.left=Math.min(innerWidth-c.offsetWidth-8,e.clientX+8)+'px'; c.style.top=Math.min(innerHeight-c.offsetHeight-8,e.clientY+8)+'px';
+  c.hidden=false;positionMenu(c,e);
   c.onclick=ev=>{ if(ev.target.closest('[data-reroll]')) rerollItem(i); if(ev.target.closest('[data-sell]')) sellItem(i); if(ev.target.closest('button')) c.hidden=true; }; }
 // buy an Unbinding Scroll (takes a hero's item off) for 50 gold
 const SCROLL_COST=50;
@@ -1922,30 +2027,30 @@ $('#items').addEventListener('contextmenu',e=>{ const b=e.target.closest('.it');
 document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#confirm')&&!(S&&S.fight&&S.fight.paused)) $('#confirm').hidden=true; },true);
 addEventListener('keydown',e=>{ if(e.key==='Escape'&&!(S&&S.fight&&S.fight.paused)) $('#confirm').hidden=true; });
 cv.addEventListener('pointermove',e=>{
-  if(!dragU) return;
-  if(!dragU.moved&&Math.hypot(e.clientX-dragU.x0,e.clientY-dragU.y0)>6){ dragU.moved=true; msg(`Drop on the shop to sell for ${sellValue(dragU.u)} gold`); }
-  dragU.pos=canvasPos(e); dragU.over=cellAt(e);
-  const r=shopCard.getBoundingClientRect();
-  dragU.sell=dragU.moved&&e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+  if(canvasTap&&canvasTap.pointerId===e.pointerId&&Math.hypot(e.clientX-canvasTap.x,e.clientY-canvasTap.y)>9)canvasTap.moved=true;
+  if(!dragU||dragU.pointerId!==e.pointerId)return;
+  if(!dragU.moved&&Math.hypot(e.clientX-dragU.x0,e.clientY-dragU.y0)>8){dragU.moved=true;msg(`Drop on the shop to sell for ${sellValue(dragU.u)} gold`);}
+  dragU.clientX=e.clientX;dragU.clientY=e.clientY;dragU.pos=canvasPos(e);dragU.over=cellAt(e);
+  const r=shopCard.getBoundingClientRect();dragU.sell=dragU.moved&&e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
   shopCard.classList.toggle('sellzone',dragU.sell);
 });
 cv.addEventListener('pointerup',e=>{
-  if(!dragU) return;
-  const d=dragU; dragU=null; shopCard.classList.remove('sellzone');
-  if(S.phase!=='prep') return;
-  if(d.moved&&d.sell){ sellUnit(d.u); return; }
-  if(d.moved){ const l=cellAt(e), tgt=l&&S.units.find(v=>sameLoc(v.loc,l));
-    if(canTryFuse(d.u,tgt)){ askFuse(e,d.u,tgt); render(); renderUI(); return; }
-    place(d.u,l); S.sel=null; }
-  else clickCell(d.u.loc);
-  render(); renderUI();
+  if(canvasTap&&canvasTap.pointerId===e.pointerId){const tap=canvasTap;canvasTap=null;if(tap.moved)return;
+    if(S.fight&&S.phase!=='prep')inspectFighter(e,true);
+    else if(S.phase==='prep'){const l=cellAt(e);if(!applyTouchCell(e,l)){if(l)clickCell(l);else S.sel=null;render();renderUI();}}return;
+  }
+  if(!dragU||dragU.pointerId!==e.pointerId)return;
+  const d=dragU;dragU=null;shopCard.classList.remove('sellzone');if(S.phase!=='prep'||!S.units.includes(d.u))return;
+  if(d.moved&&d.sell){sellUnit(d.u);return;}
+  if(d.moved){const l=cellAt(e),tgt=l&&S.units.find(v=>sameLoc(v.loc,l));if(canTryFuse(d.u,tgt)){askFuse(e,d.u,tgt);render();renderUI();return;}place(d.u,l);S.sel=null;}
+  else if(d.touch){S.sel=d.u.uid;S.selItem=null;hoverId=null;openHeroCard(d.u.type,{uid:d.u.uid});}
+  else{hoverId=null;clickCell(d.u.loc);}render();renderUI();
 });
-cv.addEventListener('pointercancel',()=>{ dragU=null; shopCard.classList.remove('sellzone'); });
-// the field fills most of a phone screen: swipes scroll the page, except when they start on one of your units
-cv.addEventListener('touchstart',e=>{
-  const l=cellAt(e.touches[0]);
-  if(S.phase==='prep'&&l&&S.units.some(v=>sameLoc(v.loc,l))) e.preventDefault();
-},{passive:false});
+for(const type of ['pointercancel','lostpointercapture'])cv.addEventListener(type,e=>{
+  if(dragU&&dragU.pointerId===e.pointerId)dragU=null;if(canvasTap&&canvasTap.pointerId===e.pointerId)canvasTap=null;shopCard.classList.remove('sellzone');
+});
+// Keep native page scrolling on empty ground; reserve a drag that starts on a hero.
+cv.addEventListener('touchstart',e=>{const l=cellAt(e.touches[0]);if(e.touches.length===1&&S.phase==='prep'&&l&&S.units.some(v=>sameLoc(v.loc,l)))e.preventDefault();},{passive:false});
 
 // ====== combat ======
 // sprites stand on their feet and are ~1 cell tall (bosses 1.5): keep the head and bars inside the field
@@ -2043,7 +2148,7 @@ function startFight(){
   if(S.phase!=='prep'||['#cards','#event','#lootChoice','#bossPact'].some(k=>!$(k).hidden))return;
   const auto=autoFill(); if(auto.length) msg(`Auto-placed ${auto.join(', ')} from the bench`);
   if(!onBoard().length) return msg('Place units on the field first');
-  S.sel=null; S.selItem=null; S.freeRerolls=0;   // preparation-only mastery rewards expire on a successful battle start
+  cancelGestures();S.touchAction=null;closeHeroCard();closeItemCard();S.sel=null; S.selItem=null; S.freeRerolls=0;   // preparation-only mastery rewards expire on a successful battle start
   const kind=roundKind(S.round);
   for(const u of onBoard()){ const b=U[u.type]; S.clsUse[b.cls]=(S.clsUse[b.cls]||0)+1; S.orgUse[b.org]=(S.orgUse[b.org]||0)+1; }   // for the end-of-run summary
   const f=onBoard().map(u=>{ const x=Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items}); if(u.fuse) fuseFighter(x,u.fuse); return x; });
@@ -2116,7 +2221,7 @@ function frame(now){
       if(S.fight.stop>0)S.fight.stop=Math.max(0,S.fight.stop-SIM_DT);else step(SIM_DT*speed*PACE);
     }}
   }else simAccum=0;
-  SND.update(dt);
+  updateDragScroll(dt);SND.update(dt);
   if(S&&S.inspect&&S.fight&&(ANIM*5|0)!==((ANIM-dt)*5|0)) renderInfo();   // live stats, 5x a second
   if(S&&S.ufx.length){ for(const u of S.ufx) u.t-=dt; S.ufx=S.ufx.filter(u=>u.t>0); }
   if(S&&drawDue(now)){const begin=performance.now();render();const cost=performance.now()-begin;
@@ -3416,15 +3521,24 @@ const itemTip=k=>`<div class="tipi"><b>${IT(k).icon} ${INAME(k)}</b>${IT(k).rare
 let bubbleFor=null;
 const hideBubble=()=>{ $('#bubble').hidden=true; bubbleFor=null; };
 function bubble(el,html){
-  const b=$('#bubble'); b.innerHTML=html; b.hidden=false; bubbleFor=el;
+  const b=$('#bubble');b.classList.toggle('touch-bubble',touchInput);b.innerHTML=html; b.hidden=false; bubbleFor=el;
   const r=el.getBoundingClientRect(), w=b.offsetWidth, h=b.offsetHeight;
   const above=r.top-h-12>=6, x=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2));
-  b.style.left=x+'px'; b.style.top=(above?r.top-h-12:r.bottom+12)+'px'; b.classList.toggle('below',!above);
+  b.style.left=x+'px';b.style.top=Math.max(8,Math.min(innerHeight-h-8,above?r.top-h-12:r.bottom+12))+'px'; b.classList.toggle('below',!above);
   b.style.setProperty('--ax',(r.left+r.width/2-x)+'px');
 }
-document.addEventListener('mouseover',e=>{ const el=e.target.closest('[data-item],[data-tip]'); if(el&&!itemDrag) bubble(el,el.dataset.item?itemTip(el.dataset.item):el.dataset.tip); });
-document.addEventListener('mouseout',e=>{ const el=e.target.closest('[data-item],[data-tip]'); if(el&&!el.contains(e.relatedTarget)) hideBubble(); });
-document.addEventListener('pointerdown',hideBubble,true);   // any click anywhere closes it
+document.addEventListener('mouseover',e=>{ const el=e.target.closest('[data-item],[data-tip]'); if(el&&!itemDrag&&!touchInput) bubble(el,el.dataset.item?itemTip(el.dataset.item):el.dataset.tip); });
+document.addEventListener('mouseout',e=>{ const el=e.target.closest('[data-item],[data-tip]'); if(!touchInput&&el&&!el.contains(e.relatedTarget))hideBubble(); });
+let hintTap=null;
+document.addEventListener('pointerdown',e=>{hideBubble();hintTap=null;if(!directTouch(e)||e.isPrimary===false)return;
+  const el=e.target.closest('[data-item],[data-tip]');if(!el||e.target.closest('.su,#items,.pt,.pc,button,a,input,select'))return;
+  hintTap={el,pointerId:e.pointerId,x:e.clientX,y:e.clientY};
+},true);
+document.addEventListener('pointermove',e=>{if(hintTap&&hintTap.pointerId===e.pointerId&&Math.hypot(e.clientX-hintTap.x,e.clientY-hintTap.y)>9)hintTap=null;},true);
+document.addEventListener('pointercancel',()=>{hintTap=null;},true);
+document.addEventListener('pointerup',e=>{const t=hintTap;if(!t||t.pointerId!==e.pointerId)return;hintTap=null;if(!t.el.isConnected)return;suppressTouchClick(e);
+  if(t.el.dataset.item)openItemCard(undefined,t.el.dataset.item);else bubble(t.el,t.el.dataset.tip);
+});
 addEventListener('scroll',hideBubble,true); addEventListener('blur',hideBubble);
 function renderItems(){
   $('#items').innerHTML=S.inv.length?S.inv.map((k,i)=>`<button class="it ${IT(k).rare?'rare':''}" data-i="${i}" data-item="${k}">${IT(k).icon}${ILV(k)>1?`<span class="lv">+${ILV(k)-1}</span>`:''}</button>`).join('')
@@ -3466,10 +3580,10 @@ function renderUI(){ AURA_ON=hasReward(readRewards(),'aura');
   $('#sCap').textContent=`${onBoard().length} / ${cap()}`; $('#sInt').textContent=`+${Math.min(5,Math.floor(S.gold/10))}`;
   $('#sStreak').textContent=S.streak>1?`🔥${S.streak}`:S.streak<-1?`💧${-S.streak}`:'–';
   $('#sNext').textContent=(S.mode==='daily'?'📅 ':S.mode==='hard'?'💀 ':'')+(roundKind(S.round)==='boss'?`💀 Boss: ${U[bossFor(S.round)].name}`:KIND_LABEL[roundKind(S.round)])+(roundKind(S.round)==='pvp'&&S.round>2?` · enemy power +${Math.round((enemyPower(S.round)-1)*100)}%`:'');
-  renderItems(); renderMeter();
+  renderTouchAction();renderItems(); renderMeter();
   const prep=S.phase==='prep';
   const marks=readMarks();
-  $('#shop').innerHTML=S.shop.map((id,k)=>id?`<button class="su c${U[id].cost}${marks.includes(id)?' marked':''}" data-k="${k}" data-id="${id}" ${!prep||S.gold<U[id].cost?'disabled':''} style="--cc:${colorOf(id)}">
+  $('#shop').innerHTML=S.shop.map((id,k)=>id?`<button class="su c${U[id].cost}${marks.includes(id)?' marked':''}${!prep||S.gold<U[id].cost?' unavailable':''}" data-k="${k}" data-id="${id}" aria-label="${U[id].name}, ${U[id].cost} gold" style="--cc:${colorOf(id)}">
     <div class="th">${thumbHTML(id,30)}</div><div class="nm">${U[id].name}</div><div class="cl">${ORIGINS[U[id].org].icon} ${CLASSES[U[id].cls].name}</div><div class="c">${U[id].cost}</div></button>`:`<div></div>`).join('');
   $('#bReroll').textContent=S.freeRerolls>0?`Reroll FREE ×${S.freeRerolls}`:'Reroll · 2';
   $('#bReroll').title=S.freeRerolls>0?'Free shop rerolls expire when battle starts.':'Reroll the shop for 2 gold.';
@@ -3497,37 +3611,35 @@ function renderUI(){ AURA_ON=hasReward(readRewards(),'aura');
 }
 let synAll=false; try{ synAll=localStorage.getItem('ab_synall')==='1'; }catch(e){}
 $('#synAll').onclick=()=>{ synAll=!synAll; try{ localStorage.setItem('ab_synall',synAll?'1':'0'); }catch(e){} renderUI(); };
-// touch screens have no hover: press and hold a shop unit to see its stats, tap to buy
-let peekTimer=null, peeked=false;
-function showTip(b){
-  const tip=$('#tip'); tip.innerHTML=infoHTML(b.dataset.id,1); tip.hidden=false;
-  const r=b.getBoundingClientRect(), w=tip.offsetWidth, h=tip.offsetHeight;
-  tip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';
-  tip.style.top=(r.top-h-8>=8?r.top-h-8:r.bottom+8)+'px';
+// A tap opens persistent details; a drag buys directly into a friendly cell.
+function cancelGestures(){
+  if(shopDrag&&shopDrag.ghost)shopDrag.ghost.remove();if(itemDrag&&itemDrag.ghost)itemDrag.ghost.remove();
+  shopDrag=null;itemDrag=null;dragU=null;canvasTap=null;if(typeof shopCard!=='undefined')shopCard.classList.remove('sellzone');
 }
-function hideTip(){ clearTimeout(peekTimer); $('#tip').hidden=true; }
-$('#shop').addEventListener('pointerdown',e=>{ const b=e.target.closest('.su'); peeked=false; if(!b||e.pointerType==='mouse') return;
-  peekTimer=setTimeout(()=>{ peeked=true; showTip(b); },350); });
-for(const ev of ['pointerup','pointercancel','pointerleave']) $('#shop').addEventListener(ev,hideTip);
-// right-click a shop hero: mark it (it glows in the shop and joins your Team Plan), or remove its mark
-$('#shop').addEventListener('contextmenu',e=>{ const b=e.target.closest('.su'); if(!b) return; e.preventDefault();
-  const id=b.dataset.id, m=readMarks(); if(!id) return;
-  if(m.includes(id)){ m.splice(m.indexOf(id),1); setMarks(m); msg(`Removed the mark from ${U[id].name}`); }
-  else if(m.length>=MAX_MARKS) msg(`You can mark up to ${MAX_MARKS} heroes — right-click a marked hero to remove its mark`);
-  else { m.push(id); setMarks(m); msg(`Marked ${U[id].name}: it glows in the shop`); } });
-$('#shop').addEventListener('click',e=>{ const b=e.target.closest('.su'); if(!b) return; if(peeked||shopDragged){ peeked=false; shopDragged=false; return; } buy(+b.dataset.k); });
-// drag a shop card onto the field or bench: buys it and puts it there
-$('#shop').addEventListener('dragstart',e=>e.preventDefault());   // no native image dragging inside the shop
-$('#shop').addEventListener('pointerdown',e=>{ const b=e.target.closest('.su'); if(!b||b.disabled||e.pointerType!=='mouse'||e.button!==0) return;
-  shopDrag={k:+b.dataset.k,id:b.dataset.id,x0:e.clientX,y0:e.clientY,moved:false,ghost:null,over:null}; b.setPointerCapture(e.pointerId); });
-$('#shop').addEventListener('pointermove',e=>{ const d=shopDrag; if(!d) return;
-  if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>6){ d.moved=true; d.ghost=document.createElement('div'); d.ghost.className='dragghost hero'; d.ghost.innerHTML=thumbHTML(d.id,40); document.body.appendChild(d.ghost); }
-  if(d.moved){ d.ghost.style.left=e.clientX+'px'; d.ghost.style.top=e.clientY+'px'; d.over=cellAt(e); render(); } });
-$('#shop').addEventListener('pointerup',e=>{ const d=shopDrag; shopDrag=null; if(!d||!d.moved) return; d.ghost.remove(); shopDragged=true; setTimeout(()=>{ shopDragged=false; },0);
-  const l=cellAt(e); if(l) buyTo(d.k,l); else render(); });
-$('#shop').addEventListener('pointercancel',()=>{ if(shopDrag&&shopDrag.ghost) shopDrag.ghost.remove(); shopDrag=null; render(); });
-$('#shop').addEventListener('mouseover',e=>{ const b=e.target.closest('.su'); const id=b?b.dataset.id:null; if(id!==hoverId){ hoverId=id; renderInfo(); } });
-$('#shop').addEventListener('mouseleave',()=>{ hoverId=null; renderInfo(); });
+addEventListener('blur',cancelGestures);addEventListener('visibilitychange',()=>{if(document.hidden)cancelGestures();});
+$('#shop').addEventListener('contextmenu',e=>{const b=e.target.closest('.su');if(!b)return;e.preventDefault();if(touchInput)return;
+  const id=b.dataset.id,m=readMarks();if(m.includes(id))m.splice(m.indexOf(id),1);else if(m.length>=MAX_MARKS)return msg(`Plan is full (${MAX_MARKS})`);else m.push(id);setMarks(m);
+});
+$('#shop').addEventListener('click',e=>{const b=e.target.closest('.su');if(!b||shopDragged)return;if(touchInput||(e.detail===0&&matchMedia('(hover:none)').matches)){if(e.detail===0)openHeroCard(b.dataset.id,{shopK:+b.dataset.k});return;}buy(+b.dataset.k);});
+$('#shop').addEventListener('dragstart',e=>e.preventDefault());
+$('#shop').addEventListener('pointerdown',e=>{const b=e.target.closest('.su');if(!b||e.button!==0||e.isPrimary===false)return;
+  shopDrag={k:+b.dataset.k,id:b.dataset.id,pointerId:e.pointerId,touch:directTouch(e),clientX:e.clientX,clientY:e.clientY,x0:e.clientX,y0:e.clientY,moved:false,ghost:null,over:null};capturePointer(b,e);
+});
+$('#shop').addEventListener('pointermove',e=>{const d=shopDrag;
+  if(!d){if(e.pointerType==='mouse'){const b=e.target.closest('.su'),id=b&&b.dataset.id;if(id!==hoverId){hoverId=id;renderInfo();}}return;}
+  if(d.pointerId!==e.pointerId)return;d.clientX=e.clientX;d.clientY=e.clientY;if(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>8)d.shifted=true;
+  if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>8&&S.phase==='prep'&&S.gold>=U[d.id].cost){
+    d.moved=true;d.ghost=document.createElement('div');d.ghost.className='dragghost hero';d.ghost.innerHTML=thumbHTML(d.id,40);document.body.appendChild(d.ghost);hideBubble();
+  }
+  if(d.moved){d.ghost.style.left=e.clientX+'px';d.ghost.style.top=e.clientY+'px';d.over=cellAt(e);render();}
+});
+$('#shop').addEventListener('pointerup',e=>{const d=shopDrag;if(!d||d.pointerId!==e.pointerId)return;shopDrag=null;if(d.ghost)d.ghost.remove();
+  if(d.moved){shopDragged=true;setTimeout(()=>{shopDragged=false;},0);if(S.shop[d.k]===d.id)buyTo(d.k,cellAt(e));else render();}
+  else if(d.touch&&!d.shifted){hoverId=null;openHeroCard(d.id,{shopK:d.k});}
+});
+for(const type of ['pointercancel','lostpointercapture'])$('#shop').addEventListener(type,e=>{if(shopDrag&&shopDrag.pointerId===e.pointerId){if(shopDrag.ghost)shopDrag.ghost.remove();shopDrag=null;render();}});
+$('#shop').addEventListener('mouseover',e=>{if(touchInput)return;const b=e.target.closest('.su'),id=b&&b.dataset.id;if(id!==hoverId){hoverId=id;renderInfo();}});
+$('#shop').addEventListener('mouseleave',()=>{if(!touchInput){hoverId=null;renderInfo();}});
 $('#lootRow').onclick=e=>{const b=e.target.closest('[data-loot]');
   if(!b||$('#lootChoice').hidden||S.phase!=='prep'||!S.pendingLoot||!S.pendingLoot.includes(b.dataset.loot))return;
   const k=b.dataset.loot;$('#lootChoice').hidden=true;S.pendingLoot=null;S.inv.push(k);SND.play('star');msg(`${IT(k).icon} ${INAME(k)} claimed`);renderUI();nextPrepOffer();
@@ -3550,24 +3662,30 @@ $('#bBig').onclick=buyBigShop;
 $('#bLock').onclick=()=>{ S.locked=!S.locked; msg(S.locked?'Shop locked for the next round (lock again after that to keep it)':'Shop unlocked'); renderUI(); };
 // items: drag one onto a hero (equip / enchant) or onto the same item (combine)
 let itemDrag=null;
-$('#items').addEventListener('pointerdown',e=>{ const b=e.target.closest('.it'); if(!b) return;
-  itemDrag={i:+b.dataset.i,x0:e.clientX,y0:e.clientY,moved:false,ghost:null,over:null}; b.setPointerCapture(e.pointerId); });
-$('#items').addEventListener('pointermove',e=>{ const d=itemDrag; if(!d) return;
-  if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>6){
-    d.moved=true; d.ghost=document.createElement('div'); d.ghost.className='dragghost'; d.ghost.textContent=IT(S.inv[d.i]).icon; $('#bubble').hidden=true; document.body.appendChild(d.ghost); }
-  if(d.moved){ d.ghost.style.left=e.clientX+'px'; d.ghost.style.top=e.clientY+'px'; d.over=cellAt(e);
-    const r=shopCard.getBoundingClientRect(); d.sell=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom; shopCard.classList.toggle('sellzone',d.sell); } });
-$('#items').addEventListener('pointerup',e=>{ const d=itemDrag; itemDrag=null; if(!d) return; if(d.ghost) d.ghost.remove(); shopCard.classList.remove('sellzone');
-  if(e.button===2) return;   // right-click: handled by contextmenu (sell)
-  if(!d.moved) return msg('Drag the item onto a hero to equip it, or onto the shop to sell it');   // items are given by dragging only
+$('#items').addEventListener('pointerdown',e=>{const b=e.target.closest('.it');if(!b||e.button!==0||e.isPrimary===false)return;
+  itemDrag={i:+b.dataset.i,key:S.inv[+b.dataset.i],pointerId:e.pointerId,touch:directTouch(e),clientX:e.clientX,clientY:e.clientY,x0:e.clientX,y0:e.clientY,moved:false,ghost:null,over:null};capturePointer(b,e);
+});
+$('#items').addEventListener('pointermove',e=>{const d=itemDrag;if(!d||d.pointerId!==e.pointerId)return;d.clientX=e.clientX;d.clientY=e.clientY;
+  if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>8){d.moved=true;d.ghost=document.createElement('div');d.ghost.className='dragghost';d.ghost.textContent=IT(d.key).icon;document.body.appendChild(d.ghost);hideBubble();}
+  if(d.moved){d.ghost.style.left=e.clientX+'px';d.ghost.style.top=e.clientY+'px';d.over=cellAt(e);const r=shopCard.getBoundingClientRect();d.sell=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;shopCard.classList.toggle('sellzone',d.sell);}
+});
+$('#items').addEventListener('pointerup',e=>{const d=itemDrag;if(!d||d.pointerId!==e.pointerId)return;itemDrag=null;if(d.ghost)d.ghost.remove();shopCard.classList.remove('sellzone');
+  if(S.inv[d.i]!==d.key)return;if(!d.moved){if(!combineTouchItem(d.i)&&d.touch)openItemCard(d.i);return;}
   const onItem=document.elementFromPoint(e.clientX,e.clientY)?.closest('#items .it');
-  if(onItem){ combineItems(d.i,+onItem.dataset.i); renderUI(); return; }   // combining bag items works during battle too
-  if(S.phase!=='prep') return msg('During battle you can only combine items in your bag — equip or sell between rounds');
-  if(d.sell) return sellItem(d.i);
-  const l=cellAt(e), u=l&&S.units.find(v=>sameLoc(v.loc,l));
-  if(!u) return msg('Drop the item on one of your heroes');
-  giveItem(u,d.i); render(); renderUI(); });
-$('#items').addEventListener('pointercancel',()=>{ if(itemDrag&&itemDrag.ghost) itemDrag.ghost.remove(); itemDrag=null; shopCard.classList.remove('sellzone'); });
+  if(onItem){combineItems(d.i,+onItem.dataset.i);renderUI();return;}
+  if(S.phase!=='prep')return msg('During battle you can combine bag items; equip and sell between rounds');
+  if(d.sell)return sellItem(d.i);const l=cellAt(e),u=l&&S.units.find(v=>sameLoc(v.loc,l));if(!u)return msg('Drop the item on one of your heroes');giveItem(u,d.i);render();renderUI();
+});
+for(const type of ['pointercancel','lostpointercapture'])$('#items').addEventListener(type,e=>{if(itemDrag&&itemDrag.pointerId===e.pointerId){if(itemDrag.ghost)itemDrag.ghost.remove();itemDrag=null;shopCard.classList.remove('sellzone');}});
+// Edge scrolling makes long cross-panel drags usable on smaller tablets/phones.
+function updateDragScroll(dt){const d=shopDrag&&shopDrag.moved?shopDrag:itemDrag&&itemDrag.moved?itemDrag:dragU&&dragU.moved?dragU:null;
+  if(!d||!d.touch)return;const x=d.clientX,y=d.clientY,hit=document.elementFromPoint(x,y),col=hit&&hit.closest('.col');
+  const box=col&&col.scrollHeight>col.clientHeight+1&&getComputedStyle(col).overflowY==='auto'?col:null;
+  const r=box?box.getBoundingClientRect():{top:0,bottom:innerHeight},edge=42;
+  const v=y<r.top+edge?-Math.min(1,(r.top+edge-y)/edge):y>r.bottom-edge?Math.min(1,(y-r.bottom+edge)/edge):0;
+  if(!v)return;if(box)box.scrollTop+=v*480*dt;else window.scrollBy(0,v*480*dt);
+  d.over=cellAt({clientX:x,clientY:y});if(d===dragU)d.pos=canvasPos({clientX:x,clientY:y});
+}
 $('#vMus').value=Math.round(SND.musVol*100); $('#vSfx').value=Math.round(SND.sfxVol*100);
 // clicking a channel's icon mutes it; clicking again brings back the level it had before muting
 const lastVol={Mus:SND.musVol||.5, Sfx:SND.sfxVol||.7};
@@ -3622,6 +3740,7 @@ function imgPos(e){ const r=$('#cropCv').getBoundingClientRect(), z=zoom();
 $('#cropCv').addEventListener('pointerdown',e=>{ e.currentTarget.setPointerCapture(e.pointerId); drag=imgPos(e); rect={x:drag.x,y:drag.y,w:0,h:0}; });
 $('#cropCv').addEventListener('pointermove',e=>{ if(!drag) return; const p=imgPos(e);
   rect={x:Math.min(p.x,drag.x),y:Math.min(p.y,drag.y),w:Math.abs(p.x-drag.x),h:Math.abs(p.y-drag.y)}; drawCrop(); });
+$('#cropCv').addEventListener('pointercancel',()=>{drag=null;});
 $('#cropCv').addEventListener('pointerup',()=>{ drag=null; if(rect&&(rect.w<2||rect.h<2)) rect=null; drawCrop(); });
 $('#zoom').onchange=drawCrop; $('#keyBg').onchange=drawCrop;
 function processCrop(){

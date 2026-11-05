@@ -388,3 +388,34 @@ In a synthetic burst on this worker, decoration draw time fell from about 1.6 ms
 to 0.8 ms, with all five tested warning cues retained. Normal-round per-frame CPU
 time remains close to the previous direct-renderer version; these changes target
 peak decoration load, allocation churn and unnecessary high-refresh draws.
+
+
+## Tablet and touch controls
+
+On iPad and other touch screens, tap a shop hero to keep its stats and skills
+open. Use **Buy** to send it to the bench, **Buy and place** then tap a friendly
+cell, or drag the shop card straight onto the field/bench. An unaffordable hero
+can still be inspected. Desktop click-to-buy and right-click controls remain.
+
+Tap an owned hero for its actual star level and equipment; use **Move / swap /
+fuse** then tap a destination, or drag it. The detail card also provides **Sell**
+with confirmation. Fighters and bosses can be inspected during combat.
+
+Tap a bag item for its description and equip/enchant, combine, reroll or sell
+actions. Equip/use-scroll asks for a hero; combine asks for another matching bag
+item. Combining works during combat; equipping, rerolling and selling wait for
+preparation. Held equipment and blessings also have persistent touch details.
+
+Team Plan supports tap-to-add, up/down ordering, remove and saved presets.
+Touch drags can scroll at screen edges; empty board swipes still scroll the page.
+Cancelled gestures, interrupted touches and extra fingers cannot buy a hero or
+leave a drag ghost. Portrait shop actions wrap within the screen.
+
+```bash
+python tools/check_touch_controls.py
+```
+
+This uses Chromium's native touch input at 1024×768, 768×1024 and 390×844,
+covering actual taps/drags, purchases, hero details, move/fuse, equipment actions,
+plans/presets, cancellation and scrolling. It complements the desktop checks in
+`tools/check_visuals.py`; it does not replace testing Safari on a physical iPad.
