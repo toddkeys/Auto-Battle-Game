@@ -87,6 +87,16 @@ ART_RIGS = {
                                  [(70, 64.5), (74, 59.5), (184, 142), (192, 152), (184, 160), (176, 152)]], 'piv': (68, 60)},   # just the shaft, ~6px wide
         },
     },
+    # Shadowstep: a glowing katana held up and forward in the front fist; a short raise, then a fast forward slash
+    'shadowstep': {
+        'order': ['body', 'head', 'armL', 'weapon', 'armR'],
+        'parts': {
+            'armR': {'poly': [(48, 58), (66, 56), (68, 72), (61, 85), (48, 83)], 'piv': (63, 60)},
+            'weapon': {'poly': [(-2, -2), (18, -2), (50, 66), (58, 82), (59, 106), (41, 108), (25, 86), (-2, 19)], 'piv': (54, 76)},
+            'armL': {'poly': [(86, 56), (102, 56), (106, 80), (104, 104), (90, 104), (86, 80)], 'piv': (92, 60)},
+            'head': {'poly': [(50, 0), (95, 0), (102, 20), (100, 48), (88, 58), (62, 58), (52, 46), (48, 20)], 'piv': (75, 56)},
+        },
+    },
 }
 
 
