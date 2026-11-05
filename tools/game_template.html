@@ -152,7 +152,7 @@ button.go:disabled{animation:none}
 .dragghost.hero{font-size:0;width:56px;height:54px}.dragghost.hero img{width:56px;height:54px;image-rendering:pixelated}
 .stl{margin-top:6px;font-size:12px;line-height:1.35;color:var(--muted)}.stl div{opacity:.6}.stl div.on{opacity:1;color:#ffe27a}.stl b{color:var(--text)}
 .tipi .next{color:#9dffb0;margin-top:4px}.tipi .sub{color:#ffd27a;margin-top:2px}
-.hudbtns{display:flex;gap:6px;margin-top:4px}.hudbtns .b{font-size:14px;padding:3px 9px 4px;white-space:nowrap}
+.hudbtns{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}#bShake.off{opacity:.65}.hudbtns .b{font-size:14px;padding:3px 9px 4px;white-space:nowrap}
 .overlay{position:fixed;inset:0;z-index:56;display:grid;place-items:center;background:radial-gradient(ellipse at center,rgba(30,18,8,.78),rgba(0,0,0,.9))}
 .overlay[hidden]{display:none}
 .sumbox.wide{width:min(760px,94vw)}
@@ -364,7 +364,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
-      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button><button class="b" id="bShake" title="Turn screen shake on or off">📳 Shake on</button></div></div>
     </div>
     <div class="board"><canvas id="cv"></canvas><div id="msg"></div><div id="timer" hidden title="Time left in this battle"></div></div>
   </main>
@@ -2156,7 +2156,8 @@ function cleanse(u){ const had=u.stun>0||u.sil>0||u.blind>0||u.slow>0||u.frz>0||
 // hit-stop: freeze the battle for a split second on big hits (rate-limited so it never feels laggy)
 function hitStop(s){ const F=S.fight; addTrauma(s*5); if(s>=.07) SND.play('boom'); if(F.t-F.lastStop>.3){ F.stop=Math.max(F.stop,s); F.lastStop=F.t; } }
 let trauma=0;
-function addTrauma(a){ if(!calmMotion) trauma=Math.min(1,trauma+a); }
+let shakeOn=!calmMotion; try{ const v=localStorage.getItem('ab_shake'); if(v!==null) shakeOn=v==='1'; }catch(e){}   // the player's choice beats the system setting
+function addTrauma(a){ if(shakeOn) trauma=Math.min(1,trauma+a); }
 // particles: x/y in cells, g = gravity (negative floats upward)
 function burst(x,y,c,n,spd=2.5,size=3,g=6){
   for(let i=0;i<n;i++){ const an=Math.random()*Math.PI*2, v=spd*(.4+Math.random()*.8), life=.3+Math.random()*.3;
@@ -3329,6 +3330,9 @@ $('#vSfx').onchange=()=>SND.play('buy');   // a sample at the new volume
 document.addEventListener('click',e=>{ if(e.target.closest('button.b,.su,.it')) SND.play('click'); });
 $('#bReroll').onclick=reroll; $('#bSell').onclick=sell; $('#bFight').onclick=startFight; $('#bCap').onclick=buyCap;
 $('#bCodex').onclick=openCodex; $('#bModes').onclick=()=>openModes();
+function showShake(){ const b=$('#bShake'); b.textContent='📳 Shake '+(shakeOn?'on':'off'); b.classList.toggle('off',!shakeOn); }
+$('#bShake').onclick=()=>{ shakeOn=!shakeOn; if(!shakeOn) trauma=0; try{ localStorage.setItem('ab_shake',shakeOn?'1':'0'); }catch(e){} showShake(); };
+showShake();
 $('#bSpeed').onclick=()=>{ speed=speed%3+1; $('#bSpeed').textContent='Speed x'+speed; };
 $('#bSpeed').oncontextmenu=e=>{ e.preventDefault(); speed=1; $('#bSpeed').textContent='Speed x1'; };   // right-click: back to x1
 $('#meter').addEventListener('click',e=>{ const h=e.target.closest('th[data-sort]'); if(!h) return; S.meterSort=h.dataset.sort; renderMeter(); });
