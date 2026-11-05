@@ -208,6 +208,8 @@ button.go:disabled{animation:none}
 .board{position:relative;align-self:center;padding:9px;border:3px solid var(--ink);border-radius:10px;
   background:linear-gradient(135deg,#5a3d22,#2b1b0f);box-shadow:inset 0 0 0 2px var(--brass),inset 0 0 0 4px var(--ink),0 14px 40px rgba(0,0,0,.65)}
 #cv{display:block;height:calc(100vh - 166px);width:auto;max-width:100%;aspect-ratio:512/600;border-radius:4px;cursor:pointer;image-rendering:pixelated;touch-action:pan-y;background:#3d6b34}
+#timer{position:absolute;left:18px;top:18px;padding:3px 9px;border:2px solid var(--ink);border-radius:6px;pointer-events:none;font:700 14px var(--body);color:#fbe6b0;background:rgba(20,12,6,.78);font-variant-numeric:tabular-nums}
+#timer.low{color:#ff6a50}
 #msg{position:absolute;left:50%;top:22px;transform:translate(-50%,-8px);max-width:86%;padding:7px 16px;border:2px solid var(--ink);border-radius:6px;pointer-events:none;
   font:600 15px var(--body);color:#2a1607;text-align:center;background:linear-gradient(180deg,#fbe6b0,#e2bd70);box-shadow:0 4px 0 var(--ink),0 8px 20px rgba(0,0,0,.5);
   opacity:0;transition:opacity .2s,transform .2s}
@@ -363,7 +365,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
       <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
     </div>
-    <div class="board"><canvas id="cv"></canvas><div id="msg"></div></div>
+    <div class="board"><canvas id="cv"></canvas><div id="msg"></div><div id="timer" hidden title="Time left in this battle"></div></div>
   </main>
   <aside class="col right">
     <div class="card">
@@ -396,7 +398,7 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
         <li><b>Items</b>: drag onto a hero (1 each). Drop the <i>same</i> item on it, or two of the same on each other, to <b>enchant</b> it (+1, +2). 📜 Unbinding Scroll takes a hero's item off.</li>
         <li><b>Shields</b>: gold shields stop physical damage, violet (🔮) magic shields stop magic damage.</li>
         <li><b>Gamblers</b> roll dice and draw cards: random, sometimes huge, outcomes. <b>Ice Wall</b> (Glacier Warden) stops enemy projectiles until it breaks.</li>
-        <li><b>Samurai</b> hit harder below half HP (Bushido). <b>Frost Healers</b> heal over time and raise <b>Ice Walls</b>: enemy projectiles that fly into a wall hit it instead, and when a wall breaks or melts it shatters, damaging and slowing enemies next to it. The 2💰 Glacier Warden raises one, the 3💰 Frost Oracle a wide one in front of the ally in danger (plus a shield), the 4💰 Winter Queen two at once that can Freeze enemies.</li>
+        <li><b>Samurai</b> hit harder below half HP (Bushido). <b>Frost Healers</b> heal over time and raise <b>Ice Walls</b>: enemy projectiles that fly into a wall hit it instead, and when a wall breaks or melts it shatters, damaging and slowing enemies next to it. The 2💰 Glacier Warden raises one, the 3💰 Frost Oracle one in front of the ally in danger (plus a shield), the 4💰 Winter Queen one great wall (twice as tough, plus a shield) that can Freeze enemies.</li>
         <li><b>Occultists</b> curse enemies: armor break (+25% damage taken), mana drain, slows, and Dispel strips shields and buffs.</li>
         <li><b>Upgrade</b> the shop for one more field slot and better odds of pricier heroes. <b>Lock</b> keeps the shop for one round (rerolling releases it).</li>
         <li><b>Flank attacks</b>: hitting a hero or monster from the <b>side</b> (above or below it) deals 10% more damage (yellow numbers), from <b>behind</b> (the side it isn't facing) 20% more (orange numbers). Assassins who leap behind the enemy and Grapplers who drag enemies past them make good use of it.</li>
@@ -891,11 +893,11 @@ const SKILLS = {
     cast(a){ const w=friends(a).sort(byHurt)[0]||a; const foe=foes(a).filter(e=>e.tgt===w).sort((p,q)=>dist(p,w)-dist(q,w))[0];
       iceWall(a,{at:w,t2:foe,hp:1,shatter:1.3}); w.shield+=a.heal*1.5*(a.skHeal||1); V({k:'dome',x:w.x,y:w.y,c:'#bff2ff',r:.7,m:.8});
       for(const b of friends(a)) if(dist(a,b)<=2) hot(b,a.heal,4,a); V({k:'ring',x:a.x,y:a.y,r:2,c:'#bff2ff',m:.6}); }},
-  winterqueen:{name:'Glacial Fortress', mp:95, desc:'Raises two ice walls (3 cells each) in front of the two most endangered allies for 6s, gives every ally 120% of her heal over 5s, and enemies within 1.5 cells of each wall have a 40% chance to Freeze for 2s. Her walls can take 120% of her max HP and shatter for 160% damage and a slow.',
+  winterqueen:{name:'Glacial Fortress', mp:95, desc:'Raises one great ice wall (3 cells) in front of the most endangered ally for 6s and gives that ally a frost shield worth 150% of her heal. Every ally recovers 120% of her heal over 5s, and enemies within 1.5 cells of the wall have a 60% chance to Freeze for 2s. Her wall can take 200% of her max HP and shatters for 220% damage and a slow.',
     cast(a){ V({k:'flash',x:0,y:0,c:'#dff8ff',m:.3});
-      const ws=friends(a).sort(byHurt).slice(0,2); if(ws.length<2) ws.push(a);
-      for(const w of ws){ const foe=foes(a).filter(e=>e.tgt===w).sort((p,q)=>dist(p,w)-dist(q,w))[0]; const wall=iceWall(a,{at:w,t2:foe,hp:1.2,shatter:1.6});
-        if(wall) for(const e of foes(a)) if(segDist(e.x,e.y,wall.x1,wall.y1,wall.x2,wall.y2)<=1.5) freeze(e,.4,2); }
+      const w=friends(a).sort(byHurt)[0]||a, foe=foes(a).filter(e=>e.tgt===w).sort((p,q)=>dist(p,w)-dist(q,w))[0], wall=iceWall(a,{at:w,t2:foe,hp:2,shatter:2.2});
+      if(wall) for(const e of foes(a)) if(segDist(e.x,e.y,wall.x1,wall.y1,wall.x2,wall.y2)<=1.5) freeze(e,.6,2);
+      w.shield+=a.heal*1.5*(a.skHeal||1); V({k:'dome',x:w.x,y:w.y,c:'#bff2ff',r:.7,m:.8});
       for(const b of friends(a)) hot(b,a.heal*1.2,5,a); FX('strike',a.x,a.y+.3,{s:.9,tint:'#cff6ff',m:.6}); }},
   piper:{name:'Rousing Note', mp:70, desc:'Plays a quick note for the strongest-hitting ally within 3 cells: it attacks 30% faster for 4s.',
     cast(a){ const b=friends(a).filter(x=>x!==a&&dist(a,x)<=3).sort((p,q)=>q.atk*q.dmgM-p.atk*p.dmgM)[0]||a;
@@ -1976,6 +1978,10 @@ function startFight(){
 // one loop draws every frame, so units breathe and effects fade even between fights
 let ANIM=0;
 const PACE=.8;   // battle time per real second at Speed x1 (x2, x3 scale it)
+let timerTxt='';
+function tickTimer(){   // battle clock: seconds left before the round times out
+  const F=S&&S.fight, on=F&&S.phase==='fight', left=on?Math.max(0,Math.ceil((F.limit||60)-F.t)):0, t=on?'⏱ '+(left/60|0)+':'+String(left%60).padStart(2,'0'):'';
+  if(t===timerTxt) return; timerTxt=t; const el=$('#timer'); el.hidden=!on; el.textContent=t; el.classList.toggle('low',on&&left<=10); }
 function frame(now){
   const dt=Math.min((now-last)/1000,.05); last=now; ANIM+=dt;
   if(S&&S.fight){ if(S.phase!=='fight') tickFx(dt*speed*PACE); else if(S.fight.paused){} else if(S.fight.stop>0) S.fight.stop-=dt; else step(dt*speed*PACE); }
@@ -1984,6 +1990,7 @@ function frame(now){
   if(S&&S.inspect&&S.fight&&(ANIM*5|0)!==((ANIM-dt)*5|0)) renderInfo();   // live stats, 5x a second
   if(S&&S.ufx.length){ for(const u of S.ufx) u.t-=dt; S.ufx=S.ufx.filter(u=>u.t>0); }
   if(S) render();
+  tickTimer();
   requestAnimationFrame(frame);
 }
 function nearest(a,list){ let best=null,bd=1e9; for(const b of list) if(b.team!==a.team&&b.hp>0&&!(b.ghost>0)){ const d=dist(a,b); if(d<bd){bd=d;best=b;} } return best; }
@@ -3171,7 +3178,14 @@ function renderInfo(){
   const sel=S.units.find(v=>v.uid===S.sel), ins=S.inspect&&S.fight&&S.fight.f.includes(S.inspect)?S.inspect:null;
   if(ins&&!hoverId){ $('#info').innerHTML=infoHTML(ins.type,ins.star,ins.items,ins); if(bubbleFor&&!document.body.contains(bubbleFor)) hideBubble(); return; }
   $('#info').innerHTML = hoverId? infoHTML(hoverId,1) : sel? infoHTML(sel.type,sel.star,sel.items,null,sel.fuse) : 'Hover a hero in the shop, or click one of yours, to see its stats and skill.';
+  holdInfoHeight();
 }
+// the hero panel only ever grows: if it shrank when the cursor left a shop card, a scrolled column would snap up,
+// move the shop under the cursor and start a hover/unhover loop (the shop "shaking")
+let infoH=0;
+function holdInfoHeight(){ const el=$('#info'), box=el.getBoundingClientRect(); if(!box.height) return;   // measured without collapsing it (that alone would snap the scroll)
+  const r=document.createRange(); r.selectNodeContents(el); const h=Math.ceil(r.getBoundingClientRect().height*el.offsetHeight/box.height);   // in CSS px, also inside a zoomed column
+  if(h>infoH){ infoH=h; el.style.minHeight=infoH+'px'; } }
 let AURA_ON=false;
 function renderUI(){ AURA_ON=hasReward(readRewards(),'aura');
   SND.music(S.phase==='fight'||S.phase==='result'?'battle':'prep');

@@ -21,7 +21,7 @@ async def main():
     startFight();const F=S.fight,a=F.f.find(x=>x.type===id),enemy=F.f.find(x=>x.team===1);
     for(const x of F.f){x.ms=0;x.atk=1;x.mp=0;x.spawnT=0;}
     a.castTgt=enemy;releaseCast(a);const walls=F.walls||[];
-    if(walls.length!==(id==='winterqueen'?2:1))throw Error('Wrong wall count '+id);
+    if(walls.length!==1)throw Error('Wrong wall count '+id);
     if(walls.some(w=>iceWallTier(w)!==j+2))throw Error('Wrong design tier '+id);
     const w=walls[0],expected=[3,4,3.6][j];if(Math.abs(Math.hypot(w.x2-w.x1,w.y2-w.y1)-expected)>.001)throw Error('Wall width changed');
     const state=JSON.stringify([w.hp,w.t,w.x1,w.x2,w.y1,w.y2,w.shatter]);drawIceWall(w);
