@@ -105,6 +105,27 @@ async def benchmark(browser, server, frames, source=None):
     await page.close()
     return result
 
+async def decoration_stress(browser, server):
+    page, errors = await open_game(browser, server)
+    result = await page.evaluate('''async () => {
+      const results=[];
+      for(const level of [0,2]){
+        newGame('daily');S.round=30;S.extra=6;S.units=UNITS.slice(0,9).map((u,i)=>({uid:i+1,type:u.id,star:2,items:[],loc:{w:'board',cx:i%8,cy:5+Math.floor(i/8)}}));
+        Math.random=mulberry32(55);startFight();FX_LOAD.level=level;
+        for(const a of S.fight.f)a.spawnT=0;
+        burst(4,4,'#ffe7a0',1200);
+        for(let i=0;i<280;i++)V({k:'sigilBloom',x:1+i%6,y:1+i%5,r:.7,c:'#ba9cff',m:.7,t:.35});
+        for(const k of ['reticle','meteor','charge','arrowrain','rune'])V({k,x:4,y:3,r:1,c:'#ffe27a',m:.7,t:.35});
+        const times=[];
+        for(let i=0;i<60;i++){await new Promise(perfRAF);ANIM+=1/60;const t=performance.now();render();times.push(performance.now()-t);}
+        results.push({level,particles:S.fight.parts.length,decorativeVfx:S.fight.vfx.filter(decorativeVfx).length,protectedCues:S.fight.vfx.filter(v=>!decorativeVfx(v)).length,cpuMeanMs:times.reduce((a,b)=>a+b)/times.length});
+      }
+      return results;
+    }''')
+    assert not errors, errors
+    await page.close()
+    return result
+
 async def main(server, args):
     async with async_playwright() as p:
         browser = await p.chromium.launch(
@@ -120,7 +141,8 @@ async def main(server, args):
         for rows in [baseline, current]:
             for row in rows or []:
                 row['combatSha256'] = hashlib.sha256(row.pop('combat').encode()).hexdigest()
-        output = {'rendering': checks, 'framesPerScenario': args.frames, 'baseline': baseline, 'current': current}
+        stress = await decoration_stress(browser, server) if args.stress else None
+        output = {'rendering': checks, 'framesPerScenario': args.frames, 'baseline': baseline, 'current': current, 'decorationStress': stress}
         print(json.dumps(output, indent=2))
         if args.output:
             args.output.write_text(json.dumps(output, indent=2)+'\n')
@@ -130,6 +152,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--baseline', type=Path)
     parser.add_argument('--output', type=Path)
+    parser.add_argument('--stress', action='store_true', help='Also compare full/light decoration bursts')
     parser.add_argument('--frames', type=int, default=120)
     args = parser.parse_args()
     if args.frames < 2:

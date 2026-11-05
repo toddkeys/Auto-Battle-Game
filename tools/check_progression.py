@@ -120,7 +120,9 @@ async def main(server):
           for(const e of S.fight.f)if(e.team===1)e.hp=0;
           endFight(true);
         }''')
-        await page.wait_for_function("S.phase==='prep'&&S.round===16&&!$('#cards').hidden", timeout=10000)
+        await page.wait_for_function("S.phase==='prep'&&S.round===16&&!$('#lootChoice').hidden", timeout=10000)
+        await page.locator('#lootRow [data-loot]').first.click()
+        await page.wait_for_function("!$('#cards').hidden", timeout=10000)
         await page.locator('#bBlessSkip').click()
         await page.evaluate("check($('#cards').hidden,'boss skip closes');startFight();check(S.phase==='fight','next battle starts after exhausted rewards')")
         print(result)

@@ -312,3 +312,79 @@ compared with `69de6e8` (CPU time for simulation plus rendering, not an FPS prom
 Frame-gap p95 on this worker fell from 50–67 ms to roughly 33 ms. Real frame rates
 depend on the browser's graphics backend and hardware; rerun the comparison on
 the same machine when investigating another performance issue.
+
+## Boss spoils and optional risk
+
+A boss victory now reserves its guaranteed rare-item slot for a **choose one of
+three** draft. The other random equipment drop and the existing 35% scroll chance
+are still awarded normally. Choosing completes the original two-equipment reward;
+it does not add a third item. Offers are distinct rare items and reproducible in
+Daily mode. A two-boss wave still grants one draft, matching its previous total
+loot count. Partial boss kills on a lost fight keep their existing random loot.
+
+Entering a boss preparation round opens an optional pact:
+
+- **Standard battle:** normal enemies and rewards.
+- **Reinforced guard:** two additional guards of the boss's existing minion type;
+  victory awards 4 extra gold. Defeat awards no pact bonus.
+
+The **Boss: Standard/Reinforced** HUD button lets the player change their choice
+before starting. The battle captures that choice, and the pact resets next round.
+No pact adds permanent stats or extra item drops.
+
+Preparation screens are queued: boss loot draft, then blessing/mastery reward.
+Crossroads still appear on their normal eligible rounds, before the pact when
+entering a boss round. A pending screen blocks battle start. Closing each screen
+opens the next one, including when every blessing is maxed. Double claims and
+result callbacks from an abandoned/restarted run are rejected.
+
+```bash
+python tools/check_boss_choices.py
+```
+
+## Adaptive effects, draw pacing and effect reuse
+
+The HUD defaults to **FPS: 60**. Clicking it selects **FPS: Unlocked** for higher
+refresh-rate displays; this preference is saved in the browser. The drawing
+schedule retains its phase on 144/240 Hz displays instead of accidentally dropping
+to 48 FPS. Input-driven refreshes remain immediate. Combat advances on a separate
+60 Hz simulation clock, with the existing Speed x1/x2/x3 multipliers. Pause and
+page visibility changes clear elapsed backlog rather than fast-forwarding it.
+
+Effect density adjusts automatically after sustained expensive frames or missed
+60 Hz frame deadlines. Three budgets reduce sparks, petals, motes, wall fragments,
+decorative blooms and smoke. Downgrades require sustained load; restoring detail
+requires five seconds of headroom per level, avoiding visible oscillation after
+one slow frame. Target reticles, meteors, charge/arrow-rain cues, rune areas,
+projectiles, Ice Walls and status indicators are kept.
+
+Spark and wall-fragment objects return to bounded pools when they expire or a
+round ends. Their arrays compact in place, and reused objects receive all fields
+again. Pool capacities are 700 sparks and 160 fragments; expired objects do not
+hold hero references. Existing tinted VFX frame caching continues to reuse image
+frames. Reducing cosmetic density still consumes the original random draws, so
+Daily-mode combat and random outcomes do not depend on graphics quality.
+
+```bash
+python tools/check_frame_pacing.py
+python tools/check_performance.py
+```
+
+Frame-pacing checks cover 30/60/144/240 Hz, capped/unlocked drawing, Speed x3,
+pause, saved settings, adaptive recovery, protected telegraphs, bounded storage
+and particle/fragment reuse. Identical fights must produce the same combat state
+at different refresh rates and effect budgets. Use the performance comparison
+command above to measure CPU time on the same worker/browser.
+
+A 10,000-spark reuse check (100 batches of 100, expired between batches) creates
+100 particle objects and reuses them 9,900 times. Use `--stress` to compare full
+and light decoration budgets in the performance check:
+
+```bash
+python tools/check_performance.py --stress --output /tmp/effect-stress.json
+```
+
+In a synthetic burst on this worker, decoration draw time fell from about 1.6 ms
+to 0.8 ms, with all five tested warning cues retained. Normal-round per-frame CPU
+time remains close to the previous direct-renderer version; these changes target
+peak decoration load, allocation churn and unnecessary high-refresh draws.

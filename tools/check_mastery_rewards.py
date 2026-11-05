@@ -70,7 +70,9 @@ async def main(server, preview):
           S.units=[{uid:1,type:'priest',star:1,items:[],loc:{w:'board',cx:3,cy:5}}];
           startFight();for(const e of S.fight.f)if(e.team===1)e.hp=0;endFight(true);
         }''')
-        await page.wait_for_function("S.phase==='prep'&&S.round===16&&!$('#cards').hidden", timeout=10000)
+        await page.wait_for_function("S.phase==='prep'&&S.round===16&&!$('#lootChoice').hidden", timeout=10000)
+        await page.locator('#lootRow [data-loot]').first.click()
+        await page.wait_for_function("!$('#cards').hidden", timeout=10000)
         await page.locator('[data-reward=recovery]').click()
         await page.evaluate("check(S.hp===100&&$('#cards').hidden,'actual boss recovery');startFight();S.fight.paused=true;check(S.phase==='fight','next battle remains playable');mastered(90)")
         assert await page.evaluate("[...document.querySelectorAll('.bless .bn')].every(e=>e.scrollWidth<=e.clientWidth)"), 'reward names fit their cards'
