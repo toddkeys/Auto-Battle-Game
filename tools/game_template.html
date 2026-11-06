@@ -1353,18 +1353,19 @@ function setInputMode(e){touchInput=directTouch(e);document.body.classList.toggl
 document.addEventListener('pointerdown',setInputMode,true);
 document.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&touchInput)setInputMode(e);},true);
 // Activate touch buttons on a stationary release, then reject the compatibility
-// click. Some mobile browsers omit/delay that click after a popup scrolls/reflows.
+// click, even if a re-render replaces the button with a non-button target.
+// A new pointer gesture clears suppression so deliberate follow-up taps still work.
 let buttonTap=null,lastButtonTap=null;
 function suppressTouchClick(e){lastButtonTap={b:null,at:performance.now(),x:e.clientX,y:e.clientY};e.preventDefault();}
 const touchButton=t=>t.closest('button')&&!t.closest('#shop,#items,#spl')?t.closest('button'):null;
-document.addEventListener('pointerdown',e=>{buttonTap=null;const b=touchButton(e.target);if(directTouch(e)&&e.isPrimary!==false&&b&&!b.disabled)buttonTap={b,id:e.pointerId,x:e.clientX,y:e.clientY};},true);
+document.addEventListener('pointerdown',e=>{buttonTap=null;lastButtonTap=null;const b=touchButton(e.target);if(directTouch(e)&&e.isPrimary!==false&&b&&!b.disabled)buttonTap={b,id:e.pointerId,x:e.clientX,y:e.clientY};},true);
 document.addEventListener('pointermove',e=>{if(buttonTap&&buttonTap.id===e.pointerId&&Math.hypot(e.clientX-buttonTap.x,e.clientY-buttonTap.y)>9)buttonTap=null;},true);
 document.addEventListener('pointercancel',()=>{buttonTap=null;},true);
 document.addEventListener('pointerup',e=>{if(directTouch(e)&&e.isPrimary!==false&&e.target.closest('#shop,#items,#cv'))suppressTouchClick(e);const t=buttonTap;if(!t||t.id!==e.pointerId)return;buttonTap=null;
   if(!t.b.isConnected||t.b.disabled||!t.b.contains(e.target))return;
   lastButtonTap={b:t.b,at:performance.now(),x:e.clientX,y:e.clientY};e.preventDefault();t.b.click();
 },true);
-document.addEventListener('click',e=>{const t=lastButtonTap;if(t&&touchInput&&e.detail>0&&touchButton(e.target)&&performance.now()-t.at<750&&(t.b===e.target.closest('button')||Math.hypot(e.clientX-t.x,e.clientY-t.y)<28)){e.preventDefault();e.stopImmediatePropagation();}},true);
+document.addEventListener('click',e=>{const t=lastButtonTap;if(t&&touchInput&&e.detail>0&&performance.now()-t.at<750&&((t.b&&t.b===e.target.closest('button'))||Math.hypot(e.clientX-t.x,e.clientY-t.y)<28)){e.preventDefault();e.stopImmediatePropagation();}},true);
 const capturePointer=(el,e)=>{try{el.setPointerCapture(e.pointerId);}catch(err){}};
 function positionMenu(c,e){const r=e.target&&e.target.getBoundingClientRect(),p=e.clientX||e.clientY?e:touchInput&&lastButtonTap?lastButtonTap:{clientX:r?r.left+r.width/2:innerWidth/2,clientY:r?r.bottom:innerHeight/2};
   c.style.left=Math.max(8,Math.min(innerWidth-c.offsetWidth-8,p.clientX+8))+'px';c.style.top=Math.max(8,Math.min(innerHeight-c.offsetHeight-8,p.clientY+8))+'px';}
@@ -1602,8 +1603,9 @@ const MAX_MARKS=10;
 function readMarks(){ try{ return JSON.parse(localStorage.getItem('ab_marks')||'[]'); }catch(e){ return []; } }
 function saveMarks(m){ try{ localStorage.setItem('ab_marks',JSON.stringify(m)); }catch(e){} }
 function openCodex(note){
+  note=typeof note==='string'?note:'';
   const c=readCodex(), marks=readMarks(), heroes=[...UNITS].sort((a,b)=>a.cls.localeCompare(b.cls)||a.cost-b.cost);
-  $('#codexCount').innerHTML=`${heroes.length} playable heroes — all heroes and skills are available to browse<br>${heroes.filter(u=>c[u.id]).length} / ${heroes.length} heroes fielded<br>
+  $('#codexCount').innerHTML=`${heroes.length} playable heroes — all heroes and skills are available to browse<br>
     <b style="color:#ffe27a">★ Marked ${marks.length} / ${MAX_MARKS}</b> — click ☆ on a hero to mark it; marked heroes glow in the shop${marks.length?' <button class="b mkreset" data-reset>Reset marks</button>':''}${note?` · <span style="color:#ff9a80">${note}</span>`:''}`;
   $('#codexGrid').innerHTML=heroes.map(u=>{ const k=c[u.id], cl=CLASSES[u.cls], o=ORIGINS[u.org], sk=SKILLS[u.id], m=marks.includes(u.id);
     return `<div class="cx ${m?'marked':''}" data-hc="${u.id}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
@@ -1709,7 +1711,7 @@ function renderPlanner(note){
   if($('#planner').hidden) return;
   const marks=readMarks();
   $('#planCount').textContent=`${UNITS.length} heroes to browse · ${marks.length} / ${MAX_MARKS} planned — they glow in the shop`;
-  $('#planNote').innerHTML=note||'';
+  $('#planNote').innerHTML=typeof note==='string'?note:'';
   $('#planSlots').innerHTML=Array.from({length:MAX_MARKS},(_,i)=>{ const id=marks[i];
     if(!id) return `<div class="pc empty" data-slot="${i}"><span class="no">${i+1}</span>${touchInput?'Tap a hero below → Add to plan':'Drag a hero here'}</div>`;
     const u=U[id], cl=CLASSES[u.cls], o=ORIGINS[u.org];
@@ -3976,7 +3978,7 @@ $('#vSfx').oninput=e=>setVol('Sfx',e.target.value/100);
 $('#vSfx').onchange=()=>SND.play('buy');   // a sample at the new volume
 document.addEventListener('click',e=>{ if(e.target.closest('button.b,.su,.it')) SND.play('click'); });
 $('#bReroll').onclick=reroll; $('#bSell').onclick=sell; $('#bFight').onclick=startFight; $('#bCap').onclick=buyCap;
-$('#bCodex').onclick=openCodex; $('#bModes').onclick=()=>openModes();
+$('#bCodex').onclick=()=>openCodex(); $('#bModes').onclick=()=>openModes();
 $('#bSpeed').onclick=()=>{ speed=speed%3+1; $('#bSpeed').textContent='Speed x'+speed; };
 $('#bSpeed').oncontextmenu=e=>{ e.preventDefault(); speed=1; $('#bSpeed').textContent='Speed x1'; };   // right-click: back to x1
 $('#meter').addEventListener('click',e=>{ const h=e.target.closest('th[data-sort]'); if(!h) return; S.meterSort=h.dataset.sort; renderMeter(); });

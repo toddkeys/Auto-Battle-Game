@@ -150,6 +150,22 @@ async def run_device(browser,server,width,height,preview):
     assert await page.locator('#heroCard').is_visible()
     assert await page.locator('[data-hcmark]').count()==0
     await page.locator('[data-hcclose]').tap()
+    # Real button activation must never stringify its PointerEvent into Codex notes.
+    await page.locator('#bCodex').tap()
+    codex_text=await page.locator('#codexCount').inner_text()
+    assert '[object ' not in codex_text and 'heroes fielded' not in codex_text,codex_text
+    assert await page.locator('#codexGrid [data-hc]').count()==await page.evaluate('UNITS.length')
+    await page.locator('#codexGrid [data-mark="swordsman"]').tap()
+    assert 'Marked 1 / 10' in await page.locator('#codexCount').inner_text()
+    assert not await page.locator('#heroCard').is_visible(), 'Mark tap must not also open hero details'
+    await page.locator('#codexCount [data-reset]').tap()
+    await page.locator('#codexCount [data-undo]').tap()
+    await page.evaluate("check(readMarks().includes('swordsman'),'Codex note Undo still works')")
+    await page.locator('#codexCount [data-reset]').tap()
+    await page.locator('#codexClose').tap()
+    await page.locator('#bModes').tap();await page.locator('#modesCodex').tap()
+    assert '[object ' not in await page.locator('#codexCount').inner_text()
+    await page.locator('#codexClose').tap();await page.locator('#modesClose').tap()
     # Touch help/tooltips and Team Plan actions have alternatives to hover/native drag.
     await page.evaluate("touchFixture();S.buffs=['rhythm'];renderUI()")
     await page.locator('#bless .bl').tap()
