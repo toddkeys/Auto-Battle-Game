@@ -206,7 +206,7 @@ button.go:disabled{animation:none}
 .cxpre input{width:130px;padding:5px 8px;font:inherit;color:var(--text);background:rgba(0,0,0,.35);border:1px solid #5a4024;border-radius:6px}
 .codexgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;overflow:auto;padding:4px;margin-bottom:12px;text-align:left}
 .cx{display:flex;gap:6px;padding:6px;border:1px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.28);font-size:12px;line-height:1.25}
-.cx img{width:48px;height:46px;image-rendering:pixelated;flex:none}.cx b{font-size:13px}.cx.locked .cs{opacity:.75}
+.cx img{width:48px;height:46px;image-rendering:pixelated;flex:none}.cx b{font-size:13px}
 .cx .cs{color:var(--muted)}
 .snd input[type=range]{width:96px;accent-color:var(--brass);cursor:pointer}
 .next{font-size:13px;color:var(--muted);line-height:1.3;min-width:150px}.next b{color:var(--text);font-weight:700}
@@ -402,7 +402,7 @@ body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
-      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bFrames" title="Drawing limit. Effects adjust automatically under load; battle speed stays the same.">FPS: 60</button><button class="b" id="bBossPact" hidden>Boss pact</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Every hero you have fielded">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bFrames" title="Drawing limit. Effects adjust automatically under load; battle speed stays the same.">FPS: 60</button><button class="b" id="bBossPact" hidden>Boss pact</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Browse every playable hero and skill">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
     </div>
     <div id="touchAction" class="touch-task" hidden></div><div class="board"><canvas id="cv"></canvas><div id="msg"></div><div id="timer" hidden title="Time left in this battle"></div></div>
   </main>
@@ -1829,7 +1829,7 @@ $('#modesbox').addEventListener('click',e=>{
     return `<button class="mode" data-mod="${k}"><div class="mi">${d.icon}</div><div class="mn">${d.name}</div><div class="md">${d.desc}</div></button>`; }).join('')}</div>`;
 });
 
-// ====== Hero Codex: every hero you have fielded (kept in this browser) ======
+// ====== Hero Codex: full playable roster; fielding history stays local ======
 function readCodex(){ try{ return JSON.parse(localStorage.getItem('ab_codex')||'{}'); }catch(e){ return {}; } }
 function noteCodex(types){ const c=readCodex(); for(const t of types) c[t]=(c[t]||0)+1; try{ localStorage.setItem('ab_codex',JSON.stringify(c)); }catch(e){} }
 // marked heroes glow in the shop, so they are easy to spot while rerolling (kept in this browser)
@@ -1838,10 +1838,10 @@ function readMarks(){ try{ return JSON.parse(localStorage.getItem('ab_marks')||'
 function saveMarks(m){ try{ localStorage.setItem('ab_marks',JSON.stringify(m)); }catch(e){} }
 function openCodex(note){
   const c=readCodex(), marks=readMarks(), heroes=[...UNITS].sort((a,b)=>a.cls.localeCompare(b.cls)||a.cost-b.cost);
-  $('#codexCount').innerHTML=`${heroes.filter(u=>c[u.id]).length} / ${heroes.length} heroes discovered — field a hero in battle to add it<br>
+  $('#codexCount').innerHTML=`${heroes.length} playable heroes — all heroes and skills are available to browse<br>${heroes.filter(u=>c[u.id]).length} / ${heroes.length} heroes fielded<br>
     <b style="color:#ffe27a">★ Marked ${marks.length} / ${MAX_MARKS}</b> — click ☆ on a hero to mark it; marked heroes glow in the shop${marks.length?' <button class="b mkreset" data-reset>Reset marks</button>':''}${note?` · <span style="color:#ff9a80">${note}</span>`:''}`;
   $('#codexGrid').innerHTML=heroes.map(u=>{ const k=c[u.id], cl=CLASSES[u.cls], o=ORIGINS[u.org], sk=SKILLS[u.id], m=marks.includes(u.id);
-    return `<div class="cx ${k?'':'locked'} ${m?'marked':''}" data-hc="${u.id}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
+    return `<div class="cx ${m?'marked':''}" data-hc="${u.id}">${thumbHTML(u.id,40)}<div><b>${u.name}</b><br><span style="color:${cl.color}">${cl.name}</span> · ${o.icon} · ${u.cost}g<br>
       <span class="cs">HP ${u.hp} · ATK ${u.atk} · R ${u.range}<br>${k?`Fielded ${k}×`:'Not fielded yet'}</span></div><button class="mk" data-mark="${u.id}" title="${m?'Unmark':'Mark: glow in the shop'}">${m?'★':'☆'}</button></div>`; }).join('');
   $('#codex').hidden=false;
 }
@@ -1939,11 +1939,11 @@ function setMarks(m,note){
   renderUI();
 }
 const skillHTML=id=>SKILLS[id]?`<b>${SKILLS[id].name}</b> — ${SKILLS[id].desc}`:'';
-function openPlanner(){ hideBubble(); $('#planner').hidden=false; renderPlanner(); }
+function openPlanner(){ hideBubble(); planCls='all'; $('#planSearch').value=''; $('#planner').hidden=false; renderPlanner(); }
 function renderPlanner(note){
   if($('#planner').hidden) return;
   const marks=readMarks();
-  $('#planCount').textContent=`${marks.length} / ${MAX_MARKS} planned — they glow in the shop`;
+  $('#planCount').textContent=`${UNITS.length} heroes to browse · ${marks.length} / ${MAX_MARKS} planned — they glow in the shop`;
   $('#planNote').innerHTML=note||'';
   $('#planSlots').innerHTML=Array.from({length:MAX_MARKS},(_,i)=>{ const id=marks[i];
     if(!id) return `<div class="pc empty" data-slot="${i}"><span class="no">${i+1}</span>${touchInput?'Tap a hero below → Add to plan':'Drag a hero here'}</div>`;
