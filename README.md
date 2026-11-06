@@ -531,8 +531,8 @@ Soulbinder links and Eclipse fields retain their casting skill's physical/magic
 identity. Class traits, Bard auras and Engineer/Summoner opening units also work
 from the secondary slot. The lead still supplies basic attack range and stats.
 
-A secondary Monk removes the lead's equipment and uses the lead's own hands and
-punch motion, without importing Monk limbs or capes. Fusion portraits, lineup
+A secondary Monk preserves the lead's original arms, equipment and attack motion,
+without importing Monk limbs or capes. Fusion portraits, lineup
 pictures and phantom echoes use the same equipment rules as the battlefield.
 Prepared equipment atlases are created on demand and held in a 48-entry LRU,
 large enough for two full nine-unit fused teams without rebuilding each frame;

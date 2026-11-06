@@ -46,11 +46,19 @@ async def main(server,preview):
       try{
         for(const lead of UNITS)for(const partner of UNITS){if(lead.cls===partner.cls||!isNew(lead.id)&&!isNew(partner.id)&&partner.cls!=='monk')continue;
           const rig=SPR[lead.id].rig;drawn=[];buildRig(rig,rigPose({fuse:partner.id,atkT:ATK_T*.55},lead.id,lead),[],null,fusionRig(lead.id,partner.id));
-          if(partner.cls==='monk'){check(drawn.every(d=>(d.r.sourceRig||d.r)===rig),'no imported Monk body '+lead.id);check(!drawn.some(d=>d.g==='weapon'),'bare hands have no weapon layer '+lead.id);}
+          if(partner.cls==='monk'){check(drawn.every(d=>(d.r.sourceRig||d.r)===rig),'no imported Monk body '+lead.id);check(drawn.some(d=>d.g==='weapon'),'lead keeps own weapon '+lead.id);check(drawn.every(d=>d.r===rig),'original arms and atlas '+lead.id);}
           else{const weapons=drawn.filter(d=>d.g==='weapon');check(weapons.length>0&&weapons.every(d=>(d.r.sourceRig||d.r)===SPR[partner.id].rig),'partner equipment '+lead.id+'/'+partner.id);}
           renders++;
         }
       }finally{rigLayer=layer;}
+      // Monk-secondary rendering must preserve every original limb/equipment pixel,
+      // including attack/cast/recovery poses; layer counts alone missed cut-out arms.
+      let monkStates=0;
+      for(const lead of UNITS.filter(u=>u.cls!=='monk'))for(const state of [{},{atkT:ATK_T*.55},{cast:CAST_T*.5},{rel:REL_T},{hurt:.6,hurtK:1,hurtX:1}]){
+        const rig=SPR[lead.id].rig;buildRig(rig,rigPose(state,lead.id,lead),[],null);const expected=rg.getImageData(0,0,RIG.width,RIG.height).data;
+        buildRig(rig,rigPose({...state,fuse:'grandmaster'},lead.id,lead),[],null,fusionRig(lead.id,'grandmaster'));const actual=rg.getImageData(0,0,RIG.width,RIG.height).data;
+        check(expected.every((v,i)=>v===actual[i]),'Monk fusion preserves original silhouette '+lead.id);monkStates++;
+      }
       // Prepared fusion crops must preserve the direct renderer's geometry.
       const surface=document.createElement('canvas');surface.width=RIG.width;surface.height=RIG.height;const brush=surface.getContext('2d',{willReadFrequently:true});let geometry=0;
       for(const [lead,partner]of [['shogun','grandmaster'],['aegiscaptain','grandmaster'],['crownduelist','hexbreaker'],['covenantqueen','aegiscaptain']])for(const state of [{},{atkT:ATK_T*.55},{cast:CAST_T*.5},{rel:REL_T},{hurt:.6,hurtK:1,hurtX:1}]){
@@ -63,9 +71,9 @@ async def main(server,preview):
       try{for(let i=0;i<60;i++)for(const [lead,partner]of [['shogun','grandmaster'],['aegiscaptain','grandmaster'],['crownduelist','hexbreaker']])buildRig(SPR[lead].rig,rigPose({fuse:partner,atkT:ATK_T*.55},lead,U[lead]),[],null,fusionRig(lead,partner));}finally{CanvasRenderingContext2D.prototype.getImageData=readPixels;}
       check(reads===0,'warmed fusion animation performs no pixel readback');
       check(FUSION_PART_LRU.size<=48,'fusion atlas cache bounded');
-      for(const id of ['shogun','voidsage','watchkeeper','crownduelist']){const info=infoHTML(id,3,[],null,'grandmaster');check(info.includes('bare-handed')&&info.includes(SKILLS.grandmaster.name),'details show Monk combo '+id);}
+      for(const id of ['shogun','voidsage','watchkeeper','crownduelist']){const info=infoHTML(id,3,[],null,'grandmaster');check(info.includes('uses own weapon')&&!info.includes('bare-handed')&&info.includes(SKILLS.grandmaster.name),'details show Monk combo '+id);}
       newGame();check(FUSION_PART_LRU.size===0&&FUSED_THUMBS.size===0,'new run releases fusion pictures');
-      return {names,orderedCombinedCasts:casts,equipmentRenders:renders,fusionGeometryStates:geometry,warmedAnimationReadbacks:reads,maxFusionCanvases:48};
+      return {names,orderedCombinedCasts:casts,equipmentRenders:renders,monkOriginalSilhouetteStates:monkStates,fusionGeometryStates:geometry,warmedAnimationReadbacks:reads,maxFusionCanvases:48};
     }finally{for(const[id,fn]of Object.entries(original))SKILLS[id].cast=fn;Math.random=random;CASTER=CAST_TYPE=null;}
   }''')
   if preview:
