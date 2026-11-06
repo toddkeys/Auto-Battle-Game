@@ -172,7 +172,7 @@ button.go:disabled{animation:none}
 .evunits button{width:86px;padding:6px 4px;border:2px solid #5a4024;border-radius:8px;background:rgba(0,0,0,.3);color:var(--text);font:inherit;font-size:12px;cursor:pointer}
 .evunits button:hover{border-color:var(--gold)}.evunits img{width:56px;height:54px;image-rendering:pixelated;display:block;margin:0 auto}
 .codexbox{width:min(980px,96vw);max-height:92vh;display:flex;flex-direction:column}
-#planner{position:fixed;top:0;right:0;bottom:0;width:min(470px,96vw);z-index:45;display:flex;flex-direction:column;gap:8px;padding:12px 12px 10px;
+#planner{position:fixed;top:0;right:auto;left:max(0px,calc(100vw - min(470px,96vw)));bottom:0;width:min(470px,96vw);z-index:45;display:flex;flex-direction:column;gap:8px;padding:12px 12px 10px;
   background:linear-gradient(180deg,#3a2614,#22160b);border-left:3px solid var(--ink);box-shadow:-8px 0 24px rgba(0,0,0,.55);color:var(--text)}
 #planner[hidden]{display:none}
 #planner .cxpre{margin:0;justify-content:flex-start}
@@ -220,11 +220,15 @@ button.go:disabled{animation:none}
   font:600 15px var(--body);color:#2a1607;text-align:center;background:linear-gradient(180deg,#fbe6b0,#e2bd70);box-shadow:0 4px 0 var(--ink),0 8px 20px rgba(0,0,0,.5);
   opacity:0;transition:opacity .2s,transform .2s}
 #msg.show{opacity:1;transform:translate(-50%,0)}
+#bFight{white-space:normal;overflow-wrap:anywhere;font-size:clamp(20px,2.1vw,26px);padding-left:6px;padding-right:6px}
 .actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.actions button.b{flex:1 1 90px;min-width:0;font-size:18px;padding:7px 6px 8px}
 button.go{display:block;width:100%;margin-top:10px}
 .card h3 .coins{margin-left:auto;font-size:28px;color:#4a2a00;text-shadow:0 1px 0 rgba(255,244,210,.6)}.card h3 .coin{width:20px;height:20px}
 /* shop: trading cards framed by cost (stone, jade, sapphire, amethyst) */
 .shop{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding-top:6px}
+.shop-slot{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:5px}button.b.shop-buy{display:none;min-width:0;min-height:52px;padding:4px 0;font:600 13px/1.2 system-ui;letter-spacing:0;white-space:normal;touch-action:manipulation}button.b.shop-buy span{display:block}
+body.touch-input .shop-buy{display:block}body.touch-input .shop{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (pointer:coarse){button.b.shop-buy{display:block}.shop{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .su{--fc:#9a9488;position:relative;min-width:0;min-height:122px;padding:6px 2px 6px;border:2px solid var(--ink);border-radius:7px;cursor:pointer;color:var(--text);font:inherit;
   background:radial-gradient(ellipse at 50% 32%,color-mix(in srgb,var(--cc) 40%,transparent),transparent 68%),linear-gradient(180deg,#2e1f13,#170f09);
   box-shadow:inset 0 0 0 2px var(--fc),inset 0 0 14px rgba(0,0,0,.7),0 3px 0 var(--ink);transition:transform .12s,box-shadow .12s;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -402,7 +406,7 @@ body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
       <div class="crest"><span class="lbl">ROUND</span><span class="num" id="sRound"></span></div>
       <div class="hpbar"><div class="hpfill" id="hpFill"></div><div class="hptxt"><span>❤</span><span id="sHp"></span><span>/ 100</span></div></div>
       <div class="snd"><div class="vols"><label><button class="mute" id="mMus" title="Mute / unmute music">🎵</button><input type="range" id="vMus" min="0" max="100" title="Music volume"></label><label><button class="mute" id="mSfx" title="Mute / unmute sound effects">🔊</button><input type="range" id="vSfx" min="0" max="100" title="Sound effect volume"></label></div></div>
-      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bFrames" title="Drawing limit. Effects adjust automatically under load; battle speed stays the same.">FPS: 60</button><button class="b" id="bBossPact" hidden>Boss pact</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Browse every playable hero and skill">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
+      <div class="next"><div>Next: <b id="sNext"></b> · <span title="Your best run in this browser">🏆 Best <b id="sBest"></b></span></div><div>On field: <b id="sCap"></b> · Interest <b id="sInt"></b> · Streak <b id="sStreak"></b></div><div class="hudbtns"><button class="b" id="bSpeed" title="Battle speed (right-click: back to x1)">Speed x1</button><button class="b" id="bFrames" title="Drawing limit. Effects adjust automatically under load; battle speed stays the same.">FPS: 60</button><button class="b" id="bEffects" title="Adjust decorative effects; skill warnings and statuses stay visible">Effects: Auto</button><button class="b" id="bSaveExit" title="Save and return to Runs. Battles resume from preparation for the current round.">Save & exit</button><button class="b" id="bBossPact" hidden>Boss pact</button><button class="b" id="bPlan" title="Team Plan: drag heroes in to mark them, compare their skills, save presets">📋 Plan</button><button class="b" id="bCodex" title="Browse every playable hero and skill">📖 Codex</button><button class="b" id="bModes" title="Start a new run: Normal, Daily Challenge or Hard">☰ Runs</button></div></div>
     </div>
     <div id="touchAction" class="touch-task" hidden></div><div class="board"><canvas id="cv"></canvas><div id="msg"></div><div id="timer" hidden title="Time left in this battle"></div></div>
   </main>
@@ -410,7 +414,7 @@ body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
     <div class="card">
       <h3>Shop <button class="b bigbtn" id="bBig" data-tip="Big Shop (200 gold): show 10 heroes instead of 5 for the rest of this run">🛒 ×10 · 200💰</button><span class="coins" id="coins"><span class="coin"></span><span id="sGold"></span></span><button class="b lockbtn" id="bLock">🔓 Lock</button></h3>
       <div class="shop" id="shop"></div>
-      <div class="odds" id="odds"></div><p class="touch-help">Tap a hero for details. Drag to buy and place.</p>
+      <div class="odds" id="odds"></div><p class="touch-help">Buy adds to your bench. Tap portraits for details; drag to buy and place.</p>
       <div class="actions">
         <button class="b blue" id="bReroll">Reroll · 2</button>
         <button class="b" id="bSell">Sell</button>
@@ -841,12 +845,14 @@ function offerMasteryRewards(){
   $('#cards').hidden=false;
 }
 function offerBlessings(){
-  const keys=seeded('blessings:'+S.round+':'+S.buffs.length,()=>{
+  const owned=S.buffs.join(',');
+  const cached=S.blessingOffer?.round===S.round&&S.blessingOffer.owned===owned&&Array.isArray(S.blessingOffer.keys)&&S.blessingOffer.keys.every(k=>BLESSINGS[k]&&blessOwned(k)<BLESS_MAX)?S.blessingOffer.keys:null;
+  const keys=cached||seeded('blessings:'+S.round+':'+S.buffs.length,()=>{
     const pool=availableBlessings();
     for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
     return pool.slice(0,3);
   });
-  if(!keys.length)return offerMasteryRewards();
+  S.blessingOffer={round:S.round,keys,owned};if(!keys.length)return offerMasteryRewards();
   $('#blessTitle').textContent='Choose a blessing';
   $('#blessNote').textContent='The boss is down! Pick one blessing for the rest of the run.';
   $('#bBlessSkip').hidden=true;
@@ -860,7 +866,7 @@ function offerBlessings(){
 // Preparation offers form one queue: item -> blessing -> optional event/pact.
 function nextPrepOffer(){
   if(S.phase!=='prep'||['#cards','#event','#lootChoice','#bossPact'].some(k=>!$(k).hidden))return;
-  const offer=S.offerQueue.shift();if(!offer)return;
+  const offer=S.offerQueue.shift();scheduleRunSave();if(!offer)return;
   if(offer==='loot')offerBossLoot();else if(offer==='blessing')offerBlessings();else if(offer==='event')openEvent();else if(offer==='pact')openBossPact();
 }
 function bossLootOptions(){return seeded('boss-loot:'+S.round,()=>{
@@ -878,7 +884,7 @@ const BOSS_PACTS={
 };
 function openBossPact(){
   if(S.phase!=='prep'||roundKind(S.round)!=='boss')return;
-  $('#pactNote').textContent=`Round ${S.round} · ${U[bossFor(S.round)].name}. Choose the risk for this battle; you can change it before fighting.`;
+  $('#pactNote').textContent=`Round ${S.round} · ${U[bossFor(S.round)].name}. Choose the risk for this battle; you can change it before fighting.${S.round>=40?' '+BOSS_PATTERNS[bossFor(S.round)].tip+' Heroes automatically evade marked ground. Patterns evolve below 66% and 33% boss HP.':''}`;
   $('#pactRow').innerHTML=Object.entries(BOSS_PACTS).map(([k,p])=>`<button class="mode" data-pact="${k}"><div class="mi">${p.icon}</div><div class="mn">${p.name}</div><div class="md">${p.desc}</div></button>`).join('');
   $('#bossPact').hidden=false;$('#bossPact .sumbox').scrollTop=0;
 }
@@ -1340,6 +1346,68 @@ const SKILLS = {
       V({k:'meteor',x,y,m:.55,t:.55+i*.18}); later(.55+i*.18,()=>{ FX('boom',x,y-.2,{s:1.5,m:.6}); V({k:'burst',x,y,r:1,c:'#ff8a3a'}); V({k:'quake',x,y:y+.2,r:1,c:'#4a2a1a',m:.8}); burst(x,y,'#ffb050',14,4,4,5); hitStop(.07); for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=1.1) hit(a,e,2); }); } }},
 };
 
+// ====== late boss patterns: readable hazards, safe spaces and automatic evasion ======
+const BOSS_PATTERNS={
+  golem:{name:'Faultline',tip:'Marked ground erupts. Leave the amber circles.',color:'#ffc56a',kind:'circle'},
+  lich:{name:'Winter Crown',tip:'The icy ring shatters. Step into its clear center or beyond the ring.',color:'#91e5ff',kind:'ring'},
+  wyrm:{name:'Scorching Run',tip:'The dragon marks a fire lane. Move sideways out of it.',color:'#ff9866',kind:'line'},
+  thornmother:{name:'Briar Cross',tip:'Crossed bramble lanes grow around a hero. Move into a clear corner.',color:'#b1ec85',kind:'cross'},
+  stormdjinn:{name:'Storm Eye',tip:'Lightning surrounds a calm eye. Move into the eye or outside the storm.',color:'#d3b0ff',kind:'ring'},
+  colossus:{name:'Siege Sweep',tip:'A wide cannon lane locks onto a hero. Leave the marked lane.',color:'#76e8da',kind:'line'}
+};
+const lateBossRound=()=>S.round>=40&&S.fight?.kind==='boss';
+const bossPhase=a=>a.hp/a.max<=.33?2:a.hp/a.max<=.66?1:0;
+function hazardDepth(h,x,y){const d=Math.hypot(x-h.x,y-h.y);
+  if(h.kind==='line')return h.width-segDist(x,y,h.x,h.y,h.x2,h.y2);
+  if(h.kind==='cross')return Math.max(h.width-Math.abs(x-h.x),h.width-Math.abs(y-h.y));
+  if(h.kind==='ring')return Math.min(d-h.safe,h.r-d);
+  return h.r-d;
+}
+function prepareBossPattern(a){const F=S.fight,spec=BOSS_PATTERNS[a.type],es=foes(a).filter(e=>!e.summon);if(!spec||!es.length)return null;
+  const phase=bossPhase(a),index=a.patternN||0,target=es[(index+phase)%es.length],delay=1.6+phase*.15;
+  const h={src:a,kind:spec.kind,name:spec.name,color:spec.color,phase,x:target.x,y:target.y,r:1.05+phase*.15,safe:.9,width:.5+phase*.08,t:delay,duration:delay};
+  if(h.kind==='ring'){h.r=2.35+phase*.12;h.safe=1.05;}
+  if(h.kind==='line'){const d=dist(a,target)||1,dx=(target.x-a.x)/d,dy=(target.y-a.y)/d;h.x=a.x;h.y=a.y;h.x2=a.x+dx*11;h.y2=a.y+dy*11;}
+  (F.hazards||(F.hazards=[])).push(h);
+  if(phase>0&&(h.kind==='circle'||h.kind==='line')&&es.length>1){const other=es[(index+phase+1)%es.length],echo={...h,t:delay+.45,duration:delay+.45};
+    if(h.kind==='circle'){echo.x=other.x;echo.y=other.y;}else{echo.labelOffset=22;const d=dist(a,other)||1;echo.x2=a.x+(other.x-a.x)/d*11;echo.y2=a.y+(other.y-a.y)/d*11;}F.hazards.push(echo);}
+  a.patternWind=delay+(F.hazards.length>1?.45:0);a.glow=.5;a.patternN=index+1;return h;
+}
+function tickBossPatterns(dt){const F=S.fight;if(!lateBossRound())return;
+  F.hazards=F.hazards||[];
+  let kept=0;for(const h of F.hazards){if(h.src.hp<=0)continue;h.t-=dt;
+    if(h.t<=0){withSkill(h.src,h.src.type,()=>{for(const e of foes(h.src))if(hazardDepth(h,e.x,e.y)>0){
+      // A single pattern cannot one-shot a healthy hero, even at endless-round scaling.
+      const amount=Math.min(h.src.atk*h.src.dmgM*1.5,e.max*(.16+h.phase*.025));deal(e,amount,false,h.src);
+      if(h.src.type==='lich')controlFor(e,'slow',1.2);else if(h.src.type==='thornmother')controlFor(e,'root',.65);
+    }});V({k:'ring',x:h.x,y:h.y,r:h.r,c:h.color,m:.35});SND.play('boom');}
+    else F.hazards[kept++]=h;
+  }F.hazards.length=kept;
+  if(F.t<(F.nextPatternScan||0))return;F.nextPatternScan=F.t+.2;
+  const bosses=F.f.filter(a=>a.team===1&&U[a.type].boss&&a.hp>0);for(let i=0;i<bosses.length;i++){const a=bosses[i];
+    if(a.patternAt===undefined)a.patternAt=F.t+6+i*3;
+    if(F.t<a.patternAt||F.hazards.length||a.stun>0||a.frz>0||a.tstop>0)continue;
+    prepareBossPattern(a);a.patternAt=F.t+11-bossPhase(a)*1.5;
+  }
+}
+function evadeBossPattern(a,dt){const hazards=S.fight.hazards;if(a.team!==0||!hazards?.length||a.root>0||a.ms<=0||a.ward>0||a.taunt>0||a.crs>0)return false;
+  const danger=(x,y)=>hazards.reduce((n,h)=>n+Math.max(0,hazardDepth(h,x,y)+.18),0);
+  if(danger(a.x,a.y)<=0)return false;
+  // Replan at 5 Hz, rather than searching directions for every hero every frame.
+  if(!a.evadeAt||S.fight.t>=a.evadeAt){a.evadeAt=S.fight.t+.2;let best=danger(a.x,a.y),point=null;
+    for(const radius of [.5,1,1.5,2,2.5])for(let i=0;i<12;i++){const angle=i*Math.PI/6,x=Math.min(COLS-.5,Math.max(.5,a.x+Math.cos(angle)*radius)),y=Math.min(ROWS-.5,Math.max(.5,a.y+Math.sin(angle)*radius)),score=danger(x,y)+Math.hypot(x-a.x,y-a.y)*.06;if(score<best){best=score;point={x,y};}}
+    a.evadeTo=point;
+  }
+  const p=a.evadeTo;if(!p)return false;const d=Math.hypot(p.x-a.x,p.y-a.y);if(d<.03)return false;const mv=Math.min(d,a.ms*(a.slow>0?.6:1)*dt);a.x+=(p.x-a.x)/d*mv;a.y+=(p.y-a.y)/d*mv;a.walk+=mv;a.moving=.12;a.face=p.x<a.x?-1:1;return true;
+}
+function drawBossHazards(){const hazards=S.fight?.hazards||[];if(!hazards.length)return;ctx.save();ctx.beginPath();ctx.rect(0,0,W,BOARD_H);ctx.clip();for(const h of hazards){const progress=1-Math.max(0,h.t/h.duration);ctx.save();ctx.strokeStyle=h.color;ctx.fillStyle=h.color;ctx.lineWidth=3;ctx.setLineDash([7,5]);ctx.lineDashOffset=-ANIM*10;
+    ctx.globalAlpha=.16+progress*.12;
+    if(h.kind==='line'){ctx.lineWidth=h.width*2*CELL;ctx.beginPath();ctx.moveTo(h.x*CELL,h.y*CELL);ctx.lineTo(h.x2*CELL,h.y2*CELL);ctx.stroke();ctx.globalAlpha=.9;ctx.lineWidth=3;for(const sign of [-1,1]){const an=Math.atan2(h.y2-h.y,h.x2-h.x)+Math.PI/2,dx=Math.cos(an)*h.width*CELL*sign,dy=Math.sin(an)*h.width*CELL*sign;ctx.beginPath();ctx.moveTo(h.x*CELL+dx,h.y*CELL+dy);ctx.lineTo(h.x2*CELL+dx,h.y2*CELL+dy);ctx.stroke();}}
+    else if(h.kind==='cross'){ctx.fillRect(0,(h.y-h.width)*CELL,W,h.width*2*CELL);ctx.fillRect((h.x-h.width)*CELL,0,h.width*2*CELL,BOARD_H);ctx.globalAlpha=.9;for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(0,(h.y+sign*h.width)*CELL);ctx.lineTo(W,(h.y+sign*h.width)*CELL);ctx.stroke();ctx.beginPath();ctx.moveTo((h.x+sign*h.width)*CELL,0);ctx.lineTo((h.x+sign*h.width)*CELL,BOARD_H);ctx.stroke();}}
+    else {ctx.beginPath();ctx.arc(h.x*CELL,h.y*CELL,h.r*CELL,0,Math.PI*2);if(h.kind==='ring'){ctx.arc(h.x*CELL,h.y*CELL,h.safe*CELL,0,Math.PI*2,true);}ctx.fill('evenodd');ctx.globalAlpha=.95;ctx.stroke();if(h.kind==='ring'){ctx.strokeStyle='#bfffcf';ctx.beginPath();ctx.arc(h.x*CELL,h.y*CELL,h.safe*CELL,0,Math.PI*2);ctx.stroke();}}
+    ctx.setLineDash([]);ctx.globalAlpha=1;ctx.font='bold 12px system-ui';ctx.textAlign='center';const x=Math.min(W-90,Math.max(90,h.x*CELL)),y=Math.min(BOARD_H-12,Math.max(22,h.y*CELL-h.r*CELL-8+(h.labelOffset||0)));ctx.fillStyle='#16131b';ctx.fillRect(x-84,y-14,168,21);ctx.fillStyle=h.color;ctx.fillText(h.name+' · '+Math.max(.1,h.t).toFixed(1)+'s',x,y);ctx.restore();
+  }ctx.restore();}
+
 // ====== screen constants ======
 const CELL=64, COLS=8, ROWS=8, BENCH=8;
 const W=COLS*CELL, BOARD_H=ROWS*CELL, BENCH_Y=BOARD_H+20, H=BENCH_Y+CELL+4;
@@ -1357,7 +1425,7 @@ document.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&touchInp
 // A new pointer gesture clears suppression so deliberate follow-up taps still work.
 let buttonTap=null,lastButtonTap=null;
 function suppressTouchClick(e){lastButtonTap={b:null,at:performance.now(),x:e.clientX,y:e.clientY};e.preventDefault();}
-const touchButton=t=>t.closest('button')&&!t.closest('#shop,#items,#spl')?t.closest('button'):null;
+const touchButton=t=>t.closest('button')&&(!t.closest('#shop,#items,#spl')||t.closest('[data-quick-buy]'))?t.closest('button'):null;
 document.addEventListener('pointerdown',e=>{buttonTap=null;lastButtonTap=null;const b=touchButton(e.target);if(directTouch(e)&&e.isPrimary!==false&&b&&!b.disabled)buttonTap={b,id:e.pointerId,x:e.clientX,y:e.clientY};},true);
 document.addEventListener('pointermove',e=>{if(buttonTap&&buttonTap.id===e.pointerId&&Math.hypot(e.clientX-buttonTap.x,e.clientY-buttonTap.y)>9)buttonTap=null;},true);
 document.addEventListener('pointercancel',()=>{buttonTap=null;},true);
@@ -1381,9 +1449,9 @@ function fitBoard(){
   // Set BOTH dimensions. A max-width clamp on width alone stretched the field after rotation.
   cv.style.width=(h*W/H)+'px';cv.style.height=h+'px';
 }
-let layoutFrame=0,layoutWidth=innerWidth,layoutHeight=innerHeight;
+let layoutFrame=0,layoutWidth=document.documentElement.clientWidth,layoutHeight=document.documentElement.clientHeight;
 function scheduleLayout(){if(layoutFrame)return;layoutFrame=requestAnimationFrame(()=>{layoutFrame=0;
-  const rotated=layoutWidth!==innerWidth||layoutHeight!==innerHeight;layoutWidth=innerWidth;layoutHeight=innerHeight;
+  const vw=document.documentElement.clientWidth,vh=document.documentElement.clientHeight,rotated=layoutWidth!==vw||layoutHeight!==vh;layoutWidth=vw;layoutHeight=vh;
   if(rotated){cancelGestures();buttonTap=null;hideBubble();$('#confirm').hidden=true;}
   fitBoard();
 });}
@@ -1634,17 +1702,17 @@ const CLOUD=(()=>{ const c=document.createElement('canvas'); c.width=320; c.heig
     const gr=g.createRadialGradient(x,y,0,x,y,r); gr.addColorStop(0,'rgba(10,30,20,1)'); gr.addColorStop(1,'rgba(10,30,20,0)');
     g.fillStyle=gr; g.fillRect(0,0,320,180); }
   return c; })();
-function drawAmbient(){
+function drawAmbient(){if(tabletEffects())return;
   const T=calmMotion?0:ANIM;
   ctx.save(); ctx.globalAlpha=.07;
   for(const [o,y,sp] of [[0,40,9],[420,260,7],[760,420,8]]){ const x=((T*sp+o)%(W+320))-320; ctx.drawImage(CLOUD,x,y-90); }
   for(let i=0;i<(ARENA.naturalWidth?0:26);i++){ const x=((i*41.3+T*(14+i%4*5))%W), y=RIVER_Y[(x/2)|0]+((i*13)%9-4)*1.6, a=.35+.35*Math.sin(T*4+i*1.7);   // glints drifting downstream
     if(a<=0) continue; ctx.globalAlpha=a; ctx.fillStyle='#f4fcff'; ctx.fillRect(x|0,y|0,4+(i%3)*2,2); }
-  for(let i=0;i<[18,10,5][FX_LOAD.level];i++){ const x=(i*79.7+Math.sin(T*.25+i)*18+W)%W, y=(i*53.1-T*(2+i%3)+BOARD_H*100)%BOARD_H;
+  for(let i=0;i<[18,10,5][effectLevel()];i++){ const x=(i*79.7+Math.sin(T*.25+i)*18+W)%W, y=(i*53.1-T*(2+i%3)+BOARD_H*100)%BOARD_H;
     ctx.globalAlpha=.15+.3*(.5+.5*Math.sin(T*1.4+i*2)); ctx.fillStyle=i%3?'#ffe6a1':'#b4e6ff';
     ctx.beginPath(); ctx.arc(x,y,i%4===0?1.7:1,0,Math.PI*2); ctx.fill(); }
   ctx.globalAlpha=.6;
-  for(let i=0;i<[10,6,3][FX_LOAD.level];i++){ const sx=(i*137.5)%W, sy=(i*89.3)%BOARD_H, x=(sx+T*(10+i%3*4))%W, y=(sy+T*(6+i%4*2)+Math.sin(T*1.3+i)*6)%BOARD_H;
+  for(let i=0;i<[10,6,3][effectLevel()];i++){ const sx=(i*137.5)%W, sy=(i*89.3)%BOARD_H, x=(sx+T*(10+i%3*4))%W, y=(sy+T*(6+i%4*2)+Math.sin(T*1.3+i)*6)%BOARD_H;
     ctx.save(); ctx.translate(x,y); ctx.rotate(T*2+i); ctx.fillStyle=i%3?'#ffd6e4':'#fffaf0'; ctx.fillRect(-2,-1,4,2); ctx.restore(); }
   ctx.restore();
 }
@@ -1791,6 +1859,34 @@ for(const event of ['pointerdown','pointerup','touchend','keydown'])addEventList
 // ====== game state ======
 let S, speed=1, last=0, msgTimer, hoverId=null, shopDrag=null, shopDragged=false;
 function msg(t){ const m=$('#msg'); m.textContent=t; m.classList.add('show'); clearTimeout(msgTimer); msgTimer=setTimeout(()=>m.classList.remove('show'),3500); }
+// ====== local run checkpoints: preparation is the resumable boundary ======
+let runAutosaveReady=false,runSaveTimer=0,runSaveFailed=false,runSequence=0;
+const RUN_SAVE_KEY='ab_run_v1';
+function readRunSave(){try{const data=JSON.parse(localStorage.getItem(RUN_SAVE_KEY)||'null'),r=data&&data.state;
+  if(data?.version!==1||!r||!['normal','daily','hard'].includes(r.mode)||!Number.isInteger(r.round)||r.round<1||!Number.isFinite(r.gold)||r.gold<0||!Number.isFinite(r.hp)||r.hp<=0||r.hp>100||!Array.isArray(r.units)||r.units.length>17||!Array.isArray(r.shop)||!Array.isArray(r.buffs)||!Array.isArray(r.inv)||!Array.isArray(r.offerQueue))return null;
+  const offers=['loot','blessing','event','pact'];if(!r.offerQueue.every(k=>offers.includes(k))||data.activeOffer&&!offers.includes(data.activeOffer)||!Array.isArray(r.bossOrder)||r.bossOrder.length!==BOSSES.length||new Set(r.bossOrder).size!==BOSSES.length||!r.bossOrder.every(k=>BOSSES.includes(k)))return null;
+  const hero=id=>UNITS.some(u=>u.id===id),item=k=>typeof k==='string'&&!!ITEMS[k.split(':')[0]];
+  if(r.units.some(u=>!hero(u.type)||![1,2,3].includes(u.star)||u.fuse&&!hero(u.fuse)||!Array.isArray(u.items)||!u.items.every(item)||!u.loc||!['board','bench'].includes(u.loc.w))||r.shop.some(id=>id!==null&&!hero(id))||!r.buffs.every(k=>BLESSINGS[k])||!r.inv.every(item))return null;
+  if(r.pendingLoot&&(!Array.isArray(r.pendingLoot)||!r.pendingLoot.every(item))||r.mod&&!MODIFIERS[r.mod]||r.eventDone&&typeof r.eventDone!=='string')return null;
+  if(r.mode==='daily'&&!/^daily-\d{4}-\d{2}-\d{2}$/.test(r.seed))return null;
+  return data;}catch(e){return null;}}
+function saveRunNow(){clearTimeout(runSaveTimer);runSaveTimer=0;if(!runAutosaveReady||!S||S.phase!=='prep')return false;
+  const {fight,inspect,ufx,touchAction,...state}=S;
+  const activeOffer=[['#lootChoice','loot'],['#cards','blessing'],['#event','event'],['#bossPact','pact']].find(([id])=>!$(id).hidden)?.[1]||null;
+  try{localStorage.setItem(RUN_SAVE_KEY,JSON.stringify({version:1,savedAt:new Date().toISOString(),speed,state:{...state,phase:'prep'},activeOffer}));runSaveFailed=false;return true;}
+  catch(e){if(!runSaveFailed){runSaveFailed=true;msg('Could not save this run. Free browser storage before leaving.');}return false;}}
+function scheduleRunSave(){if(!runAutosaveReady||S?.phase!=='prep')return;clearTimeout(runSaveTimer);runSaveTimer=setTimeout(saveRunNow,160);}
+function hideRunOverlays(){for(const id of ['#cards','#event','#lootChoice','#bossPact','#summary','#confirm','#codex','#planner'])$(id).hidden=true;closeHeroCard();closeItemCard();}
+function resumeRun(){const saved=readRunSave();if(!saved)return msg('No compatible saved run was found.');
+  runAutosaveReady=false;clearTimeout(runSaveTimer);hideRunOverlays();newGame(saved.state.mode,saved.state.mod);
+  S={...S,...saved.state,phase:'prep',fight:null,inspect:null,touchAction:null,ufx:[],sel:null,selItem:null};speed=[1,2,3].includes(saved.speed)?saved.speed:1;$('#bSpeed').textContent='Speed x'+speed;simAccum=0;$('#modes').hidden=true;runAutosaveReady=true;
+  const offer=saved.activeOffer;if(offer==='loot')offerBossLoot();else if(offer==='blessing')offerBlessings();else if(offer==='event')openEvent();else if(offer==='pact')openBossPact();else nextPrepOffer();render();renderUI();msg('Run resumed. Battles restart from preparation for the saved round.');}
+function saveAndExit(){if(!S||S.phase==='over'||S.phase==='suspended')return;
+  if(S.phase==='prep'&&!saveRunNow()){msg('Could not save this run. Keep this page open or free browser storage.');return;}
+  const checkpoint=readRunSave();if(!checkpoint||checkpoint.state.runId!==S.runId)return msg('No saved checkpoint is available for this run yet. Keep this page open.');
+  cancelGestures();clearVisuals(S.fight);S.fight=null;S.inspect=null;S.sel=null;S.selItem=null;S.phase='suspended';hideRunOverlays();render();renderUI();openModes(true);}
+$('#bSaveExit').onclick=()=>saveAndExit();
+addEventListener('pagehide',saveRunNow);document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRunNow();});
 // ====== seeded randomness: in a Daily Challenge every player gets the same shops, enemies and events ======
 function hashStr(t){ let h=2166136261; for(let i=0;i<t.length;i++) h=Math.imul(h^t.charCodeAt(i),16777619); return h>>>0; }
 function mulberry32(a){ return ()=>{ a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
@@ -1806,10 +1902,11 @@ const MODIFIERS={
   frenzy:{name:'Frenzy',icon:'⚡',desc:'Every unit on both sides attacks 25% faster and starts battle with 30% mana.'},
 };
 const HARD_UNLOCK=15;
-const bestKey=m=>m==='hard'?'ab_best_hard':m==='daily'?'ab_daily_'+today():'ab_best';
+const bestKey=(m,date=today())=>m==='hard'?'ab_best_hard':m==='daily'?'ab_daily_'+date:'ab_best';
 function openModes(first){
-  const nb=readBest('normal'), hb=readBest('hard'), db=readBest('daily'), open=true;   // Hard mode is open to everyone
-  $('#modesbox').innerHTML=`<h2>New run</h2><div class="modegrid">
+  const checkpoint=!S||['suspended','over'].includes(S.phase)?readRunSave():null;
+  const nb=readBest('normal'), hb=readBest('hard'), db=readBest('daily',today()), open=true;   // Hard mode is open to everyone
+  $('#modesbox').innerHTML=`<h2>Runs</h2>${checkpoint?`<button class="b go" id="modesResume">Continue ${esc(checkpoint.state.mode)} · Round ${checkpoint.state.round}</button><p class="hint">Saved on this device. Battles restart from this round’s preparation. Starting a new run replaces this save.</p>`:''}<div class="modegrid">
     <button class="mode" data-m="normal"><div class="mi">⚔</div><div class="mn">Normal</div><div class="md">The classic run.</div><div class="mb">🏆 Best ${nb?'round '+nb.round:'–'}</div></button>
     <button class="mode" data-m="daily"><div class="mi">📅</div><div class="mn">Daily Challenge</div><div class="md">Everyone gets the same shops, enemies and events today (${today()}). Compare with friends!</div><div class="mb">🏆 Today ${db?'round '+db.round:'–'}</div></button>
     <button class="mode" data-m="hard" ${open?'':'disabled'}><div class="mi">💀</div><div class="mn">Hard</div><div class="md">${open?'Enemies 20% stronger, plus a run modifier you pick.':`Reach round ${HARD_UNLOCK} in Normal to unlock.`}</div><div class="mb">🏆 Best ${hb?'round '+hb.round:'–'}</div></button></div>
@@ -1817,6 +1914,7 @@ function openModes(first){
   $('#modes').hidden=false;
 }
 $('#modesbox').addEventListener('click',e=>{
+  if(e.target.closest('#modesResume'))return resumeRun();
   if(e.target.closest('#modesCodex')) return openCodex();
   if(e.target.closest('#modesTop')) return openBoards();
   if(e.target.closest('#modesPending')) return openPendingScores();
@@ -2031,15 +2129,16 @@ $('#codexClose').onclick=()=>{ $('#codex').hidden=true; };
 // ====== events between rounds (every 4th round) ======
 const isEventRound=r=>r>=4&&r%4===0;
 function openEvent(){
-  const box=$('#eventbox'), wares=seeded('wares'+S.round,()=>[...RARE].sort(()=>Math.random()-.5).slice(0,3));
+  const box=$('#eventbox'), wares=S.eventWares?.round===S.round&&Array.isArray(S.eventWares.keys)&&S.eventWares.keys.every(k=>RARE.includes(k))?S.eventWares.keys:seeded('wares'+S.round,()=>[...RARE].sort(()=>Math.random()-.5).slice(0,3));S.eventWares={round:S.round,keys:wares};
   const main=()=>{ box.innerHTML=`<h2>A crossroads</h2><p>Something waits on the road. Choose one, or move on.</p><div class="modegrid">
       <button class="mode" data-e="merchant"><div class="mi">🧳</div><div class="mn">Travelling Merchant</div><div class="md">Buy one of three rare items for 6 gold.</div></button>
       <button class="mode" data-e="chest" ${S.gold<4?'disabled':''}><div class="mi">🎁</div><div class="mn">Mystery Chest</div><div class="md">Pay 4 gold to open it: gold, an item… or nothing.</div></button>
       <button class="mode" data-e="train" ${S.units.some(u=>u.star<3)?'':'disabled'}><div class="mi">🏋</div><div class="mn">Training Ground</div><div class="md">+1 star for one hero, but you skip next round's income.</div></button></div>
       <button class="b" data-e="leave">Move on</button>`; };
-  const done=t=>{ box.innerHTML=`<h2>A crossroads</h2><p>${t}</p><button class="b go" data-e="leave">Continue</button>`; render(); renderUI(); };
+  const done=t=>{ S.eventDone=t;box.innerHTML=`<h2>A crossroads</h2><p>${esc(t)}</p><button class="b go" data-e="leave">Continue</button>`; render(); renderUI(); };
   box.onclick=e=>{ const b=e.target.closest('[data-e],[data-buy],[data-uid]'); if(!b||b.disabled) return;
-    if(b.dataset.e==='leave'){ $('#event').hidden=true; nextPrepOffer();return; }
+    if(S.eventDone&&b.dataset.e!=='leave')return;
+    if(b.dataset.e==='leave'){ S.eventDone=null;$('#event').hidden=true; nextPrepOffer();return; }
     if(b.dataset.e==='merchant') box.innerHTML=`<h2>Travelling Merchant</h2><p>"Fine wares, 6 gold each." You have ${S.gold} gold.</p><div class="evitems">${wares.map(k=>`<button class="mode" data-buy="${k}" ${S.gold<6?'disabled':''}><div class="mi">${ITEMS[k].icon}</div><div class="mn">${ITEMS[k].name}</div><div class="md">${IDESC(k)}</div></button>`).join('')}</div><button class="b" data-e="leave">Leave</button>`;
     if(b.dataset.buy){ S.gold-=6; S.inv.push(b.dataset.buy); SND.play('buy'); done(`You bought ${ITEMS[b.dataset.buy].icon} ${ITEMS[b.dataset.buy].name}.`); }
     if(b.dataset.e==='chest'){ S.gold-=4; const r=seeded('chest'+S.round,()=>Math.random());
@@ -2050,7 +2149,7 @@ function openEvent(){
     if(b.dataset.e==='train') box.innerHTML=`<h2>Training Ground</h2><p>Pick a hero to train (+1 star). You will skip next round's income.</p><div class="evunits">${S.units.filter(u=>u.star<3).map(u=>`<button data-uid="${u.uid}">${thumbHTML(u.type,40)}${U[u.type].name}<br>${'★'.repeat(u.star)} → ${'★'.repeat(u.star+1)}</button>`).join('')}</div><button class="b" data-e="leave">Never mind</button>`;
     if(b.dataset.uid){ const u=S.units.find(v=>v.uid===+b.dataset.uid); u.star++; S.skipIncome=true; SND.play('star'); merge(); done(`${U[u.type].name} trained to ${'★'.repeat(u.star)}! No income next round.`); }
   };
-  main(); $('#event').hidden=false;
+  main();if(S.eventDone)done(S.eventDone);$('#event').hidden=false;scheduleRunSave();
 }
 
 // ====== top-10 leaderboard: online (Supabase) when LB_URL and LB_KEY are set, otherwise kept in this browser ======
@@ -2148,15 +2247,15 @@ function lbTable(list,mine){
     return `<tr class="${me?'me':''}${i<3?' top'+(i+1):''}"><td>${['👑','🥈','🥉'][i]||i+1}</td><td><span class="lbn${tm.length?' has':''}" data-row="${i}" ${tm.length?`data-tip="${esc(tip)}"`:''}>${esc(e.name)}${tm.length?' <small>▾</small>':''}</span></td><td>${e.round}</td><td>${e.bosses}</td></tr>`
       +(tm.length?`<tr class="lbteam" data-team="${i}" hidden><td></td><td colspan="3">${lineupHTML(tm)}</td></tr>`:''); }).join('')+'</table>';
 }
-const lbHead=m=>`<h3>Leaderboard · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
+const lbHead=(m,board=boardId(m))=>`<h3>Leaderboard · ${m==='daily'?'Daily '+board.slice(6):boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
 async function lbRunOver(){   // after a run: show the board, plus a name box when the run made the top 10
   const el=$('#lb'); if(!el) return;
-  const run=S,mode=S.mode, board=boardId(mode), sc={round:S.round,bosses:S.bosses},team=lineupOf();
-  let list; try{ list=await lbFetch(board); }catch(e){ el.innerHTML=lbHead(mode)+"<p>Couldn't reach the leaderboard.</p>"; return; }
+  const run=S,mode=S.mode, board=mode==='daily'&&S.seed?S.seed:boardId(mode), sc={round:S.round,bosses:S.bosses},team=lineupOf();
+  let list; try{ list=await lbFetch(board); }catch(e){ el.innerHTML=lbHead(mode,board)+"<p>Couldn't reach the leaderboard.</p>"; return; }
   if(S!==run||!el.isConnected||$('#summary').hidden)return;
-  if(!qualifies(list,sc)){ el.innerHTML=lbHead(mode)+lbTable(list); return; }
+  if(!qualifies(list,sc)){ el.innerHTML=lbHead(mode,board)+lbTable(list); return; }
   let saved=''; try{ saved=localStorage.getItem('ab_lb_name')||''; }catch(e){}
-  el.innerHTML=lbHead(mode)+`<div class="lbform"><b>You made the top 10!</b><input id="lbName" maxlength="16" placeholder="Your name" value="${esc(saved)}"><button class="b go" id="lbSend">Submit</button></div>`+lbTable(list);
+  el.innerHTML=lbHead(mode,board)+`<div class="lbform"><b>You made the top 10!</b><input id="lbName" maxlength="16" placeholder="Your name" value="${esc(saved)}"><button class="b go" id="lbSend">Submit</button></div>`+lbTable(list);
   const button=$('#lbSend'),input=$('#lbName'),form=el.querySelector('.lbform'),label=form.querySelector('b');let sending=false;
   const send=async()=>{
     if(sending||button.disabled)return;const name=input.value.trim().replace(/\s+/g,' ').slice(0,16);if(!name)return input.focus();
@@ -2166,7 +2265,7 @@ async function lbRunOver(){   // after a run: show the board, plus a name box wh
     forgetPendingScore(score);if(S!==run||!form.isConnected)return;label.textContent='Score submitted.';button.textContent='Submitted';input.disabled=true;SND.play('star');
     // A failed refresh must not turn an already accepted submission into a retry.
     let fresh;try{fresh=await lbFetch(board);}catch(e){if(label.isConnected)label.textContent="Score submitted. Couldn't refresh rankings; check Top 10 from Runs.";return;}
-    if(S!==run||!form.isConnected)return;el.innerHTML=lbHead(mode)+lbTable(fresh,{name,...sc});
+    if(S!==run||!form.isConnected)return;el.innerHTML=lbHead(mode,board)+lbTable(fresh,{name,...sc});
     const rank=fresh.findIndex(e=>e.name===name&&e.round===sc.round&&e.bosses===sc.bosses)+1;if(rank>0)earnRank(rank,board);
   };
   button.onclick=()=>send();
@@ -2184,12 +2283,12 @@ async function openBoards(m='normal'){   // browse the boards from the run menu
 document.addEventListener('click',e=>{ const n=e.target.closest('.lbn.has'); if(!n) return;   // click a name: open or close its line-up row
   const row=n.closest('table').querySelector(`.lbteam[data-team="${n.dataset.row}"]`); if(row){ row.hidden=!row.hidden; hideBubble(); } });
 // ====== best run (kept in this browser) ======
-function readBest(m=S&&S.mode||'normal'){ try{ return JSON.parse(localStorage.getItem(bestKey(m))||'null'); }catch(e){ return null; } }
-function showSummary(){
+function readBest(m=S&&S.mode||'normal',date=m==='daily'&&S?.mode==='daily'&&S.seed?S.seed.slice(6):today()){ try{ return JSON.parse(localStorage.getItem(bestKey(m,date))||'null'); }catch(e){ return null; } }
+function showSummary(){clearTimeout(runSaveTimer);try{localStorage.removeItem(RUN_SAVE_KEY);}catch(e){}
   const best=readBest(), rec=!best||S.round>best.round;
   const top=m=>Object.entries(m).sort((a,b)=>b[1]-a[1])[0];
   const tc=top(S.clsUse), to=top(S.orgUse);
-  if(rec) try{ localStorage.setItem(bestKey(S.mode),JSON.stringify({round:S.round,bosses:S.bosses,date:new Date().toISOString().slice(0,10)})); }catch(e){}
+  if(rec) try{ localStorage.setItem(bestKey(S.mode,S.mode==='daily'&&S.seed?S.seed.slice(6):today()),JSON.stringify({round:S.round,bosses:S.bosses,date:new Date().toISOString().slice(0,10)})); }catch(e){}
   $('#summary').innerHTML=`<div class="sumbox run-summary" role="dialog" aria-modal="true" aria-labelledby="sumTitle"><div class="sumhead"><h2 id="sumTitle">Run over</h2><button class="b" id="sumClose" aria-label="Close run summary">✕ Close</button></div><div class="sumcontent">${rec?'<div class="newrec">🏆 New record!</div>':''}<p>${{normal:'⚔ Normal',daily:'📅 Daily Challenge '+today(),hard:'💀 Hard'+(S.mod?' · '+MODIFIERS[S.mod].icon+' '+MODIFIERS[S.mod].name:'')}[S.mode]}</p>
     <div class="sumgrid"><div><span>Reached</span><b>Round ${S.round}</b></div><div><span>Best</span><b>${rec?'Round '+S.round:'Round '+best.round}</b></div>
     <div><span>Bosses beaten</span><b>${S.bosses}</b></div><div><span>Blessings</span><b>${S.buffs.length}</b></div>
@@ -2202,7 +2301,7 @@ function showSummary(){
   if(rec) SND.play('star');
   lbRunOver();
 }
-function newGame(mode='normal',mod){clearFusionParts();FUSED_THUMBS.clear();FUSED_THUMB_IMAGES.clear();cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
+function newGame(mode='normal',mod){clearFusionParts();FUSED_THUMBS.clear();FUSED_THUMB_IMAGES.clear();cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={runId:Date.now().toString(36)+'-'+(++runSequence),mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -2579,7 +2678,7 @@ function startFight(){
   if(S.phase!=='prep'||['#cards','#event','#lootChoice','#bossPact'].some(k=>!$(k).hidden))return;
   const auto=autoFill(); if(auto.length) msg(`Auto-placed ${auto.join(', ')} from the bench`);
   if(!onBoard().length) return msg('Place units on the field first');
-  cancelGestures();S.touchAction=null;closeHeroCard();closeItemCard();S.sel=null; S.selItem=null; S.freeRerolls=0;   // preparation-only mastery rewards expire on a successful battle start
+  saveRunNow();cancelGestures();S.touchAction=null;closeHeroCard();closeItemCard();S.sel=null; S.selItem=null; S.freeRerolls=0;   // preparation-only mastery rewards expire on a successful battle start
   const kind=roundKind(S.round);
   for(const u of onBoard()){ const b=U[u.type]; S.clsUse[b.cls]=(S.clsUse[b.cls]||0)+1; S.orgUse[b.org]=(S.orgUse[b.org]||0)+1; }   // for the end-of-run summary
   const f=onBoard().map(u=>{ const x=Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items}); if(u.fuse) fuseFighter(x,u.fuse); return x; });
@@ -2624,6 +2723,15 @@ function drawDue(now){
 function syncFrameButton(){ $('#bFrames').textContent=unlockedFrames?'FPS: Unlocked':'FPS: 60';$('#bFrames').setAttribute('aria-pressed',String(unlockedFrames)); }
 $('#bFrames').onclick=()=>{unlockedFrames=!unlockedFrames;nextDrawAt=0;try{localStorage.setItem('ab_draw_unlocked',unlockedFrames?'1':'0');}catch(e){}syncFrameButton();};syncFrameButton();
 addEventListener('visibilitychange',()=>{last=performance.now();simAccum=0;nextDrawAt=0;lastDrawAt=0;});
+let effectsMode='auto';
+try{const saved=localStorage.getItem('ab_effects_mode');effectsMode=['auto','tablet','full'].includes(saved)?saved:(/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1?'tablet':'auto');}catch(e){}
+const tabletEffects=()=>effectsMode==='tablet';
+const effectLevel=()=>effectsMode==='full'?0:Math.max(FX_LOAD.level,tabletEffects()?2:0);
+const TABLET_FX_BUDGET={parts:80,debris:20,vfx:18};
+const effectBudget=()=>tabletEffects()?TABLET_FX_BUDGET:FX_BUDGETS[effectLevel()];
+function syncEffectsButton(){$('#bEffects').textContent='Effects: '+({auto:'Auto',tablet:'iPad',full:'Full'})[effectsMode];$('#bEffects').title='Auto → iPad → Full. iPad reduces decoration, never skill warnings or status cues.';}
+function setEffectsMode(mode){effectsMode=['auto','tablet','full'].includes(mode)?mode:'auto';try{localStorage.setItem('ab_effects_mode',effectsMode);}catch(e){}syncEffectsButton();if(S?.fight)trimDecorations(S.fight);}
+$('#bEffects').onclick=()=>setEffectsMode(['auto','tablet','full'][(['auto','tablet','full'].indexOf(effectsMode)+1)%3]);syncEffectsButton();
 // Hysteresis avoids changing decoration density after one slow frame.
 const FX_LOAD={level:0,ema:0,slow:0,fast:0};
 const FX_BUDGETS=[{parts:700,debris:160,vfx:160},{parts:320,debris:80,vfx:80},{parts:140,debris:40,vfx:36}];
@@ -2672,23 +2780,24 @@ function mesmerize(e,by,s,src){ if(e.hp<=0||e.spin||!by||by.hp<=0) return; s+=(s
 const byHurt=(p,q)=>p.hp/p.max-q.hp/q.max;
 const PARTICLE_POOL=[],DEBRIS_POOL=[],FX_STATS={particlesMade:0,particlesReused:0,debrisMade:0,debrisReused:0,dropped:0};
 const DECORATIVE_VFX=new Set(['phantomEcho','sigilBloom','impactBloom','shards','burst']);
+const TABLET_DECORATIVE_VFX=new Set([...DECORATIVE_VFX,'rays','pillar']);
 const decorativeVfx=o=>DECORATIVE_VFX.has(o.k)||(o.k==='anim'&&o.fx==='smoke');
 const recycle=(pool,o,max)=>{if(pool.length<max)pool.push(o);};
 function clearVisuals(F){if(!F)return;for(const p of F.parts)recycle(PARTICLE_POOL,p,700);F.parts.length=0;
   for(const d of F.debris||[])recycle(DEBRIS_POOL,d,160);if(F.debris)F.debris.length=0;F.vfx.length=0;F.fx.length=0;F.decorVfx=0;}
-function trimDecorations(F){const b=FX_BUDGETS[FX_LOAD.level];
+function trimDecorations(F){const b=effectBudget();
   while(F.parts.length>b.parts)recycle(PARTICLE_POOL,F.parts.pop(),700);
   while(F.debris&&F.debris.length>b.debris)recycle(DEBRIS_POOL,F.debris.pop(),160);
   let n=0,w=0;for(const v of F.vfx){if(decorativeVfx(v)&&++n>b.vfx)continue;F.vfx[w++]=v;}F.vfx.length=w;F.decorVfx=Math.min(n,b.vfx);
 }
 function emitParticle(x,y,vx,vy,life,c,size,g){const F=S.fight;
-  if(F.parts.length>=FX_BUDGETS[FX_LOAD.level].parts){FX_STATS.dropped++;return;}
+  if(F.parts.length>=effectBudget().parts){FX_STATS.dropped++;return;}
   const p=PARTICLE_POOL.pop();if(p)FX_STATS.particlesReused++;else FX_STATS.particlesMade++;
   const o=p||{};o.x=x;o.y=y;o.vx=vx;o.vy=vy;o.life=o.max=life;o.c=c;o.size=size;o.g=g;F.parts.push(o);
 }
 // Always consume the original visual RNG, even when the cosmetic is omitted.
 const V=o=>{o.m=o.m||.4;if(o.t===undefined)o.t=o.m;o.s=o.s??(Math.random()*1e4|0);
-  const F=S.fight;if(decorativeVfx(o)){if((F.decorVfx||0)>=FX_BUDGETS[FX_LOAD.level].vfx){FX_STATS.dropped++;return;}F.decorVfx=(F.decorVfx||0)+1;}F.vfx.push(o);
+  const F=S.fight;if(tabletEffects()&&TABLET_DECORATIVE_VFX.has(o.k)){FX_STATS.dropped++;return;}if(decorativeVfx(o)){if((F.decorVfx||0)>=effectBudget().vfx){FX_STATS.dropped++;return;}F.decorVfx=(F.decorVfx||0)+1;}F.vfx.push(o);
 };
 let CASTER=null,CAST_TYPE=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
 function withSkill(a,id,fn){const before=CASTER,kind=CAST_TYPE;CASTER=a;CAST_TYPE=id;try{return fn();}finally{CASTER=before;CAST_TYPE=kind;}}
@@ -2768,7 +2877,7 @@ function wallBreakFx(w,smashed){
     const a=-Math.PI/2+(Math.random()-.5)*2.2;
     const ground=y+4+Math.random()*10,h=-(6+Math.random()*24),vx=Math.cos(a)*(30+Math.random()*90)*k,vh=-(60+Math.random()*120)*k,
       r=Math.random()*6,vr=(Math.random()-.5)*(i<6?7:14),size=(i<6?10+Math.random()*5:5+Math.random()*6)*(smashed?1:.75),life=1+Math.random()*.4;
-    if(F.debris.length<FX_BUDGETS[FX_LOAD.level].debris){const old=DEBRIS_POOL.pop();if(old)FX_STATS.debrisReused++;else FX_STATS.debrisMade++;
+    if(F.debris.length<effectBudget().debris){const old=DEBRIS_POOL.pop();if(old)FX_STATS.debrisReused++;else FX_STATS.debrisMade++;
       const o=old||{};o.x=x;o.y=y;o.ground=ground;o.h=h;o.vx=vx;o.vh=vh;o.r=r;o.vr=vr;o.s=size;o.c=cols[i%cols.length];o.t=0;o.life=life;F.debris.push(o);
     }else FX_STATS.dropped++;
   }
@@ -3048,7 +3157,7 @@ function releaseCast(a){
   if(a.nDodge) a.nDodgeT=2;   // Ninja bonus
 }
 function step(dt){
-  const F=S.fight; F.t+=dt;
+  const F=S.fight; F.t+=dt;tickBossPatterns(dt);
   for(const tm of F.timers) tm.t-=dt;
   const due=F.timers.filter(tm=>tm.t<=0); F.timers=F.timers.filter(tm=>tm.t>0);
   for(const tm of due)withSkill(tm.c||null,tm.skill||null,tm.fn);
@@ -3082,6 +3191,7 @@ function step(dt){
       continue; }
     if(a.quickcastT>0) a.quickcastT=Math.max(0,a.quickcastT-dt);
     if(a.sMp) gainMp(a,a.sMp*dt); if(a.overT>0) a.overT-=dt; if(a.zen>0) a.zen-=dt;
+    if(a.patternWind>0)a.patternWind=Math.max(0,a.patternWind-dt);
     if(a.recentDive>0)a.recentDive-=dt;
     if(a.root>0) a.root-=dt; if(a.gT>0) a.gT-=dt; if(a.windT>0) a.windT-=dt; if(a.nDodgeT>0) a.nDodgeT-=dt; if(a.ghost>0&&!a.blinkQ) a.ghost-=dt;
     if(a.pullTo){ const P=a.pullTo, d=Math.hypot(P.x-a.x,P.y-a.y), mv=Math.min(d,8*dt); if(d>.01){ a.x+=(P.x-a.x)/d*mv; a.y+=(P.y-a.y)/d*mv; } if((P.t-=dt)<=0) a.pullTo=null; }
@@ -3133,6 +3243,7 @@ function step(dt){
       continue;
     }
     a.cd-=dt*a.asM*slowM*(a.haste>0?1.3:1)*(a.quickcastT>0?1+a.quickcastK:1)*(a.wAST>0?1+a.wAS:1)*(a.windT>0?1.2:1)*(1+(a.sAS||0))*(a.overT>0?(a.overK||1.6):1)*(1+(a.combo||0)*(a.comboStep||0));
+    if(a.patternWind>0||evadeBossPattern(a,dt))continue;
     if(a.heal){
       if(tryCast(a,null,true)) continue;
       const hurt=alive.filter(b=>b.team===a.team&&b.hp>0&&b.hp<b.max*.8&&dist(a,b)<=a.range+.5).sort(byHurt)[0];
@@ -3661,10 +3772,10 @@ function drawUnit(type,star,px,py,o={}){
     const draw=()=>{if(direct){ctx.save();ctx.scale(u,u);ctx.translate(-84,-108);buildRig(rig,joints,[],expr,mix,{ctx,direct:true});ctx.restore();}
       else if(rig)ctx.drawImage(rigImage,-w/2-w,-h-h,w*3,h*3);else ctx.drawImage(im,-w/2,-h,w,h);};
     ctx.imageSmoothingEnabled=!!sp.art||(!rig&&im.naturalHeight>130);   // hand-made pictures (and big custom images) scale smoothly; pixel sprites stay crisp
-    if(!calmMotion&&o.moving&&(type==='nightreaper'||type==='shadowstep')&&!o.ghost){
+    if(!tabletEffects()&&!calmMotion&&o.moving&&(type==='nightreaper'||type==='shadowstep')&&!o.ghost){
       ctx.save(); for(let i=2;i>0;i--){ctx.globalAlpha=P.alpha*.07*(3-i);ctx.translate((o.face<0?1:-1)*5,-.5);draw();}ctx.restore(); }
     draw();   // outlines are baked into the sprites (no per-frame filter: it was costly on the GPU)
-    if(o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
+    if(!tabletEffects()&&o.enraged){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*(.18+.1*Math.sin(ANIM*10)); ctx.filter='sepia(1) saturate(6) hue-rotate(-30deg)'; draw(); ctx.filter='none'; ctx.globalCompositeOperation='source-over'; ctx.globalAlpha=P.alpha; }
     if(o.flash||o.cast>0){ ctx.globalCompositeOperation='lighter'; ctx.globalAlpha=P.alpha*Math.max((o.flash||0)*.15,o.cast>0?.12:0); draw(); }   // a soft hit blink and a steady casting glow (no strobing)   // soft, so the face still reads
   } else {
     ctx.fillStyle=o.flash?'#fff':col; ctx.beginPath(); ctx.arc(px+P.dx,py+2+P.dy-P.lift,19,0,Math.PI*2); ctx.fill();
@@ -3944,7 +4055,7 @@ function render(){
     const F=S.fight;
     ctx.save();
     const UNDER=['phantomEcho','ring','meteor','charge','rune','quake','rays','sigilBloom'];
-    for(const w of F.walls||[]) drawIceWall(w);
+    drawBossHazards();for(const w of F.walls||[]) drawIceWall(w);
     drawDebris();   // broken Ice Wall chunks
     for(const v of F.vfx) if(UNDER.includes(v.k)) drawVfx(v);
     ctx.save(); ctx.setLineDash([4,5]); ctx.lineDashOffset=-ANIM*20; ctx.strokeStyle='rgba(255,224,160,.45)'; ctx.lineWidth=2;
@@ -3953,7 +4064,7 @@ function render(){
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
     for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,swing:a.attackN%2,hurt:a.impactT/HURT_T,hurtK:a.impactK,hurtX:a.impactX,hurtY:a.impactY,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,hg:a.hg,mg:a.mg,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
-      ref:a,ghost:a.ghost,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.mkEmp>0?.35:a.glow,atkT:a.atkT,cast:a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
+      ref:a,ghost:a.ghost,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.mkEmp>0?.35:a.glow,atkT:a.atkT,cast:a.patternWind>0?Math.min(CAST_T,a.patternWind):a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const a of F.f)if(a.hp>0){
       if(a.fateUntil>F.t||a.sentinelAuraUntil>F.t){ctx.save();ctx.strokeStyle=a.fateUntil>F.t?'#81e0cb':'#79c8e8';ctx.lineWidth=1.5;ctx.globalAlpha=.4;ctx.beginPath();ctx.ellipse(a.x*CELL,(a.y+.3)*CELL,(a.fateUntil>F.t?2.5:2.2)*CELL,(a.fateUntil>F.t?2.5:2.2)*CELL*.4,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
@@ -4026,7 +4137,7 @@ const BOSS_TIPS={golem:'Spread out against Quake Slam, and save burst damage for
 function renderBossHelp(){
   $('#bossHelp').innerHTML='<b>Boss guide</b> (stats shown at round 15; they grow every boss round, and from round 30 two bosses come at once):'+BOSSES.map(id=>{ const u=U[id], sk=SKILLS[id];
     return `<div class="bh"><div class="th">${thumbHTML(id,30)}</div><div><b>${u.name}</b> · ❤ ${u.hp*2} · ⚔ ${u.atk*2} · 🎯 ${u.range}${u.armor?` · 🛡 takes ${u.armor*100}% less damage above half HP`:''}<br>
-      <b>${sk.names?sk.names.join(' / '):sk.name}</b>: ${sk.desc}<br>Brings: ${[...new Set(BOSS_MINIONS[id])].map(m=>U[m].name).join(', ')}<br><span class="tip">Tip: ${BOSS_TIPS[id]}</span></div></div>`; }).join('');
+      <b>${sk.names?sk.names.join(' / '):sk.name}</b>: ${sk.desc}${BOSS_PATTERNS[id]?`<br><b>Round 40+ · ${BOSS_PATTERNS[id].name}</b>: ${BOSS_PATTERNS[id].tip} Heroes automatically evade; patterns evolve below 66% and 33% HP.`:''}<br>Brings: ${[...new Set(BOSS_MINIONS[id])].map(m=>U[m].name).join(', ')}<br><span class="tip">Tip: ${BOSS_TIPS[id]}</span></div></div>`; }).join('');
 }
 $('#howto').addEventListener('toggle',()=>{ if($('#howto').open) renderBossHelp(); });
 const FUSED_THUMBS=new Map(),FUSED_THUMB_IMAGES=new Map();
@@ -4116,7 +4227,7 @@ function holdInfoHeight(){ const el=$('#info'), box=el.getBoundingClientRect(); 
   const r=document.createRange(); r.selectNodeContents(el); const h=Math.ceil(r.getBoundingClientRect().height*el.offsetHeight/box.height);   // in CSS px, also inside a zoomed column
   if(h>infoH){ infoH=h; el.style.minHeight=infoH+'px'; } }
 let AURA_ON=false;
-function renderUI(){ AURA_ON=hasReward(readRewards(),'aura');
+function renderUI(){ scheduleRunSave();$('#bSaveExit').disabled=!['prep','fight','result'].includes(S.phase); AURA_ON=hasReward(readRewards(),'aura');
   SND.music(S.phase==='fight'||S.phase==='result'?'battle':'prep');
   if($('#sGold').textContent!==String(S.gold)){ const c=$('#coins'); c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
   $('#bScroll').disabled=S.gold<SCROLL_COST;
@@ -4134,8 +4245,8 @@ function renderUI(){ AURA_ON=hasReward(readRewards(),'aura');
   renderTouchAction();renderItems(); renderMeter();
   const prep=S.phase==='prep';
   const marks=readMarks();
-  $('#shop').innerHTML=S.shop.map((id,k)=>id?`<button class="su c${U[id].cost}${marks.includes(id)?' marked':''}${!prep||S.gold<U[id].cost?' unavailable':''}" data-k="${k}" data-id="${id}" aria-label="${U[id].name}, ${U[id].cost} gold" style="--cc:${colorOf(id)}">
-    <div class="th">${thumbHTML(id,30)}</div><div class="nm">${U[id].name}</div><div class="cl">${ORIGINS[U[id].org].icon} ${CLASSES[U[id].cls].name}</div><div class="c">${U[id].cost}</div></button>`:`<div></div>`).join('');
+  $('#shop').innerHTML=S.shop.map((id,k)=>id?`<div class="shop-slot"><button class="su c${U[id].cost}${marks.includes(id)?' marked':''}${!prep||S.gold<U[id].cost?' unavailable':''}" data-k="${k}" data-id="${id}" aria-label="${U[id].name}, ${U[id].cost} gold" style="--cc:${colorOf(id)}">
+    <div class="th">${thumbHTML(id,30)}</div><div class="nm">${U[id].name}</div><div class="cl">${ORIGINS[U[id].org].icon} ${CLASSES[U[id].cls].name}</div><div class="c">${U[id].cost}</div></button><button class="b shop-buy" data-quick-buy="${k}" data-id="${id}" ${!prep||S.gold<U[id].cost?'disabled':''} aria-label="Buy ${U[id].name} for ${U[id].cost} gold"><span>Buy</span><span>${U[id].cost}g</span></button></div>`:`<div></div>`).join('');
   $('#bReroll').textContent=S.freeRerolls>0?`Reroll FREE ×${S.freeRerolls}`:'Reroll · 2';
   $('#bReroll').title=S.freeRerolls>0?'Free shop rerolls expire when battle starts.':'Reroll the shop for 2 gold.';
   $('#bReroll').disabled=!prep; $('#bSell').disabled=!prep||!S.sel; $('#bFight').disabled=!prep;
@@ -4171,9 +4282,9 @@ addEventListener('blur',cancelGestures);addEventListener('visibilitychange',()=>
 $('#shop').addEventListener('contextmenu',e=>{const b=e.target.closest('.su');if(!b)return;e.preventDefault();if(touchInput)return;
   const id=b.dataset.id,m=readMarks();if(m.includes(id))m.splice(m.indexOf(id),1);else if(m.length>=MAX_MARKS)return msg(`Plan is full (${MAX_MARKS})`);else m.push(id);setMarks(m);
 });
-$('#shop').addEventListener('click',e=>{const b=e.target.closest('.su');if(!b||shopDragged)return;if(touchInput||(e.detail===0&&matchMedia('(hover:none)').matches)){if(e.detail===0)openHeroCard(b.dataset.id,{shopK:+b.dataset.k});return;}buy(+b.dataset.k);});
+$('#shop').addEventListener('click',e=>{const quick=e.target.closest('[data-quick-buy]');if(quick){if(!quick.disabled&&S.shop[+quick.dataset.quickBuy]===quick.dataset.id)buy(+quick.dataset.quickBuy);return;}const b=e.target.closest('.su');if(!b||shopDragged)return;if(touchInput||(e.detail===0&&matchMedia('(hover:none)').matches)){if(e.detail===0)openHeroCard(b.dataset.id,{shopK:+b.dataset.k});return;}buy(+b.dataset.k);});
 $('#shop').addEventListener('dragstart',e=>e.preventDefault());
-$('#shop').addEventListener('pointerdown',e=>{const b=e.target.closest('.su');if(!b||e.button!==0||e.isPrimary===false)return;
+$('#shop').addEventListener('pointerdown',e=>{if(e.target.closest('[data-quick-buy]'))return;const b=e.target.closest('.su');if(!b||e.button!==0||e.isPrimary===false)return;
   shopDrag={k:+b.dataset.k,id:b.dataset.id,pointerId:e.pointerId,touch:directTouch(e),clientX:e.clientX,clientY:e.clientY,x0:e.clientX,y0:e.clientY,moved:false,ghost:null,over:null};capturePointer(b,e);
 });
 $('#shop').addEventListener('pointermove',e=>{const d=shopDrag;
@@ -4182,9 +4293,9 @@ $('#shop').addEventListener('pointermove',e=>{const d=shopDrag;
   if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>8&&S.phase==='prep'&&S.gold>=U[d.id].cost){
     d.moved=true;d.ghost=document.createElement('div');d.ghost.className='dragghost hero';d.ghost.innerHTML=thumbHTML(d.id,40);document.body.appendChild(d.ghost);hideBubble();
   }
-  if(d.moved){d.ghost.style.left=e.clientX+'px';d.ghost.style.top=e.clientY+'px';d.over=cellAt(e);render();}
+  if(d.moved){d.ghost.style.left=e.clientX+'px';d.ghost.style.top=e.clientY+'px';d.over=cellAt(e);}
 });
-$('#shop').addEventListener('pointerup',e=>{const d=shopDrag;if(!d||d.pointerId!==e.pointerId)return;shopDrag=null;if(d.ghost)d.ghost.remove();
+$('#shop').addEventListener('pointerup',e=>{if(e.target.closest('[data-quick-buy]'))return;const d=shopDrag;if(!d||d.pointerId!==e.pointerId)return;shopDrag=null;if(d.ghost)d.ghost.remove();
   if(d.moved){shopDragged=true;setTimeout(()=>{shopDragged=false;},0);if(S.shop[d.k]===d.id)buyTo(d.k,cellAt(e));else render();}
   else if(d.touch&&!d.shifted){hoverId=null;openHeroCard(d.id,{shopK:d.k});}
 });
@@ -4232,7 +4343,7 @@ for(const type of ['pointercancel','lostpointercapture'])$('#items').addEventLis
 function updateDragScroll(dt){const d=shopDrag&&shopDrag.moved?shopDrag:itemDrag&&itemDrag.moved?itemDrag:dragU&&dragU.moved?dragU:null;
   if(!d||!d.touch)return;const x=d.clientX,y=d.clientY,hit=document.elementFromPoint(x,y),col=hit&&hit.closest('.col');
   const box=col&&col.scrollHeight>col.clientHeight+1&&getComputedStyle(col).overflowY==='auto'?col:null;
-  const r=box?box.getBoundingClientRect():{top:0,bottom:innerHeight},edge=42;
+  const viewport=window.visualViewport,visualTop=viewport?.offsetTop||0,visualBottom=visualTop+(viewport?.height||document.documentElement.clientHeight),bounds=box&&box.getBoundingClientRect(),r=bounds?{top:Math.max(bounds.top,visualTop),bottom:Math.min(bounds.bottom,visualBottom)}:{top:visualTop,bottom:visualBottom},edge=42;
   const v=y<r.top+edge?-Math.min(1,(r.top+edge-y)/edge):y>r.bottom-edge?Math.min(1,(y-r.bottom+edge)/edge):0;
   if(!v)return;if(box)box.scrollTop+=v*480*dt;else window.scrollBy(0,v*480*dt);
   d.over=cellAt({clientX:x,clientY:y});if(d===dragU)d.pos=canvasPos({clientX:x,clientY:y});
@@ -4322,6 +4433,7 @@ $('#cropSave').onclick=()=>{
 
 renderSpriteList();
 newGame();
+runAutosaveReady=true;S.phase='suspended';
 openModes(true);
 last=performance.now(); requestAnimationFrame(frame);
 </script>

@@ -25,14 +25,17 @@ class Fingers:
             await self.send('touchMove',[(1,x+(tx-x)*n/15,y+(ty-y)*n/15)])
             await self.page.wait_for_timeout(12)
         await self.send('touchCancel' if cancel else 'touchEnd')
+    async def visual_point(self,x,y):
+        offset=await self.page.evaluate('({x:visualViewport?.offsetLeft||0,y:visualViewport?.offsetTop||0})')
+        return x-offset['x'],y-offset['y']
     async def center(self,selector):
         target=self.page.locator(selector).first
-        await target.scroll_into_view_if_needed();await self.page.wait_for_timeout(70)
-        b=await target.bounding_box();return b['x']+b['width']/2,b['y']+b['height']/2
+        await target.evaluate("el=>el.scrollIntoView({block:'nearest',inline:'nearest'})");await self.page.wait_for_timeout(70)
+        b=await target.evaluate('el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}}');return await self.visual_point(b['x']+b['width']/2,b['y']+b['height']/2)
     async def cell(self,cx,cy=None,bench=False):
-        b=await self.page.locator('#cv').bounding_box()
+        b=await self.page.locator('#cv').evaluate('el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}}')
         x=(cx+.5)*64;y=532+32 if bench else (cy+.5)*64
-        return b['x']+b['width']*x/512,b['y']+b['height']*y/600
+        return await self.visual_point(b['x']+b['width']*x/512,b['y']+b['height']*y/600)
     async def tap_cell(self,cx,cy=None,bench=False):
         await self.page.locator('#cv').scroll_into_view_if_needed();await self.page.wait_for_timeout(250)
         await self.page.touchscreen.tap(*await self.cell(cx,cy,bench))
@@ -122,8 +125,11 @@ async def run_device(browser,server,width,height,preview):
     await f.tap_cell(2,5)
     await page.evaluate("check(!S.units.find(u=>u.type==='swordsman').items.length&&S.inv.includes('sword:2'),'touch unbinding scroll')")
     if tablet:
+        # Keep both endpoints visible after the expanded Shop/details have scrolled.
+        await page.locator('#cv').scroll_into_view_if_needed();await page.wait_for_timeout(120)
         # Real drag equip and cancel; cancellation must never mutate inventory.
         start=await f.center('#items .it');end=await f.cell(2,5)
+        assert 0<=end[1]<height,'equip target is on the visual viewport'
         await f.drag(start,end)
         await page.evaluate("check(S.units.find(u=>u.type==='swordsman').items[0]==='sword:2'&&!S.inv.length,'finger drag equips item')")
     # Touch sales are immediate; fusion still requires confirmation.
@@ -144,9 +150,9 @@ async def run_device(browser,server,width,height,preview):
     await page.evaluate("check(S.inv[0]==='fang:2','touch combines during battle')")
     await page.locator('#cv').scroll_into_view_if_needed()
     await page.wait_for_timeout(100)
-    b=await page.locator('#cv').bounding_box()
+    b=await page.locator('#cv').evaluate('el=>{const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height}}')
     enemy=await page.evaluate("(()=>{const a=S.fight.f.find(u=>u.team===1&&U[u.type].boss);return {x:a.x,y:a.y}})()")
-    await page.touchscreen.tap(b['x']+b['width']*enemy['x']/8,b['y']+b['height']*(enemy['y']*64-5)/600)
+    await page.touchscreen.tap(*await f.visual_point(b['x']+b['width']*enemy['x']/8,b['y']+b['height']*(enemy['y']*64-5)/600))
     assert await page.locator('#heroCard').is_visible()
     assert await page.locator('[data-hcmark]').count()==0
     await page.locator('[data-hcclose]').tap()
@@ -197,7 +203,10 @@ async def run_device(browser,server,width,height,preview):
     await page.evaluate("check(!shopDrag&&!itemDrag&&!dragU&&S.gold===200,'multi-touch cancellation')")
     if not tablet:
         # Hold a drag at the screen edge; the board can be reached from the lower shop.
+        # Put the Shop in a scrolled viewport independently of HUD/board height.
+        await page.evaluate("window.scrollTo(0,scrollY+$('#shop').getBoundingClientRect().top-(visualViewport?.height||innerHeight)*.35)")
         start=await f.center('#shop .su[data-k="0"]');old_y=await page.evaluate('scrollY')
+        assert old_y>0,'edge-scroll fixture starts below the top of the page'
         await f.send('touchStart',[(1,*start)])
         await f.send('touchMove',[(1,start[0],20)])
         await page.wait_for_timeout(450)

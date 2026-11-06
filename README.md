@@ -559,3 +559,36 @@ client retries without lineup data only for a confirmed missing `team` column;
 constraint/network failures preserve the lineup. Successful submissions are not
 retried just because the following ranking refresh fails. Browser storage must
 be available to preserve failed submissions across reloads.
+
+
+Runs now autosave preparation checkpoints on this browser/device. **Save & exit**
+returns to Runs; **Continue** restores heroes (including fusions and equipment),
+bench/field positions, blessings, gold/HP, shop/lock/upgrade state, boss order,
+modifier, original Daily seed and pending item/blessing/pact choices. Leaving
+mid-battle restores preparation for that round; live fighter references and
+skill callbacks are never serialized. Paid crossroads outcomes cannot be claimed
+again. Starting a new run replaces this device's checkpoint; a completed run
+clears it. Browser storage failures are shown instead of claiming a successful save.
+
+From round 40, bosses add distinct telegraphed ground patterns: Faultline circles,
+Winter Crown rings, Scorching Run lanes, Briar Cross lanes, Storm Eye rings and
+Siege Sweep beams. Shapes evolve below 66% and 33% health, with staggered extra
+strikes for late circle/beam phases. Heroes automatically try to evade; roots,
+channels and crowd control still matter. Pattern hits are capped before defense
+modifiers at 16–21% of a target's max HP and cancel when their boss dies. Boss
+warnings are separate from disposable effects, remain in every quality mode and
+are clipped to the battlefield.
+
+**Effects: Auto / iPad / Full** is saved separately from the run. iPad mode is the
+default for detected iPads; it limits particles/debris, removes ambient decoration,
+extra blooms and expensive cosmetic passes, while retaining projectiles, warning
+geometry, statuses and hero animation. The Shop offers separate touch **Buy**
+buttons beside each hero card, buying directly to the bench. Tapping the portrait
+still opens details; dragging still buys onto the board. Shop pointer moves reuse
+the regular frame renderer instead of drawing the whole scene per input event.
+
+```bash
+python tools/check_endless_features.py
+python tools/check_touch_controls.py
+python tools/check_frame_pacing.py
+```
