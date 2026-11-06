@@ -343,7 +343,50 @@ result callbacks from an abandoned/restarted run are rejected.
 python tools/check_boss_choices.py
 ```
 
+## Equipment variety and team loadouts
+
+Ten additional items support physical damage/crit (Hawkeye Bow, Predator Sigil),
+attack speed/lifesteal (Bloodwoven Wraps), spell damage/mana (Prismatic Lens),
+physical and magic protection (Bastion Crest, Mirror Charm), healing/support
+(Seraph Seal, Soul Chalice), mobility (Wayfarer Mantle) and summons/raised allies/
+turrets (Caller Sigil). They use existing combat stats, enchanting through +5 and
+secondary stats from +3; no extra per-frame item triggers are added.
+
+Lucky Gem is rare and can appear in item rerolls, the 6-gold merchant and Mystery
+Chests. Its selection weight is 0.3 against 1 for each ordinary eligible item;
+actual odds depend on the rarity pool and recent results. Sources avoid their
+last three results, merchant/boss drafts contain three distinct choices and avoid
+the previous offer, and pending offers stay fixed when reopened or resumed.
+Rerolls still cost 30 gold and retain enchant levels. Common rerolls can produce a
+Lucky Gem; otherwise rarity is preserved. Chest payout probabilities and reward
+quantities are unchanged. Daily offers/rerolls retain seeded reproducibility.
+
+**Team gear** lists equipment on all field and bench heroes. An item's details
+show its current holders; bag items also list heroes with direct **Equip**,
+**Enchant** or **Use scroll** buttons. Full slots and invalid enchantments are
+disabled. Fused heroes retain two slots and can enchant a second matching item
+when the first is maxed. Held items still require a consumed Unbinding Scroll to
+remove; the overview provides no free transfer. During combat it shows live
+held equipment, including changes from Pilfer, and cannot equip items.
+
+```bash
+python tools/check_item_loadouts.py
+```
+
+This check samples 40,000 rewards, exercises real merchant/chest/reroll paths,
+checks every new item at all six levels, actual summons/raised allies, equip/
+enchant/scroll limits, deterministic combat across all four effects modes, and
+native touch controls at iPad sizes plus 844×390 and 852×393 phone landscapes.
+
 ## Adaptive effects, draw pacing and effect reuse
+
+The **Effects** button opens direct choices: **Auto**, **Full**, **Tablet** and
+**Minimal**, saved in the browser. Tablet is available on any device, including
+iPhone; it reduces cosmetic layers and caps particles/fragments. Minimal removes
+decorative particles, smoke, blooms, afterimages, cosmetic glows and floating
+damage numbers. Heroes, projectiles, skill warnings, hazard areas and important
+status cues remain visible. The menu pauses active combat and restores its prior
+pause state when closed or a mode is selected.
 
 The HUD defaults to **FPS: 60**. Clicking it selects **FPS: Unlocked** for higher
 refresh-rate displays; this preference is saved in the browser. The drawing
@@ -402,9 +445,9 @@ Tap an owned hero for its actual star level and equipment; use **Move / swap /
 fuse** then tap a destination, or drag it. The detail card also provides **Sell**
 immediately on touch screens; mouse sales retain confirmation. Fighters and bosses can be inspected during combat.
 
-Tap a bag item for its description and equip/enchant, combine, reroll or sell
-actions. Equip/use-scroll asks for a hero; combine asks for another matching bag
-item. Combining works during combat; equipping, rerolling and selling wait for
+Tap a bag item for its description, current holders and direct recipient buttons,
+or use equip/enchant, combine, reroll or sell actions. Equip/use-scroll can also
+ask for a hero on the field; combine asks for another matching bag item. Combining works during combat; equipping, rerolling and selling wait for
 preparation. Held equipment and blessings also have persistent touch details.
 
 Team Plan supports tap-to-add, up/down ordering, remove and saved presets.

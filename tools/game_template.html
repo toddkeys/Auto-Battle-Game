@@ -175,6 +175,7 @@ button.go:disabled{animation:none}
 #planner{position:fixed;top:0;right:auto;left:max(0px,calc(100vw - min(470px,96vw)));bottom:0;width:min(470px,96vw);z-index:45;display:flex;flex-direction:column;gap:8px;padding:12px 12px 10px;
   background:linear-gradient(180deg,#3a2614,#22160b);border-left:3px solid var(--ink);box-shadow:-8px 0 24px rgba(0,0,0,.55);color:var(--text)}
 #planner[hidden]{display:none}
+.effects-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}.effects-options .mode{min-width:0;padding:12px}.effects-options .mode .md{min-height:0}.effects-options .selected{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
 #planner .cxpre{margin:0;justify-content:flex-start}
 .plhead{display:flex;align-items:center;gap:8px}.plhead b{font:400 26px var(--pixel);color:var(--gold)}.plhead span{flex:1;color:var(--muted);font-size:12px;line-height:1.2}
 .plnote{font-size:13px;color:#ff9a80}.plnote:empty{display:none}
@@ -367,7 +368,8 @@ select{background:#1f1610;color:var(--text);border:1px solid #5a4024;border-radi
 button,.hi,.bl,.cx,.pt,.pc{touch-action:manipulation}
 .touch-help{display:none;font-size:12px;color:var(--muted);margin:6px 0 0}
 .touch-task{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--brass);border-radius:6px;background:#302111;color:var(--text);font-size:13px;margin:6px 0}
-.touch-task[hidden],#itemCard[hidden]{display:none}.touch-task button{flex:none}
+.touch-task[hidden],#itemCard[hidden]{display:none}
+#itemCard>.close-detail{position:sticky;top:0;z-index:3}.shophead{flex-wrap:wrap}.shophead .hint{flex:1 1 100px}.gear-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}.gear-row{border:1px solid #79532b;border-radius:7px;padding:8px;background:#271c13}.gear-hero{display:flex;align-items:center;gap:8px;min-width:0}.gear-hero img{width:42px;height:44px;object-fit:contain}.gear-hero b{overflow-wrap:anywhere}.gear-hero small{display:block;color:var(--muted)}.gear-held{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}.gear-held button{min-height:38px;padding:4px 7px!important;font-size:13px!important;white-space:normal!important}.gear-row>.b{min-height:44px;width:100%;font-size:16px;padding:6px;white-space:normal}.gear-row.match{border-color:var(--gold)}.gear-summary{font-size:13px;color:var(--gold);margin:10px 0}.touch-task button{flex:none}
 .su{touch-action:none}.su,.items .it,.pc,.pt,#cv,#cropCv{-webkit-touch-callout:none}
 #cropCv{touch-action:none}.pc img,.pt img{-webkit-user-drag:none;pointer-events:none}
 body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
@@ -423,7 +425,7 @@ body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
       <button class="b go" id="bFight">⚔ Start battle</button>
     </div>
     <div class="card"><h3>Hero</h3><div id="info"></div></div>
-    <div class="card"><h3 class="shophead">Items <span class="hint">drag onto a hero</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="itemTask" class="touch-task" hidden></div><div id="items" class="items"></div></div>
+    <div class="card"><h3 class="shophead">Items <button class="b lockbtn" id="bTeamGear">Team gear</button><span class="hint">tap an item to equip</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="itemTask" class="touch-task" hidden></div><div id="items" class="items"></div></div>
     <div class="card">
       <details id="howto"><summary>How to play</summary>
       <ol class="help">
@@ -485,6 +487,7 @@ body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
     <div id="planPick" class="plgrid"></div>
   </div>
 </aside>
+<div id="effectsMenu" class="overlay" hidden><div class="sumbox wide"><h2>Effects</h2><p>Warnings, projectiles and status cues stay visible in every mode.</p><div id="effectsOptions" class="effects-options"></div><button class="b" id="effectsClose">Close</button></div></div>
 <div id="modes" class="overlay" hidden><div class="sumbox wide" id="modesbox"></div></div>
 <div id="event" class="overlay" hidden><div class="sumbox wide" id="eventbox"></div></div>
 <div id="codex" class="overlay" hidden><div class="sumbox codexbox"><h2>Hero Codex</h2><p id="codexCount"></p><div class="cxpre"><button class="b mkreset" id="codexPlan">📋 Open Team Plan — drag heroes side by side, save presets</button></div><div class="codexgrid" id="codexGrid"></div><button class="b go" id="codexClose">Close</button></div></div>
@@ -740,7 +743,7 @@ const ITEMS = {
   ring: {name:'Mana Ring',      icon:'💍', desc:k=>`Start battle with +${35*k}% mana`,     apply:(x,k)=>{ x.mp=Math.min(x.mpMax*.99,x.mp+x.mpMax*.35*k); }},
   boots:{name:'Swift Boots',    icon:'👢', desc:k=>`+${20*k}% attack speed and move speed`,apply:(x,k)=>{ x.asM*=1+.2*k; x.ms*=1+.2*k; }},
   fang: {name:'Vampire Fang',   icon:'🦷', desc:k=>`Heal for ${12*k}% of damage dealt`,    apply:(x,k)=>{ x.leech+=.12*k; }},
-  gem:  {name:'Lucky Gem',      icon:'💎', desc:k=>`+${20*k}% crit chance`,                apply:(x,k)=>{ x.crit+=.2*k; }},
+  gem:  {name:'Lucky Gem',      icon:'💎', rare:1, desc:k=>`+${20*k}% crit chance`,                apply:(x,k)=>{ x.crit+=.2*k; }},
   thorns:{name:'Thorn Mail',    icon:'🌵', desc:k=>`Melee attackers take ${30*k}% of the damage they deal back`, apply:(x,k)=>{ x.thorns+=.3*k; }},
   charm:{name:'Healing Charm',  icon:'🍀', desc:k=>`Regenerate ${1.5*k}% max HP per second`,apply:(x,k)=>{ x.regen+=.015*k; }},
   crystal:{name:'Mana Crystal', icon:'🔮', desc:k=>`+${6*k} mana per attack (casts its skill sooner)`, apply:(x,k)=>{ x.manaAtk+=6*k; }},
@@ -765,6 +768,16 @@ const ITEMS = {
   duelist:{name:'Duelist Sigil',icon:'⚜️',rare:1,desc:k=>`+${Math.round(10*k)}% dodge (total capped at 65%) and +${Math.round(8*k)}% crit chance`,apply:(x,k)=>{ x.dodge=Math.min(.65,(x.dodge||0)+.1*k); x.crit+=.08*k; }},
   hourglass:{name:'Chrono Seal',icon:'⌛',rare:1,desc:k=>`Start with +${Math.round(15*k)}% mana and ignore the first status effect each battle`,apply:(x,k)=>{ x.mp=Math.min(x.mpMax*.99,x.mp+x.mpMax*.15*k); x.cloak+=1; }},
   stormcore:{name:'Storm Core',icon:'🌩️',rare:1,desc:k=>`After casting, gain +${Math.round(30*k)}% attack speed for 3s (refreshes, does not stack)`,apply:(x,k)=>{ x.quickcastK=Math.max(x.quickcastK,.3*k); }},
+  longbow:{name:'Hawkeye Bow',icon:'🏹',desc:k=>`+${Math.round(12*k)}% attack damage and +${Math.round(6*k)}% crit chance`,apply:(x,k)=>{x.atk*=1+.12*k;x.crit+=.06*k;}},
+  warwrap:{name:'Bloodwoven Wraps',icon:'🥋',desc:k=>`+${Math.round(14*k)}% attack speed; heal for ${(3.5*k).toFixed(1)}% of damage dealt`,apply:(x,k)=>{x.asM*=1+.14*k;x.leech+=.035*k;}},
+  lens:{name:'Prismatic Lens',icon:'🔍',rare:1,desc:k=>`+${Math.round(14*k)}% skill damage and +${2*k} mana per attack`,apply:(x,k)=>{x.skPow*=1+.14*k;x.manaAtk+=2*k;}},
+  bulwarkcrest:{name:'Bastion Crest',icon:'🏰',desc:k=>`+${Math.round(14*k)}% max HP; start with a physical shield worth ${Math.round(12*k)}% of max HP`,apply:(x,k)=>{x.max*=1+.14*k;x.hp=x.hpLag=x.max;x.shield+=x.max*.12*k;}},
+  mirrorcharm:{name:'Mirror Charm',icon:'🪞',rare:1,desc:k=>`Start with a magic shield worth ${Math.round(14*k)}% of max HP; +${Math.round(8*k)}% dodge (total capped at 65%)`,apply:(x,k)=>{x.mshield+=x.max*.14*k;x.dodge=Math.min(.65,(x.dodge||0)+.08*k);}},
+  seraphseal:{name:'Seraph Seal',icon:'🕊️',rare:1,desc:k=>`+${Math.round(12*k)}% healing given; allies within 2 cells regain ${(1.5*k).toFixed(1)} mana per second`,apply:(x,k)=>{x.healOut+=.12*k;x.fontK+=.75*k;}},
+  scoutmantle:{name:'Wayfarer Mantle',icon:'🧣',desc:k=>`+${Math.round(14*k)}% move speed and +${Math.round(6*k)}% dodge (total capped at 65%)`,apply:(x,k)=>{x.ms*=1+.14*k;x.dodge=Math.min(.65,(x.dodge||0)+.06*k);}},
+  finisherbadge:{name:'Predator Sigil',icon:'🎯',rare:1,desc:k=>`+${Math.round(22*k)}% damage against enemies under 35% HP; +${Math.round(6*k)}% crit chance`,apply:(x,k)=>{x.exec+=.22*k;x.crit+=.06*k;}},
+  soulrelic:{name:'Soul Chalice',icon:'🏺',rare:1,desc:k=>`+${Math.round(14*k)}% skill healing; heal for ${Math.round(6*k)}% of damage dealt`,apply:(x,k)=>{x.skHeal*=1+.14*k;x.leech+=.06*k;}},
+  callersigil:{name:'Caller Sigil',icon:'🐾',desc:k=>`Summons, raised allies and turrets gain +${Math.round(12*k)}% max HP and attack; +${k} mana per attack`,apply:(x,k)=>{x.sumBoost=(x.sumBoost||1)*(1+.12*k);x.necBoost=(x.necBoost||1)*(1+.12*k);x.manaAtk+=k;}},
   scroll:{name:'Unbinding Scroll',icon:'📜', desc:()=>'Drag onto a hero to take its item off (the scroll is used up)', use:true},
 };
 // an item is 'key' or 'key:level'; level 1 = +0 ... level 6 = +5. Power grows a little less after +2.
@@ -783,7 +796,7 @@ const SUBS={
   heal:{d:t=>`+${6*t}% healing given`,f:(x,t)=>{ x.healOut+=.06*t; }},
 };
 const ITEM_SUB={sword:'crit',plate:'red',ring:'as',boots:'dmg',fang:'hp',gem:'dmg',thorns:'red',charm:'hp',crystal:'mana',axe:'crit',siphon:'as',wound:'leech',
-  frost:'mana',phoenix:'hp',cloak:'red',gauntlet:'as',spellward:'regen',coin:'crit',censer:'heal',font:'mana',bell:'hp',banner:'dmg',buckler:'hp',grimoire:'mana',heartwood:'heal',duelist:'crit',hourglass:'regen',stormcore:'as'};
+  frost:'mana',phoenix:'hp',cloak:'red',gauntlet:'as',spellward:'regen',coin:'crit',censer:'heal',font:'mana',bell:'hp',banner:'dmg',buckler:'hp',grimoire:'mana',heartwood:'heal',duelist:'crit',hourglass:'regen',stormcore:'as',longbow:'crit',warwrap:'leech',lens:'mana',bulwarkcrest:'hp',mirrorcharm:'red',seraphseal:'heal',scoutmantle:'as',finisherbadge:'dmg',soulrelic:'heal',callersigil:'hp'};
 const subOf=(k,lv=ILV(k))=>lv>=4&&ITEM_SUB[k.split(':')[0]]?{s:SUBS[ITEM_SUB[k.split(':')[0]]],t:lv-3}:null;
 const INAME=k=>IT(k).name+(ILV(k)>1?` +${ILV(k)-1}`:''), IDESC=k=>IT(k).desc(IK(k));
 const MAX_ILV=6;   // +5
@@ -812,7 +825,7 @@ const BLESSINGS={
   riposte:{name:'Shield Riposte',icon:'🛡️',desc:'When a shield absorbs a hit, your next basic attack deals 20% more damage',total:n=>`shield absorption primes +${20*n}% damage on the next basic attack (one charge)`,hero:x=>{ x.riposteK=(x.riposteK||0)+.2; }},
   overflow:{name:'Crimson Reserve',icon:'🩸',desc:'Excess lifesteal fills a physical shield up to 6% of max HP',total:n=>`excess lifesteal fills a physical shield up to ${6*n}% of max HP`,hero:x=>{ x.bloodWard=(x.bloodWard||0)+.06; }},
   bounty:{name:'Bounty',icon:'💰',desc:'+2 gold every round',total:n=>`+${2*n} gold every round`,now:()=>{ S.bounty=(S.bounty||0)+2; }},
-  treasure:{name:'Treasure Map',icon:'🗺️',desc:'Get a rare item right now',total:n=>`${n} rare item${n>1?'s':''} gained`,now:()=>{ S.inv.push(pick(RARE)); }},
+  treasure:{name:'Treasure Map',icon:'🗺️',desc:'Get a rare item right now',total:n=>`${n} rare item${n>1?'s':''} gained`,now:()=>{ S.inv.push(rollEquipment('rare')); }},
   merc:{name:'Mercenary',icon:'🎖️',desc:'A random 4-gold hero joins your bench now',total:n=>`${n} hero${n>1?'es':''} recruited`,now:()=>{ const i=freeBench(); if(i<0){ S.gold+=8; return msg('Bench full: took 8 gold instead'); }
     S.units.push({uid:S.uid++,type:pick(UNITS.filter(u=>u.cost===4)).id,star:1,items:[],bought:-1,loc:{w:'bench',i}}); merge(); }},
 };
@@ -869,10 +882,7 @@ function nextPrepOffer(){
   const offer=S.offerQueue.shift();scheduleRunSave();if(!offer)return;
   if(offer==='loot')offerBossLoot();else if(offer==='blessing')offerBlessings();else if(offer==='event')openEvent();else if(offer==='pact')openBossPact();
 }
-function bossLootOptions(){return seeded('boss-loot:'+S.round,()=>{
-  const pool=[...RARE];for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
-  return pool.slice(0,3);
-});}
+function bossLootOptions(){if(S.bossLootDraft?.round===S.round&&Array.isArray(S.bossLootDraft.keys)&&S.bossLootDraft.keys.length===3&&new Set(S.bossLootDraft.keys).size===3&&S.bossLootDraft.keys.every(k=>RARE.includes(k)))return [...S.bossLootDraft.keys];const keys=seeded('boss-loot:'+S.round,()=>equipmentChoices(3,'rare','bossDraft'));S.bossLootDraft={round:S.round,keys};return [...keys];}
 function offerBossLoot(){
   if(!S.pendingLoot||S.phase!=='prep')return nextPrepOffer();
   $('#lootRow').innerHTML=S.pendingLoot.map(k=>`<button class="bless lootcard" data-loot="${k}"><div class="bi">${IT(k).icon}</div><div class="bn">${INAME(k)}</div><div class="bd">${IDESC(k)}</div><div class="bs">Rare · Choose one</div></button>`).join('');
@@ -1641,7 +1651,7 @@ function saveRunNow(){clearTimeout(runSaveTimer);runSaveTimer=0;if(!runAutosaveR
   try{localStorage.setItem(RUN_SAVE_KEY,JSON.stringify({version:1,savedAt:new Date().toISOString(),speed,state:{...state,phase:'prep'},activeOffer}));runSaveFailed=false;return true;}
   catch(e){if(!runSaveFailed){runSaveFailed=true;msg('Could not save this run. Free browser storage before leaving.');}return false;}}
 function scheduleRunSave(){if(!runAutosaveReady||S?.phase!=='prep')return;clearTimeout(runSaveTimer);runSaveTimer=setTimeout(saveRunNow,160);}
-function hideRunOverlays(){for(const id of ['#cards','#event','#lootChoice','#bossPact','#summary','#confirm','#codex','#planner'])$(id).hidden=true;closeHeroCard();closeItemCard();}
+function hideRunOverlays(){closeEffectsMenu();for(const id of ['#cards','#event','#lootChoice','#bossPact','#summary','#confirm','#codex','#planner'])$(id).hidden=true;closeHeroCard();closeItemCard();}
 function resumeRun(){const saved=readRunSave();if(!saved)return msg('No compatible saved run was found.');
   runAutosaveReady=false;clearTimeout(runSaveTimer);hideRunOverlays();newGame(saved.state.mode,saved.state.mod);
   S={...S,...saved.state,phase:'prep',fight:null,inspect:null,touchAction:null,ufx:[],sel:null,selItem:null};speed=[1,2,3].includes(saved.speed)?saved.speed:1;$('#bSpeed').textContent='Speed x'+speed;simAccum=0;$('#modes').hidden=true;runAutosaveReady=true;
@@ -1747,15 +1757,34 @@ $('#heroCard').addEventListener('click',e=>{
   if(e.target.closest('[data-hcmark]')){ const id=heroCardFor, m=readMarks();
     if(m.includes(id)) m.splice(m.indexOf(id),1); else if(m.length>=MAX_MARKS){ e.target.closest('[data-hcmark]').textContent=`Plan is full (${MAX_MARKS})`; return; } else m.push(id);
     setMarks(m);openHeroCard(id,context); } });
+function itemEnchantIndex(u,k){const first=u.items.findIndex(h=>IT(h)===IT(k));if(first<0)return -1;const fit=u.items.findIndex(h=>IT(h)===IT(k)&&ILV(h)<MAX_ILV&&ILV(h)+ILV(k)<=MAX_ILV);return fit>=0?fit:first;}
+function itemEquipError(u,k){if(!u||!k||!IT(k))return 'Item or hero is no longer available.';
+  if(IT(k).use)return u.items.length?'':`${U[u.type].name} has no item to take off`;
+  const held=u.items[itemEnchantIndex(u,k)];if(held){if(ILV(held)>=MAX_ILV)return `${INAME(held)} is already fully enchanted`;if(ILV(held)+ILV(k)>MAX_ILV)return `Together they would go past +${MAX_ILV-1} — use a smaller one`;return '';}
+  return u.items.length>=itemSlots(u)?`${U[u.type].name} has no free item slot. Use a scroll to remove equipment first.`:'';
+}
+function gearUnits(){const active=['fight','result'].includes(S.phase)&&S.fight,live=new Map((active?S.fight.f:[]).filter(a=>a.team===0&&!a.summon&&a.unitUid!==undefined).map(a=>[a.unitUid,a]));return S.units.map(u=>({...u,items:live.get(u.uid)?.items||u.items}));}
+function gearRows(k,bag=false){return gearUnits().sort((a,b)=>(a.loc.w==='bench')-(b.loc.w==='bench')||a.uid-b.uid).map(u=>{
+  const match=k&&u.items.some(h=>IT(h)===IT(k)),error=bag?itemEquipError(u,k):'',action=k&&IT(k).use?'Use scroll':match?'Enchant':'Equip';
+  return `<div class="gear-row ${match?'match':''}"><div class="gear-hero">${thumbHTML(u.type,42,u.fuse)}<div><b>${esc(heroName(u.type,u.fuse))} ${u.fuse?'★':'★'.repeat(u.star)}</b><small>${u.loc.w==='board'?'Field':'Bench'} · ${u.items.length} / ${itemSlots(u)} slots</small></div></div><div class="gear-held">${u.items.length?u.items.map(h=>`<button class="b" data-gear-key="${esc(h)}">${IT(h).icon} ${esc(INAME(h))}</button>`).join(''):'<span class="hint">No equipment</span>'}</div>${bag?`<button class="b" data-item-send="${u.uid}" ${S.phase!=='prep'||error?'disabled':''}>${error?esc(error):action+' '+IT(k).icon+' '+esc(INAME(k))}</button>`:''}</div>`;
+ }).join('')||'<p class="hint">Buy a hero to start equipping your team.</p>';}
+function openTeamGear(){cancelTouchAction();closeHeroCard();hideBubble();itemCardContext={teamGear:true};$('#itemCard').innerHTML='<button class="b close-detail" data-item-close aria-label="Close team gear">✕</button><h3>Team gear</h3><p class="help">Field and bench equipment. Tap an item to see who uses it. Equip a bag item from its details; held equipment still requires an Unbinding Scroll to remove.</p><div class="gear-list">'+gearRows()+'</div>';$('#itemCard').hidden=false;}
+$('#bTeamGear').onclick=()=>openTeamGear();
 function closeItemCard(){ $('#itemCard').hidden=true;itemCardContext=null; }
 function openItemCard(i,key){closeHeroCard();const k=key||S.inv[i];if(!k)return;hideBubble();
   const bag=Number.isInteger(i),prep=S.phase==='prep';itemCardContext={i,key:k};
   $('#itemCard').innerHTML=`<button class="b close-detail" data-item-close aria-label="Close item details">✕</button>${itemTip(k)}`+
     (bag?`<div class="detail-actions"><button class="b" data-item-equip ${prep?'':'disabled'}>${IT(k).use?'Use scroll':'Equip / enchant'}</button>${IT(k).use?'':`<button class="b" data-item-combine>Combine</button><button class="b" data-item-reroll ${prep&&S.gold>=REROLL_COST?'':'disabled'}>Reroll · ${REROLL_COST} gold</button>`}<button class="b" data-item-sell ${prep?'':'disabled'}>Sell · ${itemValue(k)} gold</button></div>`:'<p class="help">Use an Unbinding Scroll to remove held equipment.</p>');
+  const holders=gearUnits().filter(u=>u.items.some(h=>IT(h)===IT(k)));
+  $('#itemCard').insertAdjacentHTML('beforeend',`<div class="gear-summary">Using this item: ${holders.length?holders.map(u=>esc(heroName(u.type,u.fuse))).join(', '):'No heroes yet'}</div><button class="b" data-team-gear>View all team gear</button>${bag?`<h4>Send to a hero</h4><div class="gear-list">${gearRows(k,true)}</div>`:''}`);
   $('#itemCard').hidden=false;
 }
 document.addEventListener('pointerdown',e=>{if(e.isPrimary!==false&&itemCardContext&&!e.target.closest('#itemCard'))closeItemCard();},true);
-$('#itemCard').onclick=e=>{if(e.target.closest('[data-item-close]'))return closeItemCard();if(!e.target.closest('[data-item-equip],[data-item-combine],[data-item-reroll],[data-item-sell]'))return;const c=itemCardContext;
+$('#itemCard').onclick=e=>{if(e.target.closest('[data-item-close]'))return closeItemCard();
+  if(e.target.closest('[data-team-gear]'))return openTeamGear();
+  const held=e.target.closest('[data-gear-key]');if(held)return openItemCard(undefined,held.dataset.gearKey);
+  const send=e.target.closest('[data-item-send]');if(send){const c=itemCardContext,u=S.units.find(u=>u.uid===+send.dataset.itemSend);if(S.phase!=='prep'||!c||S.inv[c.i]!==c.key||!u)return;const error=itemEquipError(u,c.key);if(error)return msg(error);cancelTouchAction();giveItem(u,c.i);closeItemCard();render();renderUI();return;}
+if(!e.target.closest('[data-item-equip],[data-item-combine],[data-item-reroll],[data-item-sell]'))return;const c=itemCardContext;
   if(!c||!Number.isInteger(c.i)||S.inv[c.i]!==c.key)return closeItemCard();
   if(e.target.closest('[data-item-equip]')){closeItemCard();beginTouchAction({kind:'item',i:c.i,key:c.key});}
   else if(e.target.closest('[data-item-combine]')){closeItemCard();beginTouchAction({kind:'combine',i:c.i,key:c.key});}
@@ -1894,7 +1923,7 @@ $('#codexClose').onclick=()=>{ $('#codex').hidden=true; };
 // ====== events between rounds (every 4th round) ======
 const isEventRound=r=>r>=4&&r%4===0;
 function openEvent(){
-  const box=$('#eventbox'), wares=S.eventWares?.round===S.round&&Array.isArray(S.eventWares.keys)&&S.eventWares.keys.every(k=>RARE.includes(k))?S.eventWares.keys:seeded('wares'+S.round,()=>[...RARE].sort(()=>Math.random()-.5).slice(0,3));S.eventWares={round:S.round,keys:wares};
+  const box=$('#eventbox'), wares=S.eventWares?.round===S.round&&Array.isArray(S.eventWares.keys)&&S.eventWares.keys.every(k=>RARE.includes(k))?S.eventWares.keys:seeded('wares'+S.round,()=>equipmentChoices(3,'rare','merchant'));S.eventWares={round:S.round,keys:wares};
   const main=()=>{ box.innerHTML=`<h2>A crossroads</h2><p>Something waits on the road. Choose one, or move on.</p><div class="modegrid">
       <button class="mode" data-e="merchant"><div class="mi">🧳</div><div class="mn">Travelling Merchant</div><div class="md">Buy one of three rare items for 6 gold.</div></button>
       <button class="mode" data-e="chest" ${S.gold<4?'disabled':''}><div class="mi">🎁</div><div class="mn">Mystery Chest</div><div class="md">Pay 4 gold to open it: gold, an item… or nothing.</div></button>
@@ -1908,8 +1937,8 @@ function openEvent(){
     if(b.dataset.buy){ S.gold-=6; S.inv.push(b.dataset.buy); SND.play('buy'); done(`You bought ${ITEMS[b.dataset.buy].icon} ${ITEMS[b.dataset.buy].name}.`); }
     if(b.dataset.e==='chest'){ S.gold-=4; const r=seeded('chest'+S.round,()=>Math.random());
       if(r<.35){ S.gold+=10; SND.play('buy'); done('💰 The chest is full of coins: +10 gold!'); }
-      else if(r<.6){ const k=seeded('chestR'+S.round,()=>pick(RARE)); S.inv.push(k); SND.play('star'); done(`✨ A rare item: ${ITEMS[k].icon} ${ITEMS[k].name}!`); }
-      else if(r<.8){ const k=seeded('chestC'+S.round,()=>pick(COMMON)); S.inv.push(k); SND.play('buy'); done(`An item: ${ITEMS[k].icon} ${ITEMS[k].name}.`); }
+      else if(r<.6){ const k=seeded('chestR'+S.round,()=>rollEquipment('rare','chest')); S.inv.push(k); SND.play('star'); done(`✨ A rare item: ${ITEMS[k].icon} ${ITEMS[k].name}!`); }
+      else if(r<.8){ const k=seeded('chestC'+S.round,()=>rollEquipment('common','chest')); S.inv.push(k); SND.play('buy'); done(`An item: ${ITEMS[k].icon} ${ITEMS[k].name}.`); }
       else done('🕸 Empty. Only cobwebs…'); }
     if(b.dataset.e==='train') box.innerHTML=`<h2>Training Ground</h2><p>Pick a hero to train (+1 star). You will skip next round's income.</p><div class="evunits">${S.units.filter(u=>u.star<3).map(u=>`<button data-uid="${u.uid}">${thumbHTML(u.type,40)}${U[u.type].name}<br>${'★'.repeat(u.star)} → ${'★'.repeat(u.star+1)}</button>`).join('')}</div><button class="b" data-e="leave">Never mind</button>`;
     if(b.dataset.uid){ const u=S.units.find(v=>v.uid===+b.dataset.uid); u.star++; S.skipIncome=true; SND.play('star'); merge(); done(`${U[u.type].name} trained to ${'★'.repeat(u.star)}! No income next round.`); }
@@ -2066,7 +2095,7 @@ function showSummary(){clearTimeout(runSaveTimer);try{localStorage.removeItem(RU
   if(rec) SND.play('star');
   lbRunOver();
 }
-function newGame(mode='normal',mod){clearFusionParts();FUSED_THUMBS.clear();FUSED_THUMB_IMAGES.clear();cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={runId:Date.now().toString(36)+'-'+(++runSequence),mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
+function newGame(mode='normal',mod){closeEffectsMenu();clearFusionParts();FUSED_THUMBS.clear();FUSED_THUMB_IMAGES.clear();cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={runId:Date.now().toString(36)+'-'+(++runSequence),mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -2135,20 +2164,11 @@ function fuseFighter(x,fuseType,mult=1){
 }
 // drop item S.inv[i] on a hero: equip it, enchant the same item it already holds, or (scroll) take its item off
 function giveItem(u,i){
-  const k=S.inv[i]; if(k===undefined) return;
-  if(IT(k).use){
-    if(!u.items.length) return msg(`${U[u.type].name} has no item to take off`);
-    S.inv.splice(i,1); S.inv.push(...u.items); msg(`Took ${u.items.map(x=>IT(x).icon).join(' ')} off ${U[u.type].name}`); u.items=[]; SND.play('equip'); return;
-  }
-  const j=u.items.findIndex(h=>IT(h)===IT(k)), held=u.items[j];
-  if(j>=0){   // same item: enchant
-    if(ILV(held)>=MAX_ILV) return msg(`${INAME(held)} is already fully enchanted`);
-    if(ILV(held)+ILV(k)>MAX_ILV) return msg(`Together they would go past +${MAX_ILV-1} — use a smaller one`);
-    u.items[j]=held.split(':')[0]+':'+(ILV(held)+ILV(k)); S.inv.splice(i,1); SND.play('star');
-    return msg(`✨ ${U[u.type].name}'s ${INAME(u.items[j])} is enchanted!`);
-  }
-  if(u.items.length>=itemSlots(u)) return msg(`${U[u.type].name} already holds ${u.items.map(h=>IT(h).icon).join(' ')} — drop the same item to enchant it, or use 📜 to take ${u.items.length>1?'them':'it'} off`);
-  u.items.push(k); S.inv.splice(i,1); SND.play('equip'); msg(`${U[u.type].name} equipped ${IT(k).icon} ${INAME(k)}`);
+  const k=S.inv[i];if(k===undefined)return;const error=itemEquipError(u,k);if(error)return msg(error);
+  if(IT(k).use){S.inv.splice(i,1);S.inv.push(...u.items);msg(`Took ${u.items.map(x=>IT(x).icon).join(' ')} off ${U[u.type].name}`);u.items=[];SND.play('equip');return;}
+  const j=itemEnchantIndex(u,k),held=u.items[j];
+  if(j>=0){u.items[j]=held.split(':')[0]+':'+(ILV(held)+ILV(k));S.inv.splice(i,1);SND.play('star');return msg(`✨ ${U[u.type].name}'s ${INAME(u.items[j])} is enchanted!`);}
+  u.items.push(k);S.inv.splice(i,1);SND.play('equip');msg(`${U[u.type].name} equipped ${IT(k).icon} ${INAME(k)}`);
 }
 // drop inventory item i on inventory item j: two of the same combine into an enchanted one
 function combineItems(i,j){
@@ -2302,14 +2322,14 @@ cv.addEventListener('contextmenu',e=>{   // right-click a hero: confirm, then se
 const itemValue=k=>5*ILV(k);   // 5 gold per item (an enchanted item is made of several)
 function sellItem(i){if(S.phase!=='prep')return;const k=S.inv[i]; if(!k) return; const v=itemValue(k); S.gold+=v; S.inv.splice(i,1); SND.play('sell');
   msg(`Sold ${IT(k).icon} ${INAME(k)} for ${v} gold`); renderUI(); }
-// right-click an item: reroll it into another random item (same rarity and enchant level) for 30 gold, or sell it
+// Rerolls keep rarity (except a low-chance Lucky Gem) and enchant level; cost 30 gold.
 const REROLL_COST=30;
 function rerollItem(i){if(S.phase!=='prep')return;const k=S.inv[i]; if(!k||IT(k).use) return; if(S.gold<REROLL_COST) return msg(`Rerolling an item costs ${REROLL_COST} gold`);
-  const base=k.split(':')[0], pool=(ITEMS[base].rare?RARE:COMMON).filter(b=>b!==base), nb=pool[Math.floor(Math.random()*pool.length)], nk=ILV(k)>1?nb+':'+ILV(k):nb;
+  const base=k.split(':')[0],n=S.itemRollN||0,nb=seeded('item-reroll:'+S.round+':'+n,()=>rollEquipment(ITEMS[base].rare?'rare':'common','reroll',[base]));if(!nb)return;S.itemRollN=n+1;const nk=ILV(k)>1?nb+':'+ILV(k):nb;
   S.gold-=REROLL_COST; S.inv[i]=nk; SND.play('reroll'); msg(`🎲 ${IT(k).icon} ${INAME(k)} → ${IT(nk).icon} ${INAME(nk)}`); renderUI(); }
 function askItem(e,i){if(S.phase!=='prep')return;const k=S.inv[i];if(!k)return;const c=$('#confirm'),can=!IT(k).use;
   c.innerHTML=`<div><b>${IT(k).icon} ${INAME(k)}</b></div><div class="row">${can?`<button class="b" data-reroll ${S.gold<REROLL_COST?'disabled':''}>🎲 Reroll (${REROLL_COST} gold)</button> `:''}<button class="b" data-sell>Sell (${itemValue(k)} gold)</button> <button class="b" data-no>Cancel</button></div>`+
-    (can?`<div style="font-size:12px;margin-top:6px;max-width:300px">Reroll turns it into another random ${IT(k).rare?'rare ':''}item and keeps its enchant level.</div>`:'');
+    (can?`<div style="font-size:12px;margin-top:6px;max-width:300px">Reroll gives another ${IT(k).rare?'rare ':''}item, with a small chance of a Lucky Gem. Keeps its enchant level and avoids recent results.</div>`:'');
   c.hidden=false;positionMenu(c,e);
   c.onclick=ev=>{ if(ev.target.closest('[data-reroll]')) rerollItem(i); if(ev.target.closest('[data-sell]')) sellItem(i); if(ev.target.closest('button')) c.hidden=true; }; }
 // buy an Unbinding Scroll (takes a hero's item off) for 50 gold
@@ -2397,6 +2417,14 @@ function applySynergy(f){
 // difficulty: enemy stats grow 6% per round, teams build around a class/origin, and carry items later on
 const enemyPower=r=>1+Math.max(0,Math.min(r,20)-2)*0.03+Math.max(0,r-20)*0.015;   // grows slower after round 20
 const EQUIP=Object.keys(ITEMS).filter(k=>!ITEMS[k].use), COMMON=EQUIP.filter(k=>!ITEMS[k].rare), RARE=EQUIP.filter(k=>ITEMS[k].rare);   // base keys
+const ITEM_WEIGHT={gem:.3};
+function rollEquipment(rarity='any',source='loot',exclude=[]){const pool=rarity==='rare'?RARE:rarity==='common'?COMMON:EQUIP;
+  const candidates=[...new Set([...pool,'gem'])].filter(k=>!exclude.includes(k));if(!candidates.length)return null;
+  if(!S.itemHistory||typeof S.itemHistory!=='object'||Array.isArray(S.itemHistory))S.itemHistory={};const history=S.itemHistory,recent=Array.isArray(history[source])?history[source]:[],fresh=candidates.filter(k=>!recent.includes(k)),choices=fresh.length?fresh:candidates;
+  let n=Math.random()*choices.reduce((sum,k)=>sum+(ITEM_WEIGHT[k]||1),0),chosen=choices[choices.length-1];for(const k of choices){n-=ITEM_WEIGHT[k]||1;if(n<0){chosen=k;break;}}
+  history[source]=[...recent,chosen].slice(-3);return chosen;
+}
+function equipmentChoices(n,rarity,source){const result=[],previous=Array.isArray(S.itemHistory?.[source])?[...S.itemHistory[source]]:[];for(let i=0;i<n;i++){const k=rollEquipment(rarity,source,[...previous,...result]);if(!k)break;result.push(k);}return result;}
 const ENEMY_EQUIP=EQUIP.filter(k=>k!=='coin');
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function genEnemies(r){
@@ -2446,7 +2474,7 @@ function startFight(){
   saveRunNow();cancelGestures();S.touchAction=null;closeHeroCard();closeItemCard();S.sel=null; S.selItem=null; S.freeRerolls=0;   // preparation-only mastery rewards expire on a successful battle start
   const kind=roundKind(S.round);
   for(const u of onBoard()){ const b=U[u.type]; S.clsUse[b.cls]=(S.clsUse[b.cls]||0)+1; S.orgUse[b.org]=(S.orgUse[b.org]||0)+1; }   // for the end-of-run summary
-  const f=onBoard().map(u=>{ const x=Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items}); if(u.fuse) fuseFighter(x,u.fuse); return x; });
+  const f=onBoard().map(u=>{ const x=Object.assign(mkF(u.type,u.star,u.loc.cx,u.loc.cy,0),{items:u.items,unitUid:u.uid}); if(u.fuse) fuseFighter(x,u.fuse); return x; });
   noteCodex(onBoard().flatMap(typesOf));
   const hardM=(S.mode==='hard'?1.2:1)*(S.mod==='titan'?1.15:1);
   const foesNow=seeded('enemy'+S.round,()=>kind==='pvp'?genEnemies(S.round):genMonsters(S.round));
@@ -2458,7 +2486,7 @@ function startFight(){
     if(S.mod==='glass'&&x.team===0){ x.dmgM*=1.3; x.max*=.75; x.hp=x.hpLag=x.max; }
     if(S.mod==='frenzy'){ x.asM*=1.25; x.mp=Math.max(x.mp,x.mpMax*.3); } }
   for(const x of f) if(x.team===0) for(const k of S.buffs) if(BLESSINGS[k].hero) BLESSINGS[k].hero(x);   // blessings
-  const ITEM_STATS=['shield','mshield','skPow','skHeal','dodge','quickcastK','atk','max','hp','asM','ms','leech','crit','thorns','regen','manaAtk','exec','frostOn','phoenix','cloak','spellblade','coin','siphon','wound','red','dmgM','healOut','fontK','bellK','bannerK'];
+  const ITEM_STATS=['shield','mshield','skPow','skHeal','dodge','quickcastK','atk','max','hp','asM','ms','leech','crit','thorns','regen','manaAtk','exec','frostOn','phoenix','cloak','spellblade','coin','siphon','wound','red','dmgM','healOut','fontK','bellK','bannerK','sumBoost','necBoost'];
   f.forEach((x,i)=>{ const before=Object.fromEntries(ITEM_STATS.map(k=>[k,x[k]||0])); for(const k of x.items||[]){ IT(k).apply(x,IK(k)); const sb=subOf(k); if(sb) sb.s.f(x,sb.t); }
     x.itemDelta=Object.fromEntries(ITEM_STATS.map(k=>[k,(x[k]||0)-before[k]]).filter(([,v])=>v));   // what the items added, so Pilfer can take it back
     x.spawnT=.3+(i%9)*.04; if(U[x.type].leap) x.leapDelay=.2; });
@@ -2489,14 +2517,23 @@ function syncFrameButton(){ $('#bFrames').textContent=unlockedFrames?'FPS: Unloc
 $('#bFrames').onclick=()=>{unlockedFrames=!unlockedFrames;nextDrawAt=0;try{localStorage.setItem('ab_draw_unlocked',unlockedFrames?'1':'0');}catch(e){}syncFrameButton();};syncFrameButton();
 addEventListener('visibilitychange',()=>{last=performance.now();simAccum=0;nextDrawAt=0;lastDrawAt=0;});
 let effectsMode='auto';
-try{const saved=localStorage.getItem('ab_effects_mode');effectsMode=['auto','tablet','full'].includes(saved)?saved:(/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1?'tablet':'auto');}catch(e){}
-const tabletEffects=()=>effectsMode==='tablet';
+try{const saved=localStorage.getItem('ab_effects_mode');effectsMode=['auto','full','tablet','minimal'].includes(saved)?saved:(/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1?'tablet':'auto');}catch(e){}
+const minimalEffects=()=>effectsMode==='minimal';
+const tabletEffects=()=>effectsMode==='tablet'||minimalEffects();
 const effectLevel=()=>effectsMode==='full'?0:Math.max(FX_LOAD.level,tabletEffects()?2:0);
-const TABLET_FX_BUDGET={parts:80,debris:20,vfx:18};
-const effectBudget=()=>tabletEffects()?TABLET_FX_BUDGET:FX_BUDGETS[effectLevel()];
-function syncEffectsButton(){$('#bEffects').textContent='Effects: '+({auto:'Auto',tablet:'iPad',full:'Full'})[effectsMode];$('#bEffects').title='Auto → iPad → Full. iPad reduces decoration, never skill warnings or status cues.';}
-function setEffectsMode(mode){effectsMode=['auto','tablet','full'].includes(mode)?mode:'auto';try{localStorage.setItem('ab_effects_mode',effectsMode);}catch(e){}syncEffectsButton();if(S?.fight)trimDecorations(S.fight);}
-$('#bEffects').onclick=()=>setEffectsMode(['auto','tablet','full'][(['auto','tablet','full'].indexOf(effectsMode)+1)%3]);syncEffectsButton();
+const TABLET_FX_BUDGET={parts:80,debris:20,vfx:18},MINIMAL_FX_BUDGET={parts:0,debris:0,vfx:0};
+const effectBudget=()=>minimalEffects()?MINIMAL_FX_BUDGET:tabletEffects()?TABLET_FX_BUDGET:FX_BUDGETS[effectLevel()];
+const EFFECT_MODES={auto:{name:'Auto',desc:'Adjust decorative detail automatically under load.'},full:{name:'Full',desc:'All decorative effects, particles and floating damage numbers.'},tablet:{name:'Tablet',desc:'Fewer particles and cosmetic layers for phones and tablets.'},minimal:{name:'Minimal',desc:'No decorative particles, smoke, blooms or damage numbers. Heroes, attacks, warnings and statuses remain.'}};
+let effectsMenuFight=null,effectsMenuWasPaused=false;
+function syncEffectsButton(){$('#bEffects').textContent='Effects: '+EFFECT_MODES[effectsMode].name;$('#bEffects').title='Choose Auto, Full, Tablet or Minimal effects.';}
+function setEffectsMode(mode){effectsMode=Object.hasOwn(EFFECT_MODES,mode)?mode:'auto';try{localStorage.setItem('ab_effects_mode',effectsMode);}catch(e){}syncEffectsButton();if(S?.fight)trimDecorations(S.fight);}
+function openEffectsMenu(){if(!$('#effectsMenu').hidden)return;if(S?.phase==='fight'&&S.fight){effectsMenuFight=S.fight;effectsMenuWasPaused=!!S.fight.paused;S.fight.paused=true;}
+  $('#effectsOptions').innerHTML=Object.entries(EFFECT_MODES).map(([key,d])=>`<button class="mode ${effectsMode===key?'selected':''}" data-effects-mode="${key}" aria-pressed="${effectsMode===key}"><div class="mn">${d.name}${effectsMode===key?' ✓':''}</div><div class="md">${d.desc}</div></button>`).join('');$('#effectsMenu').hidden=false;}
+function closeEffectsMenu(){if(effectsMenuFight&&S?.fight===effectsMenuFight)effectsMenuFight.paused=effectsMenuWasPaused;effectsMenuFight=null;$('#effectsMenu').hidden=true;}
+$('#bEffects').onclick=()=>openEffectsMenu();$('#effectsClose').onclick=()=>closeEffectsMenu();
+$('#effectsOptions').onclick=e=>{const b=e.target.closest('[data-effects-mode]');if(b){setEffectsMode(b.dataset.effectsMode);closeEffectsMenu();}};
+$('#effectsMenu').onclick=e=>{if(e.target===$('#effectsMenu'))closeEffectsMenu();};
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#effectsMenu').hidden)closeEffectsMenu();});syncEffectsButton();
 // Hysteresis avoids changing decoration density after one slow frame.
 const FX_LOAD={level:0,ema:0,slow:0,fast:0};
 const FX_BUDGETS=[{parts:700,debris:160,vfx:160},{parts:320,debris:80,vfx:80},{parts:140,debris:40,vfx:36}];
@@ -2553,7 +2590,7 @@ function clearVisuals(F){if(!F)return;for(const p of F.parts)recycle(PARTICLE_PO
 function trimDecorations(F){const b=effectBudget();
   while(F.parts.length>b.parts)recycle(PARTICLE_POOL,F.parts.pop(),700);
   while(F.debris&&F.debris.length>b.debris)recycle(DEBRIS_POOL,F.debris.pop(),160);
-  let n=0,w=0;for(const v of F.vfx){if(decorativeVfx(v)&&++n>b.vfx)continue;F.vfx[w++]=v;}F.vfx.length=w;F.decorVfx=Math.min(n,b.vfx);
+  let n=0,w=0;for(const v of F.vfx){if(minimalEffects()&&v.k==='anim'||tabletEffects()&&TABLET_DECORATIVE_VFX.has(v.k)||decorativeVfx(v)&&++n>b.vfx)continue;F.vfx[w++]=v;}F.vfx.length=w;F.decorVfx=Math.min(n,b.vfx);
 }
 function emitParticle(x,y,vx,vy,life,c,size,g){const F=S.fight;
   if(F.parts.length>=effectBudget().parts){FX_STATS.dropped++;return;}
@@ -2562,12 +2599,12 @@ function emitParticle(x,y,vx,vy,life,c,size,g){const F=S.fight;
 }
 // Always consume the original visual RNG, even when the cosmetic is omitted.
 const V=o=>{o.m=o.m||.4;if(o.t===undefined)o.t=o.m;o.s=o.s??(Math.random()*1e4|0);
-  const F=S.fight;if(tabletEffects()&&TABLET_DECORATIVE_VFX.has(o.k)){FX_STATS.dropped++;return;}if(decorativeVfx(o)){if((F.decorVfx||0)>=effectBudget().vfx){FX_STATS.dropped++;return;}F.decorVfx=(F.decorVfx||0)+1;}F.vfx.push(o);
+  const F=S.fight;if(minimalEffects()&&o.k==='anim'||tabletEffects()&&TABLET_DECORATIVE_VFX.has(o.k)){FX_STATS.dropped++;return;}if(decorativeVfx(o)){if((F.decorVfx||0)>=effectBudget().vfx){FX_STATS.dropped++;return;}F.decorVfx=(F.decorVfx||0)+1;}F.vfx.push(o);
 };
 let CASTER=null,CAST_TYPE=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
 function withSkill(a,id,fn){const before=CASTER,kind=CAST_TYPE;CASTER=a;CAST_TYPE=id;try{return fn();}finally{CASTER=before;CAST_TYPE=kind;}}
 const later=(t,fn)=>S.fight.timers.push({t,fn,c:CASTER,skill:CAST_TYPE});
-function pop(u,txt,c,big){ if(typeof txt==='string'&&/^\+.*\b(?:mana|mp)\b/i.test(txt)){ if(u.hp>0)u.mg=.4; return; } if(typeof txt==='string'&&!/^[+\d]/.test(txt)) return popIcon(u,wordIcon(txt),c);   // words show as icons; numbers stay numbers
+function pop(u,txt,c,big){if(minimalEffects()&&(typeof txt==='number'||typeof txt==='string'&&/^[+\d]/.test(txt)))return; if(typeof txt==='string'&&/^\+.*\b(?:mana|mp)\b/i.test(txt)){ if(u.hp>0)u.mg=.4; return; } if(typeof txt==='string'&&!/^[+\d]/.test(txt)) return popIcon(u,wordIcon(txt),c);   // words show as icons; numbers stay numbers
   S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?1.1:.7,txt,c,big}); trimFx(); }
 // every word pop-up as an icon (matched by its first word; a text that starts with a symbol uses that symbol)
 const WORD_ICONS={Dispelled:'🚫',Warp:'🌀',Blink:'🌀',Thawed:'♨️',Stripped:'✋',Snake:'🎲',Shatter:'💥',Second:'🌬️',Risen:'🧟',Rhythm:'🎵',Reborn:'🕊️',
@@ -2579,7 +2616,7 @@ function wordIcon(txt){
   const first=[...txt][0]; if(first.codePointAt(0)>0x2000) return first;   // already starts with a symbol (cards, notes)
   return WORD_ICONS[txt.split(/[^A-Za-z]/)[0]]||'❗'; }
 // damage and heal numbers: rapid hits on the same unit add up in one number instead of stacking new ones
-function popNum(u,v,c,pre=''){ if(/\b(?:mana|mp)\b/i.test(pre)){ if(u.hp>0)u.mg=.4; return; } const F=S.fight, f=F.fx.find(f=>f.u===u&&f.c===c&&f.t0-f.t<.35);
+function popNum(u,v,c,pre=''){if(minimalEffects())return; if(/\b(?:mana|mp)\b/i.test(pre)){ if(u.hp>0)u.mg=.4; return; } const F=S.fight, f=F.fx.find(f=>f.u===u&&f.c===c&&f.t0-f.t<.35);
   if(f){ f.num+=v; f.txt=pre+Math.round(f.num); return; }   // only during a number's first 0.35s, so a steady stream still shows new numbers
   F.fx.push({x:u.x,y:u.y-.35,t:.7,t0:.7,num:v,txt:pre+Math.round(v),c,u}); trimFx(); }
 function trimFx(){ const fx=S.fight.fx; while(fx.length>30){ const i=fx.findIndex(f=>!f.big&&!f.crit&&!f.icon); if(i<0) break; fx.splice(i,1); } }   // at most 30 on screen: the oldest small numbers go first
@@ -2791,7 +2828,7 @@ function deal(t,dmg,crit,src,linked=false){
   if(crit) hitStop(.05);
   if(src){ const d=dist(src,t)||1; t.kx+=(t.x-src.x)/d*.12; t.ky+=(t.y-src.y)/d*.12; }
   burst(t.x,t.y-.25,crit?'#ffd23f':'#ffffff',crit?8:4,crit?3.5:2.5,crit?3:2); if(src) SND.impact(src,t,crit);
-  if(crit) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else popNum(t,dmg,['#fff','#ffe27a','#ffb050'][BACKHIT]);
+  if(crit&&!minimalEffects()) S.fight.fx.push({x:t.x,y:t.y-.45,t:1.2,t0:1.2,txt:String(Math.round(dmg)),c:'#ff3a2a',big:true,crit:true}); else popNum(t,dmg,['#fff','#ffe27a','#ffb050'][BACKHIT]);
   if(BACKHIT===2&&Math.random()<.35) pop({x:t.x,y:t.y-.7},'Back!','#ffb050');
 }
 // Mimics: steal an enemy's skill and cast it as your own
@@ -3116,14 +3153,14 @@ function endFight(win){
   if(win&&F.kind==='monster'&&S.mod==='titan') S.cardsDue=true;
   if(win){ const coins=Math.round(F.f.filter(x=>x.team===0&&x.hp>0).reduce((g,x)=>g+(x.coin||0),0)); S.gold+=1+coins; S.result=`Victory! +${1+gb+coins} gold`;
     if(F.kind!=='pvp'){ const got=[];
-      const drops=F.kind==='boss'?[pick(EQUIP)]:[Math.random()<.25?pick(RARE):pick(COMMON)];
+      const drops=F.kind==='boss'?[rollEquipment('any')]:[Math.random()<.25?rollEquipment('rare'):rollEquipment('common')];
       if(F.kind==='boss'){S.pendingLoot=bossLootOptions();S.result+=' · Choose a rare item next';}
       if(Math.random()<(F.kind==='boss'?.35:.15)) drops.push('scroll');
       for(const k of drops){ S.inv.push(k); got.push(IT(k).icon); }
       S.result+=' · Loot '+got.join(' '); } }
   else { const loss=2+Math.floor(S.round/5)+surv.length;   // 2 + 1 per 5 rounds + 1 per enemy still standing
      S.hp=Math.max(0,S.hp-loss); S.result=`Defeat... -${loss} HP`+(gb?` (+${gb} gold)`:'');
-     const fallen=F.f.filter(x=>x.team===1&&U[x.type].boss&&x.hp<=0&&!x.summon).map(()=>pick(RARE));
+     const fallen=F.f.filter(x=>x.team===1&&U[x.type].boss&&x.hp<=0&&!x.summon).map(()=>rollEquipment('rare'));
      if(fallen.length){ S.inv.push(...fallen); S.result+=' · Boss loot '+fallen.map(k=>IT(k).icon).join(' '); } }
   if(win&&F.kind==='boss'&&F.pact==='reinforced'){S.gold+=4;S.result+=' · Reinforced guard +4 gold';}
   if(S.alchGold){ S.gold+=S.alchGold; S.result+=` · Alchemy +${S.alchGold} gold`; }   // Alchemist bonus, win or lose
@@ -3489,7 +3526,7 @@ function drawUnit(type,star,px,py,o={}){
   ctx.save(); ctx.translate(px+P.dx,py+22); ctx.scale(1,.36);   // soft ground shadow
   const gsh=ctx.createRadialGradient(0,0,0,0,0,22*sh); gsh.addColorStop(0,'rgba(12,18,10,.5)'); gsh.addColorStop(.65,'rgba(12,18,10,.28)'); gsh.addColorStop(1,'rgba(12,18,10,0)');
   ctx.fillStyle=gsh; ctx.beginPath(); ctx.arc(0,0,22*sh,0,Math.PI*2); ctx.fill(); ctx.restore();
-  if(o.team===0&&AURA_ON&&o.die===undefined){ const pu=calmMotion?.5:.5+.5*Math.sin(ANIM*2.4+(o.ph||0));   // Golden Aura (top-10 reward)
+  if(!minimalEffects()&&o.team===0&&AURA_ON&&o.die===undefined){ const pu=calmMotion?.5:.5+.5*Math.sin(ANIM*2.4+(o.ph||0));   // Golden Aura (top-10 reward)
     ctx.save(); ctx.translate(px+P.dx,py+22); ctx.scale(1,.38); const ga=ctx.createRadialGradient(0,0,4,0,0,30*sh);
     ga.addColorStop(0,`rgba(255,226,120,${.55+.25*pu})`); ga.addColorStop(.7,`rgba(255,200,80,${.28+.14*pu})`); ga.addColorStop(1,'rgba(255,200,80,0)');
     ctx.fillStyle=ga; ctx.beginPath(); ctx.arc(0,0,30*sh,0,Math.PI*2); ctx.fill(); ctx.restore();
@@ -3501,7 +3538,7 @@ function drawUnit(type,star,px,py,o={}){
     for(let i=0;i<6;i++){ const a=i*Math.PI/3+(calmMotion?0:ANIM*.18); const x=px+P.dx+Math.cos(a)*29*sc,y=py+22+Math.sin(a)*10*sc;
       ctx.fillStyle=ctx.strokeStyle; ctx.fillRect(x-1,y-1,2,2); } ctx.restore(); }
   if(o.sel){ ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,20*sh,7*sh,0,0,Math.PI*2); ctx.stroke(); }
-  if(o.fuse&&!o.ghost&&o.die===undefined){   // fused: a soft glow of both class colours behind the hero
+  if(!minimalEffects()&&o.fuse&&!o.ghost&&o.die===undefined){   // fused: a soft glow of both class colours behind the hero
     const k=.22+.08*Math.sin(ANIM*2.6+(o.ph||0)), cy=py+2;
     for(const [cc,dx] of [[col,-4],[colorOf(o.fuse),4]]){ const g=ctx.createRadialGradient(px+P.dx+dx,cy,3,px+P.dx+dx,cy,30);
       g.addColorStop(0,cc); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.globalAlpha=P.alpha*k; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px+P.dx+dx,cy,30,0,Math.PI*2); ctx.fill(); }
@@ -3523,7 +3560,7 @@ function drawUnit(type,star,px,py,o={}){
       ctx.beginPath(); ctx.arc(0,0,32+i*4,a,a+Math.PI*.85); ctx.stroke(); }
     ctx.restore(); }
   if(o.enraged){ ctx.fillStyle='#ff3020'; ctx.globalAlpha=P.alpha*(.35+.2*Math.sin(ANIM*10)); ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,34,13,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
-  if(o.glow||o.cast>0){ const g=o.cast>0?.45:o.glow*1.2;
+  if(!minimalEffects()&&(o.glow||o.cast>0)){ const g=o.cast>0?.45:o.glow*1.2;
     ctx.fillStyle=col; ctx.globalAlpha=P.alpha*g; ctx.beginPath(); ctx.ellipse(px+P.dx,py+22,26,10,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=P.alpha; }
   if(sp&&sp.img.naturalWidth){
     const im=sp.img, bounds=sp.bounds||{bottom:im.naturalHeight,height:im.naturalHeight}, s=54/(native?im.naturalHeight:bounds.height)*sc, u=rig?(native?1:im.naturalHeight/bounds.height)*sc:0;
@@ -3572,8 +3609,8 @@ function drawUnit(type,star,px,py,o={}){
   else ctx.fillText('★'.repeat(star),px,py-38);   // stars sit on top of the health bar
   if(o.org&&ORIGINS[b.org]) drawIcon(ORIGINS[b.org].icon,px+sw+8,py-41,12);   // origin badge
   if(o.hp!==undefined){
-    if(o.hg>0){ ctx.fillStyle=`rgba(124,252,154,${Math.min(1,o.hg*2)*.85})`; ctx.fillRect(px-24,py-38,48,12); }   // being healed: a green glow around the bar (no heal numbers)
-    if(o.mg>0){ ctx.fillStyle=`rgba(94,187,255,${Math.min(.6,o.mg*1.5)})`; ctx.fillRect(px-24,py-33,48,7); }
+    if(!minimalEffects()&&o.hg>0){ ctx.fillStyle=`rgba(124,252,154,${Math.min(1,o.hg*2)*.85})`; ctx.fillRect(px-24,py-38,48,12); }   // being healed: a green glow around the bar (no heal numbers)
+    if(!minimalEffects()&&o.mg>0){ ctx.fillStyle=`rgba(94,187,255,${Math.min(.6,o.mg*1.5)})`; ctx.fillRect(px-24,py-33,48,7); }
     ctx.fillStyle='#000'; ctx.fillRect(px-22,py-36,44,8);
     ctx.fillStyle='#fff6d0'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hpLag),5);   // recent damage drains away
     ctx.fillStyle=o.team===1?'#ff5a5a':'#4fdc6a'; ctx.fillRect(px-22,py-36,44*Math.max(0,o.hp),5);
@@ -3822,7 +3859,7 @@ function render(){
     }
     for(const p of F.parts){ ctx.globalAlpha=Math.max(0,p.life/p.max); ctx.fillStyle=p.c; ctx.fillRect(p.x*CELL-p.size/2,p.y*CELL-p.size/2,p.size,p.size); }
     ctx.globalAlpha=1; ctx.textAlign='center';
-    for(const f of F.fx){ // numbers pop big, settle, then drift up and fade
+    for(const f of F.fx){if(minimalEffects()&&!f.icon)continue; // numbers pop big, settle, then drift up and fade
       const age=f.t0-f.t, sc=age<.1?.5+age/.1*.9:Math.max(1,1.4-(age-.1)*3), rise=(1-(1-age/f.t0)**2)*.7;
       ctx.save(); ctx.translate(f.x*CELL,(f.y-rise)*CELL); ctx.scale(sc,sc); ctx.globalAlpha=Math.min(1,f.t*3);
       if(f.crit){   // critical hit: a spiky yellow burst behind a big red number

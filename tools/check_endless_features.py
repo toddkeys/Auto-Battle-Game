@@ -133,7 +133,7 @@ async def main(server):
   await ipad.add_init_script("Object.defineProperty(navigator,'maxTouchPoints',{get:()=>5})")
   q=await ipad.new_page();await ready(q,url)
   assert await q.evaluate('effectsMode')=='tablet','detected iPad must default to lighter effects'
-  await q.locator('.mode[data-m=normal]').tap();await q.locator('#bEffects').tap()
+  await q.locator('.mode[data-m=normal]').tap();await q.locator('#bEffects').tap();await q.locator('[data-effects-mode=full]').tap()
   assert await q.evaluate('effectsMode')=='full'
   await ready(q,url);assert await q.evaluate('effectsMode')=='full','explicit effect preference survives reload'
   await ipad.close()
