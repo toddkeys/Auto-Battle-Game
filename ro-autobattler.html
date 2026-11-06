@@ -175,6 +175,7 @@ button.go:disabled{animation:none}
 #planner{position:fixed;top:0;right:auto;left:max(0px,calc(100vw - min(470px,96vw)));bottom:0;width:min(470px,96vw);z-index:45;display:flex;flex-direction:column;gap:8px;padding:12px 12px 10px;
   background:linear-gradient(180deg,#3a2614,#22160b);border-left:3px solid var(--ink);box-shadow:-8px 0 24px rgba(0,0,0,.55);color:var(--text)}
 #planner[hidden]{display:none}
+#heroTraining{z-index:74}.trainingbox{width:min(1000px,96vw);text-align:left;padding:16px}.training-head{position:sticky;top:-1px;z-index:2;background:#49331e;display:flex;align-items:center;justify-content:space-between;gap:10px}.training-head h2{margin:0;font-size:34px}.training-head .b{flex:none}.training-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:16px}.training-layout aside{background:#271c13;border:1px solid var(--brass);border-radius:6px;padding:12px;min-width:0}.training-portrait{display:flex;justify-content:center;height:100px}.training-portrait img{height:100px;max-width:100%;object-fit:contain;image-rendering:pixelated}.training-layout h3{font:26px var(--pixel);color:var(--gold);margin:8px 0}.training-stars,.training-actions{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.training-stars .b{min-width:0;min-height:44px;flex:1;padding:6px}.training-stars .selected{outline:2px solid var(--gold)}.training-main{min-width:0;text-align:center}#trainingCanvas{display:block;width:min(100%,440px);height:auto;aspect-ratio:1;max-width:100%;margin:auto;border:2px solid var(--brass);border-radius:6px;touch-action:none;image-rendering:pixelated}.training-actions{justify-content:center}.training-actions .b{min-height:44px;font-size:18px;white-space:normal}.training-stats{display:flex;justify-content:center;gap:8px 18px;flex-wrap:wrap;border-top:1px solid var(--brass);padding-top:8px;color:var(--gold);font-size:14px}.trainingbox>.b{margin-top:8px}.training-stars~p{font-size:13px;line-height:1.4}@media(max-height:550px) and (min-width:601px){.training-layout{grid-template-columns:190px minmax(0,1fr)}.training-main{display:grid;grid-template-columns:minmax(0,1fr) 165px;gap:8px;align-content:start}#trainingCanvas{width:240px;align-self:start}.training-actions{flex-direction:column;flex-wrap:nowrap;margin:0;align-self:start}.training-actions .b{width:100%;padding:6px}.training-main>.help,.training-stats{grid-column:1/-1}.trainingbox>.help{margin:4px 0 8px;font-size:11px}.training-portrait{height:64px}.training-portrait img{height:64px}.trainingbox{padding:12px}.training-head h2{font-size:28px}}@media(max-width:600px){.training-layout{grid-template-columns:1fr}.training-portrait{float:left;width:72px;height:80px;margin-right:10px}.training-portrait img{height:80px}.training-layout aside{padding:8px}.training-layout h3{margin:0}.training-stars{margin:8px 0}.training-head h2{font-size:28px}}
 .effects-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}.effects-options .mode{min-width:0;padding:12px}.effects-options .mode .md{min-height:0}.effects-options .selected{border-color:var(--gold);box-shadow:inset 0 0 0 2px var(--gold)}
 #planner .cxpre{margin:0;justify-content:flex-start}
 .plhead{display:flex;align-items:center;gap:8px}.plhead b{font:400 26px var(--pixel);color:var(--gold)}.plhead span{flex:1;color:var(--muted);font-size:12px;line-height:1.2}
@@ -487,6 +488,7 @@ body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
     <div id="planPick" class="plgrid"></div>
   </div>
 </aside>
+<div id="heroTraining" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="trainingTitle"><div class="sumbox trainingbox"><div class="training-head"><h2 id="trainingTitle">Hero training</h2><button class="b" id="trainingClose">Close ✕</button></div><p class="help">Training only — no gold spent. Available before battle.</p><div class="training-layout"><aside id="trainingInfo"></aside><div class="training-main"><canvas id="trainingCanvas" aria-label="Training arena. Drag the wooden dummy to test skill range."></canvas><div class="training-actions"><button class="b go" id="trainingCast">Cast skill</button><button class="b" id="trainingAuto">Auto attack: On</button><button class="b" id="trainingAlly">Ally: Off</button><button class="b" id="trainingHit">Test hit</button><button class="b" id="trainingReset">Reset</button></div><div id="trainingStats" class="training-stats" aria-live="off"></div><p id="trainingHint" class="help">Drag the dummy to test range. Add an ally to test healing.</p></div></div><button class="b" id="trainingBack">Back to Codex</button></div></div>
 <div id="effectsMenu" class="overlay" hidden><div class="sumbox wide"><h2>Effects</h2><p>Warnings, projectiles and status cues stay visible in every mode.</p><div id="effectsOptions" class="effects-options"></div><button class="b" id="effectsClose">Close</button></div></div>
 <div id="modes" class="overlay" hidden><div class="sumbox wide" id="modesbox"></div></div>
 <div id="event" class="overlay" hidden><div class="sumbox wide" id="eventbox"></div></div>
@@ -903,7 +905,7 @@ function openBossPact(){
 // ====== summons ======
 // a summon copies its caller's team bonuses; summoner class bonus makes it stronger
 function summon(a,type,max){
-  const F=S.fight; if(F.f.filter(x=>x.owner===a&&x.type===type&&x.hp>0).length>=max) return null;
+  const F=S.fight; if(F.training&&F.f.filter(x=>x.summon&&x.hp>0).length>=8)return null;if(F.f.filter(x=>x.owner===a&&x.type===type&&x.hp>0).length>=max) return null;
   const m=mkF(type,1,0,0,a.team,STAR_MULT[a.star-1]*(a.mult||1)*(a.sumBoost||1));
   m.x=Math.min(COLS-.5,Math.max(.5,a.x+(Math.random()<.5?-.8:.8))); m.y=Math.min(ROWS-.5,Math.max(.5,a.y+(a.team===0?-.5:.5)));
   for(const k of ['red','asM','regen','crit','dmgM','killAS','leech']) if(a[k]!==undefined) m[k]=a[k];
@@ -914,7 +916,7 @@ function summon(a,type,max){
 // Necromancers: raise the latest fallen enemies (not bosses or summons) as allies for the rest of the battle
 function raise(a,n,pct){
   const F=S.fight, gs=F.graves.filter(g=>g.team!==a.team&&!g.used&&!U[g.type].boss).slice(-n);
-  for(const g of gs){ g.used=1;
+  for(const g of gs){ if(F.training&&F.f.filter(x=>x.summon&&x.hp>0).length>=8)break;g.used=1;
     const m=mkF(g.type,g.star,0,0,a.team,g.mult*pct*(a.necBoost||1)); m.x=g.x; m.y=g.y;
     for(const k of ['red','asM','regen','crit','dmgM','killAS','leech','manaMul']) if(a[k]!==undefined) m[k]=a[k];
     Object.assign(m,{summon:true,raised:true,owner:a,items:[],spawnT:.3,mult:1}); F.f.push(m);
@@ -1424,7 +1426,7 @@ const W=COLS*CELL, BOARD_H=ROWS*CELL, BENCH_Y=BOARD_H+20, H=BENCH_Y+CELL+4;
 const U = Object.fromEntries([...UNITS,...SUMMONS,...MONSTERS].map(u=>[u.id,u]));
 const colorOf=t=>(CLASSES[U[t].cls]||{color:U[t].cls==='summon'?'#7fe8d0':'#c8a070'}).color;
 const $ = s=>document.querySelector(s);
-const cv=$('#cv'), ctx=cv.getContext('2d');
+const cv=$('#cv');let ctx=cv.getContext('2d');
 const directTouch=e=>e.pointerType==='touch'||e.pointerType==='pen';
 let touchInput=false;
 function setInputMode(e){touchInput=directTouch(e);document.body.classList.toggle('touch-input',touchInput);}
@@ -1886,7 +1888,7 @@ function saveRunNow(){clearTimeout(runSaveTimer);runSaveTimer=0;if(!runAutosaveR
   try{localStorage.setItem(RUN_SAVE_KEY,JSON.stringify({version:1,savedAt:new Date().toISOString(),speed,state:{...state,phase:'prep'},activeOffer}));runSaveFailed=false;return true;}
   catch(e){if(!runSaveFailed){runSaveFailed=true;msg('Could not save this run. Free browser storage before leaving.');}return false;}}
 function scheduleRunSave(){if(!runAutosaveReady||S?.phase!=='prep')return;clearTimeout(runSaveTimer);runSaveTimer=setTimeout(saveRunNow,160);}
-function hideRunOverlays(){closeEffectsMenu();for(const id of ['#cards','#event','#lootChoice','#bossPact','#summary','#confirm','#codex','#planner'])$(id).hidden=true;closeHeroCard();closeItemCard();}
+function hideRunOverlays(){closeHeroTraining();closeEffectsMenu();for(const id of ['#cards','#event','#lootChoice','#bossPact','#summary','#confirm','#codex','#planner'])$(id).hidden=true;closeHeroCard();closeItemCard();}
 function resumeRun(){const saved=readRunSave();if(!saved)return msg('No compatible saved run was found.');
   runAutosaveReady=false;clearTimeout(runSaveTimer);hideRunOverlays();newGame(saved.state.mode,saved.state.mod);
   S={...S,...saved.state,phase:'prep',fight:null,inspect:null,touchAction:null,ufx:[],sel:null,selItem:null};speed=[1,2,3].includes(saved.speed)?saved.speed:1;$('#bSpeed').textContent='Speed x'+speed;simAccum=0;$('#modes').hidden=true;runAutosaveReady=true;
@@ -1957,6 +1959,60 @@ function openCodex(note){
       <span class="cs">HP ${u.hp} · ATK ${u.atk} · R ${u.range}<br>${k?`Fielded ${k}×`:'Not fielded yet'}</span></div><button class="mk" data-mark="${u.id}" title="${m?'Unmark':'Mark: glow in the shop'}">${m?'★':'☆'}</button></div>`; }).join('');
   $('#codex').hidden=false;
 }
+// ====== Codex training: isolated synchronous simulation, prep access only ======
+let TRAINING=null;
+const trainingCanvas=$('#trainingCanvas'),trainingCtx=trainingCanvas.getContext('2d');
+function withHeroTraining(fn){const t=TRAINING;if(!t)return;const run=S,context=ctx,rng=Math.random,caster=CASTER,castType=CAST_TYPE,scale=FXS,back=BACKHIT;
+  try{S=t.state;ctx=trainingCtx;Math.random=t.random;return fn(t.state.fight);}
+  finally{S=run;ctx=context;Math.random=rng;CASTER=caster;CAST_TYPE=castType;FXS=scale;BACKHIT=back;}
+}
+function trainingDummy(team,x,y){const a=mkF('swordsman',1,0,0,team);Object.assign(a,{trainingDummy:true,range:team===0?3:1,items:[],x,y,hp:team===0?1100:10000,max:team===0?2000:10000,mp:0,cd:99,ms:0,face:-1});a.hpLag=a.hp;return a;}
+function resetHeroTraining(){const t=TRAINING;if(!t)return;withHeroTraining(F=>clearVisuals(F));
+  t.random=mulberry32(14237);t.accum=0;t.statsAt=-1;
+  t.state={phase:'fight',mode:'normal',round:1,gold:0,units:[],inv:[],buffs:[],ufx:[],result:'',inspect:null,fight:{training:true,f:[],proj:[],fx:[],vfx:[],decorVfx:0,timers:[],parts:[],debris:[],graves:[],holes:[],walls:[],arrows:[],t:0,kind:'training',stop:0,lastStop:-9,autoAttack:t.auto,trainingCasts:0,trainingDamage:0,trainingFirstHit:null}};
+  withHeroTraining(F=>{const a=mkF(t.id,t.star,1,4,0);a.items=[];a.face=1;F.f=[a,trainingDummy(1,5.5,4.5)];if(t.ally)F.f.push(trainingDummy(0,2.5,5.5));applySynergy([a]);applyStars(a);F.trainingHero=a;
+    F.graves=[{type:'swordsman',star:1,x:4.5,y:5.5,team:1,mult:1},{type:'archer',star:1,x:5.5,y:5.5,team:1,mult:1}];initTactics();
+    if(U[t.id].guard&&t.ally){const ally=F.f.find(b=>b.trainingDummy&&b.team===0);ally.guard=a;ally.guardPct=U[t.id].guard+(a.guardPlus||0);}
+    if(a.sumStart&&U[t.id].calls)summon(a,U[t.id].calls,9);
+    for(let i=0;i<(a.turrets||0);i++)build(a,9);
+  });
+  $('#trainingAuto').textContent='Auto attack: '+(t.auto?'On':'Off');$('#trainingAlly').textContent='Ally: '+(t.ally?'On':'Off');
+  $('#trainingInfo').innerHTML=`<div class="training-portrait">${thumbHTML(t.id,100)}</div><h3>${esc(U[t.id].name)}</h3><p class="help">${CLASSES[U[t.id].cls].name} · ${ORIGINS[U[t.id].org].name} · ${U[t.id].cost} gold</p><div class="training-stars">${[1,2,3].map(n=>`<button class="b ${t.star===n?'selected':''}" data-training-star="${n}" aria-pressed="${t.star===n}">${'★'.repeat(n)}</button>`).join('')}</div><p><b>${esc(SKILLS[t.id].name)}</b><br>${esc(SKILLS[t.id].desc)}</p><p class="help">Base hero stats and star perks. No items, blessings or team synergies.</p>${MIMICS[t.id]?'<p class="help">The dummy provides Shield Bash for copy skills.</p>':''}${U[t.id].cls==='necromancer'?'<p class="help">Two fallen enemies are provided for raising.</p>':''}`;
+  $('#trainingHint').textContent='Drag the dummy to test range. Test hit damages your hero or ally for shield/healing tests. Reset restores the setup.';syncTrainingStats();drawHeroTraining();
+}
+function openHeroTraining(id){if(S?.phase!=='prep'||!UNITS.some(u=>u.id===id))return false;closeHeroTraining();cancelGestures();cancelTouchAction();closeHeroCard();closeItemCard();hideBubble();
+  TRAINING={id,star:1,auto:true,ally:false,random:mulberry32(14237),state:{fight:{parts:[],debris:[],vfx:[],fx:[]}},accum:0,drag:null};trainingCanvas.width=W*RES;trainingCanvas.height=BOARD_H*RES;$('#heroTraining').hidden=false;$('#heroTraining .trainingbox').scrollTop=0;resetHeroTraining();$('#trainingClose').focus({preventScroll:true});return true;
+}
+function closeHeroTraining(){if(!TRAINING)return;const d=TRAINING.drag;if(d&&trainingCanvas.hasPointerCapture(d.id))trainingCanvas.releasePointerCapture(d.id);withHeroTraining(F=>clearVisuals(F));TRAINING=null;$('#heroTraining').hidden=true;trainingCanvas.width=trainingCanvas.height=0;simAccum=0;}
+function syncTrainingStats(){const t=TRAINING;if(!t)return;const F=t.state.fight,damage=F.trainingDamage,elapsed=F.trainingFirstHit===null?0:Math.max(.1,F.t-F.trainingFirstHit),healing=F.f.filter(a=>a.team===0&&!a.trainingDummy).reduce((n,a)=>n+a.hl,0);
+  $('#trainingStats').textContent=`Damage ${Math.round(damage).toLocaleString()} · DPS ${elapsed?Math.round(damage/elapsed).toLocaleString():0} · Healing ${Math.round(healing).toLocaleString()} · Casts ${F.trainingCasts}`;
+  const a=F.trainingHero;$('#trainingCast').disabled=!!(a.castT>0||a.chan>0||a.spin||a.blinkQ||a.leap||a.hp<=0);t.statsAt=F.t;
+}
+function tickHeroTraining(dt){if(!TRAINING)return;if(S.phase!=='prep'){closeHeroTraining();return;}if(document.hidden)return;
+  const t=TRAINING;t.accum+=Math.min(.05,dt);withHeroTraining(F=>{while(t.accum+1e-9>=SIM_DT){t.accum-=SIM_DT;if(F.stop>0)F.stop=Math.max(0,F.stop-SIM_DT);else step(SIM_DT*PACE);
+      F.f=F.f.filter(a=>a.hp>0||a.dieT>0||!a.summon);for(const a of F.f){if(!Number.isFinite(a.hp))a.hp=a.max;if(a===F.trainingHero&&a.hp<=0){a.hp=a.hpLag=a.max;a.dead=false;}clampOnBoard(a);}
+    }if(F.t-t.statsAt>=.2)syncTrainingStats();});
+}
+function drawHeroTraining(){if(TRAINING)withHeroTraining(()=>render(true));}
+function drawTrainingGrid(){ctx.fillStyle='rgba(25,15,8,.25)';ctx.fillRect(0,0,W,BOARD_H);ctx.strokeStyle='rgba(243,212,138,.16)';ctx.lineWidth=1;ctx.beginPath();for(let i=1;i<COLS;i++){ctx.moveTo(i*CELL,0);ctx.lineTo(i*CELL,BOARD_H);}for(let i=1;i<ROWS;i++){ctx.moveTo(0,i*CELL);ctx.lineTo(W,i*CELL);}ctx.stroke();}
+function drawTrainingDummy(a){const x=a.x*CELL+a.kx*CELL,y=a.y*CELL+a.ky*CELL;ctx.save();ctx.translate(x,y);ctx.fillStyle='#0006';ctx.beginPath();ctx.ellipse(0,23,20,6,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#23180f';ctx.lineWidth=3;
+  ctx.fillStyle='#70431f';ctx.fillRect(-5,-15,10,37);ctx.strokeRect(-5,-15,10,37);ctx.fillRect(-20,20,40,6);ctx.strokeRect(-20,20,40,6);
+  ctx.fillStyle=a.flash>0?'#eec895':'#b77d3c';for(const [bx,by,bw,bh]of [[-13,-43,26,25],[-23,-15,46,9],[-14,-20,28,30]]){ctx.fillRect(bx,by,bw,bh);ctx.strokeRect(bx,by,bw,bh);}ctx.strokeStyle=a.team===0?'#78c5a1':'#9c3532';ctx.lineWidth=4;ctx.beginPath();ctx.arc(0,-5,8,0,Math.PI*2);ctx.stroke();
+  ctx.font="14px 'Jersey 10',system-ui";ctx.textAlign='center';ctx.fillStyle='#100c08';ctx.fillRect(-47,-75,94,19);ctx.fillStyle='#f3e7cf';ctx.fillText(a.team===0?'Ally Dummy':'Training Dummy',0,-61);ctx.fillStyle='#1a1009';ctx.fillRect(-31,-55,62,7);ctx.fillStyle=a.team===0?'#74cc99':'#df6555';ctx.fillRect(-30,-54,60*Math.max(0,Math.min(1,a.hp/a.max)),5);
+  if(a.shield>0||a.mshield>0){ctx.fillStyle=a.mshield>0?'#b58aef':'#f3ca68';ctx.fillRect(-30,-46,60*Math.min(1,(a.shield+a.mshield)/a.max),3);}
+  const statuses=Object.entries(STATUS).filter(([key])=>a[key]>0).slice(0,4);statuses.forEach(([key,v],i)=>drawIcon(v.icon,-22+i*15,-85,14));ctx.restore();
+}
+$('#trainingInfo').onclick=e=>{const b=e.target.closest('[data-training-star]');if(TRAINING&&b){TRAINING.star=+b.dataset.trainingStar;resetHeroTraining();}};
+$('#trainingCast').onclick=()=>{if(!TRAINING||S.phase!=='prep')return;withHeroTraining(F=>{const a=F.trainingHero;if(a.castT>0||a.chan>0||a.spin||a.blinkQ||a.leap||a.hp<=0)return;a.mp=a.mpMax;a.sil=a.root=a.stun=a.frz=0;a.fateRecast=0;tryCast(a,nearest(a,F.f),true);});syncTrainingStats();};
+$('#trainingHit').onclick=()=>{if(TRAINING)withHeroTraining(F=>{const target=F.f.find(a=>a.trainingDummy&&a.team===0)||F.trainingHero,enemy=F.f.find(a=>a.trainingDummy&&a.team===1);deal(target,target.max*.4,false,enemy);syncTrainingStats();});};
+$('#trainingAuto').onclick=()=>{if(TRAINING){TRAINING.auto=!TRAINING.auto;TRAINING.state.fight.autoAttack=TRAINING.auto;$('#trainingAuto').textContent='Auto attack: '+(TRAINING.auto?'On':'Off');}};
+$('#trainingAlly').onclick=()=>{if(TRAINING){TRAINING.ally=!TRAINING.ally;resetHeroTraining();}};$('#trainingReset').onclick=()=>resetHeroTraining();
+$('#trainingClose').onclick=()=>closeHeroTraining();$('#trainingBack').onclick=()=>{closeHeroTraining();openCodex();};
+$('#heroTraining').onclick=e=>{if(e.target===$('#heroTraining'))closeHeroTraining();};addEventListener('keydown',e=>{if(e.key==='Escape'&&TRAINING){closeHeroTraining();e.preventDefault();}});
+trainingCanvas.addEventListener('pointerdown',e=>{if(!TRAINING||e.isPrimary===false)return;const r=trainingCanvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*COLS,y=(e.clientY-r.top)/r.height*ROWS,a=TRAINING.state.fight.f.filter(a=>a.trainingDummy).find(a=>Math.hypot(a.x-x,a.y-y)<.8);if(!a)return;TRAINING.drag={id:e.pointerId,a};trainingCanvas.setPointerCapture(e.pointerId);e.preventDefault();});
+trainingCanvas.addEventListener('pointermove',e=>{const d=TRAINING?.drag;if(!d||d.id!==e.pointerId)return;const r=trainingCanvas.getBoundingClientRect();d.a.x=Math.max(.5,Math.min(COLS-.5,(e.clientX-r.left)/r.width*COLS));d.a.y=Math.max(1.2,Math.min(ROWS-.5,(e.clientY-r.top)/r.height*ROWS));d.a.kx=d.a.ky=0;e.preventDefault();});
+for(const event of ['pointerup','pointercancel','lostpointercapture'])trainingCanvas.addEventListener(event,e=>{const d=TRAINING?.drag;if(d&&d.id===e.pointerId){TRAINING.drag=null;if(trainingCanvas.hasPointerCapture(e.pointerId))trainingCanvas.releasePointerCapture(e.pointerId);}});
+
 // ====== Hero detail card: click a hero in the Codex or the Team Plan ======
 // closes on a click anywhere outside it, on its ✕, or on Escape
 let heroCardFor=null,heroCardContext=null,itemCardContext=null;
@@ -1972,6 +2028,7 @@ function openHeroCard(id,context={}){closeItemCard(); const u=U[id]; if(!u) retu
     $('#heroCard').insertAdjacentHTML('beforeend',`<div class="detail-actions"><button class="b" data-shop-buy ${can?'':'disabled'}>Buy · ${u.cost} gold</button><button class="b" data-shop-place ${can?'':'disabled'}>Buy and place</button></div>`);
   }
   if(owned&&S.phase==='prep')$('#heroCard').insertAdjacentHTML('beforeend',`<div class="detail-actions"><button class="b" data-unit-move>Move / swap / fuse</button><button class="b" data-unit-sell>Sell · ${sellValue(owned)} gold</button></div>`);
+  if(UNITS.some(v=>v.id===id))$('#heroCard').insertAdjacentHTML('beforeend',`<div class="detail-actions"><button class="b" data-hero-training ${S.phase==='prep'?'':'disabled'}>Try hero</button>${S.phase==='prep'?'':'<span class="help">Training is available before battle.</span>'}</div>`);
   if(!UNITS.some(v=>v.id===id))$('#heroCard .hca').remove();
   $('#heroCard').hidden=false;heroCardFor=id;heroCardContext=context;hideBubble(); }
 const closeHeroCard=()=>{ $('#heroCard').hidden=true;heroCardFor=null;heroCardContext=null; };
@@ -1979,6 +2036,7 @@ document.addEventListener('pointerdown',e=>{ if(e.isPrimary!==false&&heroCardFor
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&heroCardFor){ closeHeroCard(); e.stopPropagation(); } },true);
 $('#heroCard').addEventListener('click',e=>{
   if(e.target.closest('[data-hcclose]'))return closeHeroCard();
+  if(e.target.closest('[data-hero-training]'))return openHeroTraining(heroCardFor);
   const context=heroCardContext||{},uid=context.uid,id=heroCardFor;
   if(e.target.closest('[data-shop-buy],[data-shop-place]')){
     if(S.phase!=='prep'||S.shop[context.shopK]!==id)return closeHeroCard();
@@ -2330,7 +2388,7 @@ function showSummary(){clearTimeout(runSaveTimer);try{localStorage.removeItem(RU
   if(rec) SND.play('star');
   lbRunOver();
 }
-function newGame(mode='normal',mod){closeEffectsMenu();clearFusionParts();FUSED_THUMBS.clear();FUSED_THUMB_IMAGES.clear();cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={runId:Date.now().toString(36)+'-'+(++runSequence),mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
+function newGame(mode='normal',mod){closeHeroTraining();closeEffectsMenu();clearFusionParts();FUSED_THUMBS.clear();FUSED_THUMB_IMAGES.clear();cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={runId:Date.now().toString(36)+'-'+(++runSequence),mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -2703,6 +2761,7 @@ function autoFill(){
   return placed;
 }
 function startFight(){
+  if(TRAINING)return;
   if(S.phase!=='prep'||['#cards','#event','#lootChoice','#bossPact'].some(k=>!$(k).hidden))return;
   const auto=autoFill(); if(auto.length) msg(`Auto-placed ${auto.join(', ')} from the bench`);
   if(!onBoard().length) return msg('Place units on the field first');
@@ -2757,7 +2816,8 @@ const minimalEffects=()=>effectsMode==='minimal';
 const tabletEffects=()=>effectsMode==='tablet'||minimalEffects();
 const effectLevel=()=>effectsMode==='full'?0:Math.max(FX_LOAD.level,tabletEffects()?2:0);
 const TABLET_FX_BUDGET={parts:80,debris:20,vfx:18},MINIMAL_FX_BUDGET={parts:0,debris:0,vfx:0};
-const effectBudget=()=>minimalEffects()?MINIMAL_FX_BUDGET:tabletEffects()?TABLET_FX_BUDGET:FX_BUDGETS[effectLevel()];
+const TRAINING_FX_BUDGET={parts:160,debris:40,vfx:36};
+const effectBudget=()=>minimalEffects()?MINIMAL_FX_BUDGET:tabletEffects()?TABLET_FX_BUDGET:S?.fight?.training?TRAINING_FX_BUDGET:FX_BUDGETS[effectLevel()];
 const EFFECT_MODES={auto:{name:'Auto',desc:'Adjust decorative detail automatically under load.'},full:{name:'Full',desc:'All decorative effects, particles and floating damage numbers.'},tablet:{name:'Tablet',desc:'Fewer particles and cosmetic layers for phones and tablets.'},minimal:{name:'Minimal',desc:'No decorative particles, smoke, blooms or damage numbers. Heroes, attacks, warnings and statuses remain.'}};
 let effectsMenuFight=null,effectsMenuWasPaused=false;
 function syncEffectsButton(){$('#bEffects').textContent='Effects: '+EFFECT_MODES[effectsMode].name;$('#bEffects').title='Choose Auto, Full, Tablet or Minimal effects.';}
@@ -2789,7 +2849,8 @@ function tickTimer(){   // battle clock: seconds left before the round times out
   if(t===timerTxt) return; timerTxt=t; const el=$('#timer'); el.hidden=!on; el.textContent=t; el.classList.toggle('low',on&&left<=10); }
 function frame(now){
   const dt=Math.min((now-last)/1000,.05); last=now; ANIM+=dt;
-  if(S&&S.fight){
+  if(TRAINING){tickHeroTraining(dt);simAccum=0;}
+  else if(S&&S.fight){
     if(S.phase!=='fight'){simAccum=0;tickFx(dt*speed*PACE);}
     else if(S.fight.paused)simAccum=0;
     else {simAccum+=dt;while(simAccum+1e-9>=SIM_DT&&S.phase==='fight'){
@@ -2800,7 +2861,7 @@ function frame(now){
   updateDragScroll(dt);SND.update(dt);
   if(S&&S.inspect&&S.fight&&(ANIM*5|0)!==((ANIM-dt)*5|0)) renderInfo();   // live stats, 5x a second
   if(S&&S.ufx.length){ for(const u of S.ufx) u.t-=dt; S.ufx=S.ufx.filter(u=>u.t>0); }
-  if(S&&drawDue(now)){const begin=performance.now();render();const cost=performance.now()-begin;
+  if(S&&drawDue(now)){const begin=performance.now();if(TRAINING)drawHeroTraining();else render();const cost=performance.now()-begin;
     const gap=lastDrawAt?now-lastDrawAt:DRAW_INTERVAL;observeFrameCost(cost,gap/1000,gap);lastDrawAt=now;
   }
   tickTimer();
@@ -3033,6 +3094,7 @@ function deal(t,dmg,crit,src,linked=false){
   if(t.frz>0){ t.frz=0; dmg*=1.5; SND.play('shatter'); FX('nova',t.x,t.y-.3,{s:.8,tint:'#cff4ff',m:.45}); pop(t,'Shatter!','#dff8ff',true); V({k:'shards',x:t.x,y:t.y,c:'#dff8ff',r:.9,n:10,m:.35}); }   // damage breaks Frozen
   if(t.tstop>0&&src){ t.tsBank+=dmg; return; }   // Stop Time: banked until time resumes
   if(t.pmark&&src) t.pmark.acc+=dmg;   // Paradox Mark tally
+  if(S.fight.training&&t.trainingDummy&&t.team===1&&src?.team===0){const F=S.fight;F.trainingDamage+=dmg;F.trainingFirstHit??=F.t;}
   if(src) src.dd+=dmg; t.dtk+=dmg;
   const raw=dmg;
   const sk=isMagic(src)?'mshield':'shield';   // gold shields stop physical damage, violet ones stop magic
@@ -3174,6 +3236,7 @@ function castFusionSkill(a,id,t){return withSkill(a,id,()=>{const target=skillTg
 function releaseCast(a){
   let t=a.castTgt; if(t&&t.hp<=0) t=nearest(a,S.fight.f);
   if(!a.heal&&!t) return;
+  if(S.fight.training&&a===S.fight.trainingHero)S.fight.trainingCasts++;
   a.atkT=ATK_T; a.relT=REL_T; a.glow=.5; if(t) a.tgt=t; if(a.spellblade) a.sb=a.spellblade;
   if(a.star===3){ FXS=1.3; V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.6,m:.8}); V({k:'ring',x:a.x,y:a.y,r:1.1,c:'#fff3c0',m:.6}); burst(a.x,a.y-.4,'#ffe9a0',18,3.5,3,-2); }   // 3 stars: a golden flourish
   for(const m of S.fight.f) if(m.mimicMp&&m.team!==a.team&&m.hp>0) gainMp(m,m.mimicMp);   // Mimic class bonus
@@ -3279,6 +3342,7 @@ function step(dt){
       if(a.castT<=0) releaseCast(a);
       continue;
     }
+    if(F.training&&(a.trainingDummy||!F.autoAttack))continue;
     a.cd-=dt*a.asM*slowM*(a.haste>0?1.3:1)*(a.quickcastT>0?1+a.quickcastK:1)*(a.wAST>0?1+a.wAS:1)*(a.windT>0?1.2:1)*(1+(a.sAS||0))*(a.overT>0?(a.overK||1.6):1)*(1+(a.combo||0)*(a.comboStep||0));
     if(a.patternWind>0||evadeBossPattern(a,dt))continue;
     if(a.heal){
@@ -3333,6 +3397,7 @@ function step(dt){
     p.ang=Math.atan2(ny-p.y,p.bx-p.x); p.x=p.bx; p.y=ny; return true;
   });
   tickMoonArrows(dt);tickFx(dt);
+  if(F.training)return;
   const a0=F.f.some(x=>x.team===0&&x.hp>0), a1=F.f.some(x=>x.team===1&&x.hp>0);
   if(a0&&a1&&F.t>(F.limit||60)&&F.kind==='boss'&&!F.paused){ F.paused=true; askBossTimeout(); return; }   // boss fights: the player decides
   if(!a0||!a1||F.t>(F.limit||60)) endFight(a0&&!a1);
@@ -3345,6 +3410,7 @@ function tickFx(dt){
     a.kx*=Math.exp(-dt*10); a.ky*=Math.exp(-dt*10); a.flash=Math.max(0,a.flash-dt*5);
     if(a.hpLag>a.hp) a.hpLag=Math.max(a.hp,a.hpLag-Math.max(a.max*.4*dt,(a.hpLag-a.hp)*3*dt)); else a.hpLag=a.hp;
     if(a.wind&&a.hp>0&&a.hp<a.max*.3){ heal(a,a.max*a.wind,null); a.wind=0; pop(a,'Second Wind','#bff2ff',true); }   // blessing
+    if(F.training&&a.trainingDummy&&a.hp<=0){a.hp=a.hpLag=a.max;a.dead=false;}
     if(a.hp<=0&&!a.dead&&a.phoenix){ a.hp=a.hpLag=a.max*Math.min(.7,a.phoenix); a.phoenix=0; a.frz=a.stun=0; a.psn=null; a.brn=null;   // Phoenix Feather
       pop(a,'Phoenix!','#ffb040',true); V({k:'pillar',x:a.x,y:a.y+.35,c:'#ff9030',m:.6}); burst(a.x,a.y-.3,'#ffb040',18,3,3,-2); }
     if(a.hp<=0&&!a.dead&&a.brn&&a.brn.t>.2){   // the fire jumps to the nearest ally of the fallen unit
@@ -3374,7 +3440,7 @@ function askBossTimeout(){
     else if(ev.target.closest('[data-yes]')){ F.paused=false; c.hidden=true; endFight(false); } };
 }
 function endFight(win){
-  if(!S.fight||S.phase!=='fight')return;
+  if(!S.fight||S.phase!=='fight'||S.fight.training)return;
   const run=S;S.phase='result';
   const surv=S.fight.f.filter(x=>x.team===1&&x.hp>0&&!x.summon);
   const F=S.fight, gb=(S.goldBonus||[0,0])[win?0:1]; S.gold+=gb;
@@ -4032,9 +4098,9 @@ function drawIceWall(w){
   ctx.restore();
 }
 
-function render(){
+function render(training=false){
   ctx.setTransform(RES,0,0,RES,0,0); ctx.clearRect(0,0,W,H);
-  ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); drawSanctuary(); drawAmbient();
+  ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); if(!training){drawSanctuary();drawAmbient();}else drawTrainingGrid();
   if(S.fight&&S.fight.holes) for(const h of S.fight.holes){ const x=h.x*CELL, y=h.y*CELL, R=h.r*CELL, k=Math.min(1,(h.T-h.t)*4,h.t*4);   // black hole
     const g=ctx.createRadialGradient(x,y,0,x,y,R); g.addColorStop(0,`rgba(0,0,0,${.95*k})`); g.addColorStop(.35,`rgba(40,10,70,${.7*k})`); g.addColorStop(1,'rgba(90,40,160,0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.ellipse(x,y,R,R*.7,0,0,Math.PI*2); ctx.fill();
@@ -4103,7 +4169,7 @@ function render(){
     ctx.restore();
     const fs=F.f.filter(x=>x.hp>0||x.dieT>0).sort((a,b)=>a.y-b.y);
     const cheer=S.phase==='result'?F.winner:-1;
-    for(const a of fs) drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,swing:a.attackN%2,hurt:a.impactT/HURT_T,hurtK:a.impactK,hurtX:a.impactX,hurtY:a.impactY,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,hg:a.hg,mg:a.mg,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
+    for(const a of fs) if(a.trainingDummy)drawTrainingDummy(a);else drawUnit(a.type,a.star,a.x*CELL,a.y*CELL,{back:a.tgt&&a.tgt.hp>0&&a.tgt.y<a.y-.25&&Math.abs(a.tgt.y-a.y)>Math.abs(a.tgt.x-a.x)*.5,fuse:a.fuse,tstop:a.tstop,pmark:a.pmark?1:0,spin:a.spin?1:0,raised:a.raised,root:a.root,shock:a.shock,enraged:a.enraged&&a.hp>0,team:a.team,items:a.items,swing:a.attackN%2,hurt:a.impactT/HURT_T,hurtK:a.impactK,hurtX:a.impactX,hurtY:a.impactY,cheer:a.team===cheer&&a.hp>0,leapP:a.leapP,spawn:a.spawnT/.3,hp:a.hp/a.max,hpLag:a.hpLag/a.max,hg:a.hg,mg:a.mg,mp:a.mp/a.mpMax,flash:a.flash,face:a.face,
       ref:a,ghost:a.ghost,sel:a===S.inspect,rel:a.relT,frz:a.frz,ward:a.ward,dis:a.dis,stun:a.stun,sil:a.sil,blind:a.blind,slow:a.slow,shield:a.shield,mshield:a.mshield,psn:a.psn,brn:a.brn,glow:a.mkEmp>0?.35:a.glow,atkT:a.atkT,cast:a.patternWind>0?Math.min(CAST_T,a.patternWind):a.castT,kx:a.kx,ky:a.ky,walk:a.walk,moving:a.moving,ph:a.ph,die:a.hp>0?undefined:a.dieT/DIE_T});
     for(const v of F.vfx) if(!UNDER.includes(v.k)) drawVfx(v);
     for(const a of F.f)if(a.hp>0){

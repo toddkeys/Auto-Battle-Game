@@ -343,6 +343,37 @@ result callbacks from an abandoned/restarted run are rejected.
 python tools/check_boss_choices.py
 ```
 
+## Hero Codex training
+
+Open a playable hero's detail card and select **Try hero** during preparation.
+Training is unavailable during combat, results or game over; an open preview
+also blocks starting a real battle. All 88 heroes can use their real sprites,
+attack animations, skills and 1–3 star perks. The preview uses base stats without
+items, blessings or team synergies. Drag the wooden dummy to test range, toggle
+auto attacks, manually **Cast skill**, add an injured **Ally**, use **Test hit**
+to check healing/shields, or **Reset**. Damage, DPS, healing and released casts
+update five times a second. Copy skills borrow the dummy's Shield Bash;
+necromancers receive two fallen enemies to raise. Reset restores both.
+
+The existing frame loop runs only the preview while it is open. Simulation,
+fighters, timers and random draws are isolated from the run; previews never
+spend gold, earn rewards, change fielding history or overwrite a run save.
+Effects respect the selected quality mode, with at most 160 decorative particles
+in Full training and lower budgets in Tablet/Minimal. Living summons are capped
+at eight across all summoning paths. Closing releases the simulation references,
+clears its effects and zeroes its canvas backing store; no preview interval or
+extra animation loop keeps running. The close control stays accessible while
+scrolling; landscape phone controls sit beside the arena.
+
+```bash
+python tools/check_hero_training.py
+```
+
+Checks cover all 264 hero/star combinations, real healing and repeat summons,
+run/save/random isolation, rejected access during combat, cleanup, native touch
+skill controls, dummy drags/cancellation and rotation at iPad and phone sizes.
+Touch tests use Chromium emulation, rather than physical iPad/iPhone Safari.
+
 ## Equipment variety and team loadouts
 
 Ten additional items support physical damage/crit (Hawkeye Bow, Predator Sigil),
