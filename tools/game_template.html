@@ -907,7 +907,7 @@ function raise(a,n,pct){
   return gs.length;
 }
 // Engineers: build turrets (they copy the builder's team bonuses like any summon)
-function build(a,max){ const m=summon(a,U[a.type].tower||'turret',max), k=(a.turBoost||1)*(U[a.type].turBoost||1); if(m){ m.max*=k; m.hp=m.hpLag=m.max; m.atk*=k; } return m; }   // the Gearmaster's own turrets are 60% tougher
+function build(a,max){ const spec=U[typesOf(a).find(t=>U[t].cls==='engineer')||a.type],m=summon(a,spec.tower||'turret',max),k=(a.turBoost||1)*(spec.turBoost||1); if(m){ m.max*=k; m.hp=m.hpLag=m.max; m.atk*=k; } return m; }   // the Gearmaster's own turrets are 60% tougher
 // Ninja Flicker Strike: hop from enemy to enemy, then come home
 function blink(a,list,m){ a.blinkQ={list,i:0,t:0,home:{x:a.x,y:a.y},m:m*(a.nSkill||1)}; a.ghost=9; FX('smoke',a.x,a.y-.1,{s:1,add:false,m:.4}); }
 const segDist=(px,py,x0,y0,x1,y1)=>{ const dx=x1-x0, dy=y1-y0, l=dx*dx+dy*dy||1, q=Math.max(0,Math.min(1,((px-x0)*dx+(py-y0)*dy)/l)); return Math.hypot(px-x0-dx*q,py-y0-dy*q); };
@@ -1005,7 +1005,7 @@ function tickTactics(dt,alive){const F=S.fight;
   }
 }
 function bindSouls(a,n,m,seconds){const es=foes(a).sort((p,q)=>dist(a,p)-dist(a,q)).slice(0,n);if(!es.length)return;
-  const link={src:a,members:es,share:a.linkShare||.12,until:S.fight.t+seconds+(a.linkPlus||0)};
+  const link={src:a,members:es,share:a.linkShare||.12,skill:CAST_TYPE||a.type,until:S.fight.t+seconds+(a.linkPlus||0)};
   for(const e of es)e.soulLink=link;
   for(const e of es){hit(a,e,m);V({k:'ring',x:e.x,y:e.y,r:.55,c:'#d892e9',m:.65});}
   for(let i=1;i<es.length;i++)V({k:'beam',x:es[0].x,y:es[0].y-.3,x2:es[i].x,y2:es[i].y-.3,c:'#d892e9',m:.65});
@@ -1014,14 +1014,14 @@ function duelTarget(a){const es=foes(a).filter(e=>!(e.ghost>0));return es.sort((
 function markDuel(a,seconds){const t=duelTarget(a);if(!t)return null;if(a.duelTarget!==t){a.duelTarget=t;a.duelStacks=0;}a.duelMark=t;a.duelMarkUntil=S.fight.t+seconds;a.tgt=t;V({k:'reticle',x:t.x,y:t.y,c:'#ffa6b6',m:.55});return t;}
 // A real straight skillshot: first collision wins, wall blocks it, travel determines stun.
 function moonArrow(a){const t=farthestFoes(a,1,12)[0];if(!t)return;const d=Math.hypot(t.x-a.x,t.y-a.y+.15)||1;
-  (S.fight.arrows||(S.fight.arrows=[])).push({src:a,x:a.x,y:a.y-.15,dx:(t.x-a.x)/d,dy:(t.y-a.y+.15)/d,travel:0,life:1.8,pow:a.skPow||1});
+  (S.fight.arrows||(S.fight.arrows=[])).push({src:a,x:a.x,y:a.y-.15,dx:(t.x-a.x)/d,dy:(t.y-a.y+.15)/d,travel:0,life:1.8,pow:a.skPow||1,skill:CAST_TYPE||'moonlance'});
   V({k:'rune',x:a.x,y:a.y+.3,r:.65,c:'#c5d2ff',m:.45});SND.play('arrows');
 }
 function tickMoonArrows(dt){const F=S.fight;if(!F.arrows)return;let keep=0;
   for(const p of F.arrows){const ox=p.x,oy=p.y,mv=9*dt;p.x+=p.dx*mv;p.y+=p.dy*mv;p.travel+=mv;p.life-=dt;
     if(F.walls&&F.walls.some(w=>w.team!==p.src.team&&segX(ox,oy,p.x,p.y,w.x1,w.y1,w.x2,w.y2))){V({k:'shards',x:p.x,y:p.y,c:'#c5d2ff',r:.5,n:4,m:.25});continue;}
     let target=null,best=Infinity;for(const e of F.f)if(e.hp>0&&e.team!==p.src.team&&!(e.ghost>0)&&segDist(e.x,e.y,ox,oy,p.x,p.y)<=.38){const d=Math.hypot(e.x-ox,e.y-oy);if(d<best){best=d;target=e;}}
-    if(target){const prev=CASTER,sp=p.src.skPow;CASTER=p.src;p.src.skPow=p.pow;try{hit(p.src,target,1.8+Math.min(1.2,p.travel*.15));controlFor(target,'stun',Math.min(3,.5+p.travel*.4));}finally{p.src.skPow=sp;CASTER=prev;}
+    if(target){const sp=p.src.skPow;p.src.skPow=p.pow;try{withSkill(p.src,p.skill,()=>{hit(p.src,target,1.8+Math.min(1.2,p.travel*.15));controlFor(target,'stun',Math.min(3,.5+p.travel*.4));});}finally{p.src.skPow=sp;}
       FX('spark',target.x,target.y-.3,{s:.7,tint:'#c5d2ff',m:.4});continue;}
     if(p.life>0&&p.x>-.5&&p.x<COLS+.5&&p.y>-.5&&p.y<ROWS+.5)F.arrows[keep++]=p;
   }F.arrows.length=keep;
@@ -1231,7 +1231,7 @@ const SKILLS = {
   phantomblade:{name:'Phantom Cross',mp:70,desc:'Dashes through the target, leaving a violet rift: 130% damage along the path. After 0.45s a crossing phantom blade strikes marked enemies for 100% and slows them for 1.5s. Untargetable during the 0.22s dash. Cannot cast while rooted.',
     cast(a,t){const d=dist(a,t)||1,ux=(t.x-a.x)/d,uy=(t.y-a.y)/d,x0=a.x,y0=a.y,x1=Math.min(COLS-.5,Math.max(.5,t.x+ux)),y1=Math.min(ROWS-.5,Math.max(.5,t.y+uy));
       const list=foes(a).filter(e=>segDist(e.x,e.y,x0,y0,x1,y1)<=.65),k=a.nSkill||1;a.leap={x0,y0,x1,y1,t:0,T:.22,flat:1};a.ghost=.22;
-      for(const q of [0,.5])V({k:'phantomEcho',type:a.type,x:x0+(x1-x0)*q,y:y0+(y1-y0)*q,face:a.face,m:.5});
+      for(const q of [0,.5])V({k:'phantomEcho',type:a.type,fuse:a.fuse,x:x0+(x1-x0)*q,y:y0+(y1-y0)*q,face:a.face,m:.5});
       V({k:'beam',x:x0,y:y0-.25,x2:x1,y2:y1-.25,c:'#a99aff',m:.5});FX('smoke',x0,y0-.2,{s:.7,tint:'#6d5bb8',add:false,m:.4});
       for(const e of list){hit(a,e,1.3*k);V({k:'reticle',x:e.x,y:e.y,c:'#d4b4ff',m:.45});}
       later(.45,()=>{if(a.hp<=0)return;for(const e of list)if(e.hp>0){hit(a,e,1*k);inflict(e,'slow',1.5);V({k:'slash',x:e.x,y:e.y,c:'#eadcff',dir:-a.face,m:.28});V({k:'arc',x:e.x,y:e.y,c:'#9a7aff',r:.8,dir:a.face,m:.28});}SND.play('steal');});}},
@@ -1239,7 +1239,7 @@ const SKILLS = {
     cast(a,t){ const x=t.x, y=t.y; V({k:'ring',x,y,r:2,c:'#8a6aff',m:.5}); FX('nova',x,y-.2,{s:1.2,tint:'#8a6aff',m:.5});
       for(const e of foes(a)) if(Math.hypot(e.x-x,e.y-y)<=2){ pull(e,x,y,a); later(.25,()=>{ if(e.hp>0) hit(a,e,1.1); }); } }},
   eclipsewitch:{name:'Event Horizon', mp:110, desc:'Channels a black hole on the largest group of enemies for 2.5s: enemies within 2 cells are dragged to its centre, can\'t act, and take 50% of her attack as damage every half second.',
-    cast(a){ const c=densest(a,2); if(!c) return; S.fight.holes.push({x:c.x,y:c.y,r:2,t:2.5,T:2.5,src:a,tick:0}); a.chan=2.5;
+    cast(a){ const c=densest(a,2); if(!c) return; S.fight.holes.push({x:c.x,y:c.y,r:2,t:2.5,T:2.5,src:a,tick:0,skill:CAST_TYPE||'eclipsewitch'}); a.chan=2.5;
       }},
   thornweaver:{name:'Entangling Roots', mp:65, desc:'Thorny roots burst from the ground: enemies within 1.5 cells of the target take 120% damage and are rooted for 2s (they can only attack what is already in range, and can\'t use moving skills).',
     cast(a,t){ const x=t.x, y=t.y; V({k:'quake',x,y:y+.3,r:1.5,c:'#4a8a2a',m:.8});
@@ -1406,7 +1406,7 @@ function setSprite(id,src,faceLeft,rig){
       let top=c.height,bottom=0; for(let y=0;y<c.height;y++) for(let x=0;x<c.width;x++) if(a[(y*c.width+x)*4+3]>10){ top=Math.min(top,y); bottom=Math.max(bottom,y+1); }
       if(SPR[id]&&SPR[id].img===im) SPR[id].bounds={top,bottom,height:Math.max(1,bottom-top)};
       render();renderUI();}; im.src=src; SPR[id]={img:im,faceLeft};
-    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={img:ri,layers:rig.layers,piv:rig.piv,rects:rig.rects,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56,roster:!!rig.roster}; } }   // custom images have no rig: they animate as one piece
+    if(rig){ const ri=new Image(); ri.src=rig.src; SPR[id].rig={id,img:ri,layers:rig.layers,piv:rig.piv,rects:rig.rects,faceLayer:rig.faceLayer,expr:rig.expr,k:rig.k||1,fw:rig.fw||56,roster:!!rig.roster}; } }   // custom images have no rig: they animate as one piece
   else delete SPR[id];
 }
 /*DEFAULT_SPRITES*/
@@ -1830,7 +1830,7 @@ function heroTip(h){ const u=U[h.t], f=h.f&&U[h.f];
   const tag=(c,txt)=>`<span class="ctag" style="--c:${c}">${txt}</span>`;   // class colours are made for dark panels: a dark tag keeps them readable on the light tooltip
   return f?`<b>${u.name}</b> ⚭ <b>${f.name}</b><br>${tag(colorOf(h.t),CLASSES[u.cls].name)} + ${tag(colorOf(h.f),CLASSES[f.cls].name)} ${tag('#f3e2b8',ORIGINS[u.org].icon+' '+ORIGINS[u.org].name)} ${tag('#f3e2b8',ORIGINS[f.org].icon+' '+ORIGINS[f.org].name)}`
     :`<b>${u.name}</b> ${'★'.repeat(h.s||1)}<br>${tag(colorOf(h.t),CLASSES[u.cls].name)} ${tag('#f3e2b8',ORIGINS[u.org].icon+' '+ORIGINS[u.org].name)}`; }
-const lineupHTML=tm=>okTeam(tm).length?`<div class="lineup">${okTeam(tm).map(h=>`<span class="lu${h.f?' fz':''}" data-tip="${esc(heroTip(h))}">${thumbHTML(h.t,32)}<i>${h.f?'<b style="color:#ff3a3a">★</b>':'★'.repeat(h.s||1)}</i></span>`).join('')}</div>`
+const lineupHTML=tm=>okTeam(tm).length?`<div class="lineup">${okTeam(tm).map(h=>`<span class="lu${h.f?' fz':''}" data-tip="${esc(heroTip(h))}">${thumbHTML(h.t,32,h.f)}<i>${h.f?'<b style="color:#ff3a3a">★</b>':'★'.repeat(h.s||1)}</i></span>`).join('')}</div>`
   :'<div class="lineup none">No line-up saved for this score.</div>';
 async function lbFetch(board){
   if(!LB_ONLINE){ try{ return JSON.parse(localStorage.getItem('ab_lb_'+board)||'[]'); }catch(e){ return []; } }
@@ -1945,7 +1945,7 @@ function showSummary(){
   if(rec) SND.play('star');
   lbRunOver();
 }
-function newGame(mode='normal',mod){cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
+function newGame(mode='normal',mod){clearFusionParts();FUSED_THUMBS.clear();FUSED_THUMB_IMAGES.clear();cancelGestures();closeHeroCard();closeItemCard();SND.reset();simAccum=0;clearVisuals(S&&S.fight);$('#lootChoice').hidden=true;$('#bossPact').hidden=true; $('#cards').hidden=true; $('#summary').hidden=true; $('#event').hidden=true; S={mode,mod:mode==='hard'?mod:null,seed:mode==='daily'?'daily-'+today():null,rollN:0,bosses:0,clsUse:{},orgUse:{},buffs:[],round:1,gold:10,hp:100,phase:'prep',offerQueue:[],pendingLoot:null,bossPact:null,freeRerolls:0,units:[],shop:[],sel:null,fight:null,uid:1,result:'',extra:0,locked:false,inv:[],selItem:null,touchAction:null,meter:null,ufx:[]}; if(S.mod==='loan') S.gold+=15; S.bossOrder=seeded('bosses',()=>[...BOSSES].sort(()=>Math.random()-.5)); rollShop(); render(); renderUI(); }
 const MAX_CAP=9;
 // field slots only grow when bought: start with 3, slots 4..9 cost more each time
 const CAP_COSTS=[6,10,15,21,28,36];
@@ -1969,18 +1969,25 @@ const FUSE_WORDS={warrior:['Battle','Knight'],archer:['Swift','Ranger'],holy:['H
   gambler:['Lucky','Gambler'],samurai:['Bushido','Samurai'],frost:['Frost','Warden'],occultist:['Cursed','Occultist'],crusader:['Valiant','Paladin'],
   summoner:['Spirit','Summoner'],bard:['Melodic','Bard'],alchemist:['Toxic','Alchemist'],necro:['Undying','Necromancer'],engineer:['Clockwork','Engineer'],
   monk:['Zen','Monk'],chrono:['Warping','Warper'],ninja:['Shadow','Assassin'],mimic:['Mirror','Mimic'],mesmer:['Hypnotic','Mesmer'],monkey:['Simian','Trickster'],
+  sentinel:['Vigilant','Sentinel'],abjurer:['Warding','Abjurer'],duelist:['Resolute','Duelist'],soulbinder:['Soulbound','Soulbinder'],
   gunner:['Gunpowder','Gunslinger'],grapple:['Chained','Grappler'],gravity:['Void','Voidcaller'],druid:['Verdant','Druid'],berserker:['Raging','Berserker']};
 function fusedName(lead,partner){ const a=FUSE_WORDS[U[partner].cls], b=FUSE_WORDS[U[lead].cls]; return a&&b?a[0]+' '+b[1]:U[lead].name; }
 const heroName=(type,fuse)=>fuse?fusedName(type,fuse):U[type].name;
 const comboName=(lead,partner)=>(FUSE_WORDS[U[partner].cls]||[''])[0]+' '+SKILLS[lead].name;   // the fused skill: partner's class word + lead's skill ("Holy Shield Charge")
 const fuseMana=(a,b)=>Math.round((SKILLS[a].mp+SKILLS[b].mp)*.85);   // a fused hero casts both skills at once for 85% of both manas (simulated: as strong as alternating them)
-const typesOf=u=>u.fuse?[u.type,u.fuse]:[u.type];   // what a hero counts as for class/origin bonuses
+const typesOf=u=>u.fuse?[u.type,u.fuse]:[u.type];
+const hasClass=(u,cls)=>U[u.type].cls===cls||!!(u.fuse&&U[u.fuse].cls===cls);
+const bareFusion=(type,partner)=>!!(partner&&U[partner].cls==='monk'&&U[type].cls!=='monk');
+const BARE_FUSION=Object.freeze({unarmed:true});
+const fusionRig=(type,partner)=>bareFusion(type,partner)?BARE_FUSION:partner&&SPR[partner]&&SPR[partner].rig;
+const fusionLook=(type,partner)=>bareFusion(type,partner)?`Looks like <b>${U[type].name}</b>, fighting bare-handed`:`Looks like <b>${U[type].name}</b> holding <b>${U[partner].name}</b>'s weapon`;
 const canTryFuse=(a,b)=>a&&b&&a!==b&&a.star===3&&b.star===3&&!a.fuse&&!b.fuse&&U[a.type].cls!==U[b.type].cls&&U[a.type].cost<5&&U[b.type].cost<5;
 function fuseError(){ if(S.round<FUSE_ROUND) return `Fusion unlocks at round ${FUSE_ROUND}`; if(S.gold<FUSE_COST) return `Not enough gold to fuse: it costs ${FUSE_COST} gold, you have ${S.gold}`; return null; }
 const defaultLead=(a,b)=>U[a.type].cost>U[b.type].cost?a:b;   // the pricier hero, or the one dropped onto on a tie
 function fuse(a,b,leadUnit=defaultLead(a,b)){   // a is dragged onto b; the lead gives the body, range, basic attack and first skill
   const lead=leadUnit, other=lead===a?b:a, items=[...b.items,...a.items];
   const lt=lead.type, ot=other.type; b.type=lt; b.fuse=ot;   // read both types before b changes
+  if(SPR[lt]&&SPR[lt].rig)fusionParts(SPR[lt].rig,bareFusion(lt,ot));if(!bareFusion(lt,ot)&&SPR[ot]&&SPR[ot].rig)fusionParts(SPR[ot].rig);
   b.star=3; b.items=items.slice(0,itemSlots(b)); S.inv.push(...items.slice(itemSlots(b)));
   S.units=S.units.filter(v=>v!==a); S.gold-=FUSE_COST; S.sel=b.uid;
   S.ufx.push({k:'star',uid:b.uid,t:1.1,m:1.1}); SND.play('star'); msg(`⚭ ${U[b.type].name} + ${U[b.fuse].name} became the ${fusedName(b.type,b.fuse)}!`);
@@ -1992,7 +1999,7 @@ function askFuse(e,a,b){
     c.innerHTML=`<div>⚭ Fuse <b>${U[a.type].name} ★★★</b> + <b>${U[b.type].name} ★★★</b>${err?'':` for <b>${FUSE_COST} gold</b>`}?</div>
     ${err?`<div style="font-size:13px;margin-top:4px;max-width:320px;color:#ff9a80">${err}</div>`:
       `<div class="fuselead">Lead: ${leadBtn(a)}${leadBtn(b)}</div>
-       <div style="font-size:12px;margin-top:4px;max-width:330px">Becomes the <b style="color:#ffe27a">${fusedName(lead.type,other.type)}</b> with the combo skill <b style="color:#ffe27a">${comboName(lead.type,other.type)}</b>. Looks like <b>${U[lead.type].name}</b> holding <b>${U[other.type].name}</b>'s weapon, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), casts both skills at once (${fuseMana(lead.type,other.type)} mana), holds 2 items.</div>`}
+       <div style="font-size:12px;margin-top:4px;max-width:330px">Becomes the <b style="color:#ffe27a">${fusedName(lead.type,other.type)}</b> with the combo skill <b style="color:#ffe27a">${comboName(lead.type,other.type)}</b>. ${fusionLook(lead.type,other.type)}, uses ${U[lead.type].name}'s range and basic attack and casts its skill first. Counts as both classes and both origins, best stats of the two (+10%), casts both skills at once (${fuseMana(lead.type,other.type)} mana), holds 2 items.</div>`}
     <div class="row">${err?'':'<button class="b" data-yes>Fuse</button>'}<button class="b" data-no>${err?'OK':'Cancel'}</button></div>`; };
   draw(); c.hidden=false;positionMenu(c,e);
   c.onclick=ev=>{ const l=ev.target.closest('[data-lead]'); if(l){ lead=l.dataset.lead==='a'?a:b; draw(); return; }
@@ -2247,20 +2254,20 @@ function applySynergy(f){
       x.duelStep=[.025,.04,.06][lv.duelist];x.linkShare=[.12,.18,.25][lv.soulbinder];x.linkPlus=lv.soulbinder>=2?1:0;
       x.mp=x.mpMax*[0,.3,.6][olv.starborn]; x.shield=x.max*[0,.15,.3][olv.ironvow];
       x.back=team===0?x.y>6:x.y<2; x.backRed=x.back?[0,.2,.35][lv.crusader]:0;
-      if(U[x.type].cls==='crusader'){ x.red=Math.min(.7,(x.red||0)+[0,.1,.2][lv.crusader]); if(lv.crusader>=2) x.shield+=x.max*.25; }
+      if(hasClass(x,'crusader')){ x.red=Math.min(.7,(x.red||0)+[0,.1,.2][lv.crusader]); if(lv.crusader>=2) x.shield+=x.max*.25; }
       x.lucky=lv.gambler>=1; x.lucky2=lv.gambler>=2;
-      if(U[x.type].cls==='samurai'){ x.bushido=[0,.25,.5][lv.samurai]; x.firstCrit=lv.samurai>=2; }
+      if(hasClass(x,'samurai')){ x.bushido=[0,.25,.5][lv.samurai]; x.firstCrit=lv.samurai>=2; }
       x.hotBoost=[1,1.3,1.6][lv.frost]; x.wardPlus=0; x.wallHp=[1,1.3,1.6][lv.frost]; x.wallChill=lv.frost>=2;
       x.sumBoost=[1,1.25,1.5][lv.summoner]; x.sumStart=lv.summoner>=2;
       x.songR=lv.bard>=1?3:2; x.songK=lv.bard>=2?1.5:1;
-      x.potPsn=lv.alchemist>=2; x.necBoost=[1,1.3,1.6][lv.necro]; x.necMana=lv.necro>=2&&U[x.type].cls==='necro';
-      x.turBoost=[1,1.3,1.6][lv.engineer]; x.turrets=U[x.type].cls==='engineer'?(lv.engineer>=2?2:1):0;
-      if(U[x.type].cls==='monk'){ x.dodge=[0,.2,.35][lv.monk]; x.comboStep=[.03,.04,.06][lv.monk]; }
-      if(U[x.type].cls==='chrono'&&lv.chrono){ x.warpSh=.15; x.warpAS=.35; x.blinkSave=1; }
-      if(U[x.type].cls==='ninja'){ x.nDodge=[0,.25,.4][lv.ninja]; x.nSkill=lv.ninja>=2?1.25:1; }
+      x.potPsn=lv.alchemist>=2; x.necBoost=[1,1.3,1.6][lv.necro]; x.necMana=lv.necro>=2&&hasClass(x,'necro');
+      x.turBoost=[1,1.3,1.6][lv.engineer]; x.turrets=hasClass(x,'engineer')?(lv.engineer>=2?2:1):0;
+      if(hasClass(x,'monk')){ x.dodge=[0,.2,.35][lv.monk]; x.comboStep=[.03,.04,.06][lv.monk]; }
+      if(hasClass(x,'chrono')&&lv.chrono){ x.warpSh=.15; x.warpAS=.35; x.blinkSave=1; }
+      if(hasClass(x,'ninja')){ x.nDodge=[0,.25,.4][lv.ninja]; x.nSkill=lv.ninja>=2?1.25:1; }
       x.gAmp=[0,.15,.3][lv.gravity]; x.hAmp=[0,.15,.3][lv.grapple]; x.critX=[0,.4,.8][lv.gunner]; if(lv.monkey) x.dodge=(x.dodge||0)+[0,.1,.2][lv.monkey];
-      if(U[x.type].cls==='mimic'){ x.mimicMp=[0,10,20][lv.mimic]; x.mimicAmp=lv.mimic>=2?.15:0; } x.mesAmp=[0,.15,.3][lv.mesmer]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
-      if(U[x.type].cls==='berserker'){ x.cleave=[0,.3,.6][lv.berserker]; if(lv.berserker>=2) x.leech+=.1; } }
+      if(hasClass(x,'mimic')){ x.mimicMp=[0,10,20][lv.mimic]; x.mimicAmp=lv.mimic>=2?.15:0; } x.mesAmp=[0,.15,.3][lv.mesmer]; x.rootPlus=lv.druid>=1?1:0; x.rootAmp=lv.druid>=2?.15:0;
+      if(hasClass(x,'berserker')){ x.cleave=[0,.3,.6][lv.berserker]; if(lv.berserker>=2) x.leech+=.1; } }
     if(team===0) S.alchGold=[0,1,2][lv.alchemist];
     if(team===0) S.goldBonus=[[0,0],[1,0],[2,1]][olv.gilded];   // [on win, on loss]
   }
@@ -2339,10 +2346,10 @@ function startFight(){
   for(const x of f) if(x.lucky2){   // Gambler tier 2: each ally gets a random blessing of fortune
     for(const b of f) if(b.team===x.team&&!b.fortune){ b.fortune=1; const r=Math.floor(Math.random()*4);
       if(r===0) b.dmgM*=1.15; else if(r===1) b.asM*=1.15; else if(r===2) b.shield+=b.max*.12; else b.mshield+=b.max*.12; } }
-  for(const x of f) if(U[x.type].guard){   // Guardian Link: protect the nearest unguarded back-line ally
+  for(const x of f){const spec=typesOf(x).map(t=>U[t]).find(u=>u.guard);if(spec){   // Guardian Link: protect the nearest unguarded back-line ally
     const ally=f.filter(b=>b.team===x.team&&b!==x&&!b.guard&&U[b.type].range>=2).sort((p,q)=>dist(p,x)-dist(q,x))[0];
-    if(ally){ ally.guard=x; ally.guardPct=U[x.type].guard+(x.guardPlus||0); } }
-  for(const x of f) if(x.sumStart&&U[x.type].calls){ const m=summon(x,U[x.type].calls,9); if(m) m.spawnT=x.spawnT+.25; }   // Summoner bonus (tier 2)
+    if(ally){ ally.guard=x; ally.guardPct=spec.guard+(x.guardPlus||0); } }}
+  for(const x of f) if(x.sumStart){const caller=typesOf(x).map(t=>U[t]).find(u=>u.calls);if(caller){const m=summon(x,caller.calls,9);if(m)m.spawnT=x.spawnT+.25;}}   // Summoner bonus (tier 2)
   S.fight.graves=[]; S.fight.holes=[];initTactics();
   for(const x of f) for(let i=0;i<(x.turrets||0);i++){ const m=build(x,9); if(m) m.spawnT=x.spawnT+.3+i*.15; }   // Engineers
   renderUI();
@@ -2427,8 +2434,9 @@ function emitParticle(x,y,vx,vy,life,c,size,g){const F=S.fight;
 const V=o=>{o.m=o.m||.4;if(o.t===undefined)o.t=o.m;o.s=o.s??(Math.random()*1e4|0);
   const F=S.fight;if(decorativeVfx(o)){if((F.decorVfx||0)>=FX_BUDGETS[FX_LOAD.level].vfx){FX_STATS.dropped++;return;}F.decorVfx=(F.decorVfx||0)+1;}F.vfx.push(o);
 };
-let CASTER=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
-const later=(t,fn)=>S.fight.timers.push({t,fn,c:CASTER});
+let CASTER=null,CAST_TYPE=null;   // the unit whose skill is resolving right now: its skill damage and healing get its star bonus
+function withSkill(a,id,fn){const before=CASTER,kind=CAST_TYPE;CASTER=a;CAST_TYPE=id;try{return fn();}finally{CASTER=before;CAST_TYPE=kind;}}
+const later=(t,fn)=>S.fight.timers.push({t,fn,c:CASTER,skill:CAST_TYPE});
 function pop(u,txt,c,big){ if(typeof txt==='string'&&/^\+.*\b(?:mana|mp)\b/i.test(txt)){ if(u.hp>0)u.mg=.4; return; } if(typeof txt==='string'&&!/^[+\d]/.test(txt)) return popIcon(u,wordIcon(txt),c);   // words show as icons; numbers stay numbers
   S.fight.fx.push({x:u.x,y:u.y-.35,t:big?1.1:.7,t0:big?1.1:.7,txt,c,big}); trimFx(); }
 // every word pop-up as an icon (matched by its first word; a text that starts with a symbol uses that symbol)
@@ -2474,7 +2482,7 @@ function manaGlow(u,before){ const gained=u.mp-before; if(gained>0&&u.hp>0&&u.mp
 const gainMp=(u,amt)=>{ const before=u.mp; u.mp=Math.min(u.mpMax,u.mp+amt*(u.drain>0?.5:1)*(1-(u.manaCut||0))); manaGlow(u,before); };
 const healMul=u=>(u.wnd>0?.5:1)*(u.psn?.7:1);   // Wounded halves healing, poison cuts it by 30%
 const MAGIC_CLS={abjurer:1,soulbinder:1,mimic:1,mesmer:1,magic:1,holy:1,occultist:1,summoner:1,frost:1,gambler:1,bard:1,alchemist:1,necro:1,chrono:1,gravity:1,druid:1}, MAGIC_TYPES={wisp:1,drake:1,lich:1,shroomkin:1};
-const isMagic=src=>!!src&&(MAGIC_CLS[U[src.type].cls]||MAGIC_TYPES[src.type]);
+const isMagic=src=>{const id=src&&CASTER===src&&CAST_TYPE||src&&src.type;return !!id&&!!(MAGIC_CLS[U[id].cls]||MAGIC_TYPES[id]);};
 // dice: a d6, rolled twice (best kept) with the Gambler bonus
 const roll=a=>{ const r=()=>1+Math.floor(Math.random()*6); return a.lucky?Math.max(r(),r()):r(); };
 function dieFx(a,n,dx=0){ pop({x:a.x+dx,y:a.y-.6},'🎲 '+n,n===6?'#ffe27a':'#ffd0ea',true); FX('spark',a.x+dx,a.y-.9,{s:.6,tint:'#ffb0e0',m:.4}); }
@@ -2599,11 +2607,11 @@ const PROJ={maskedmagus:'p_arcane',mirrormage:'p_arcane',puppeteer:'p_dark',rime
 const MINI_PROJ={p_ice:'shard',p_plant:'thorn',p_dark:'dark',p_arcane:'needle',p_light:'spark',magic:'ember',wizard:'shard',voidsage:'dark',holy:'spark'};
 const MINI_COL={ember:['#ff7a2a','#ffe27a'],shard:['#8fdcff','#ffffff'],needle:['#c8a0ff','#ffffff'],thorn:['#4a9a3a','#bff28a'],spark:['#ffe27a','#ffffff'],dark:['#6a3a9a','#d8b8ff']};
 function shoot(a,t,mult=1,c,big,onHit){
-  const arrow=!big&&U[a.type].cls==='archer';
+  const type=CASTER===a&&CAST_TYPE||a.type,arrow=!big&&U[type].cls==='archer'&&(CASTER===a||!bareFusion(a.type,a.fuse));
   const d0=Math.max(.5,Math.hypot(t.x-a.x,t.y-a.y+.2));
   SND.play(arrow?'shoot':'zapshot');
-  const spr=!arrow&&PROJ[a.type], mini=!arrow&&!big&&spr!=='card'?MINI_PROJ[a.type]||MINI_PROJ[spr]||MINI_PROJ[U[a.type].cls]||'spark':null;
-  S.fight.proj.push({x:a.x,y:a.y-.2,bx:a.x,by:a.y-.2,d0,h:arrow?Math.min(1.1,d0*.2):0,src:a,t,c:c||colorOf(a.type),mult,big,arrow,onHit,tr:[],spr,mini});
+  const spr=!arrow&&PROJ[type], mini=!arrow&&!big&&spr!=='card'?MINI_PROJ[type]||MINI_PROJ[spr]||MINI_PROJ[U[type].cls]||'spark':null;
+  S.fight.proj.push({x:a.x,y:a.y-.2,bx:a.x,by:a.y-.2,d0,h:arrow?Math.min(1.1,d0*.2):0,src:a,t,c:c||colorOf(type),mult,big,arrow,onHit,tr:[],spr,mini,skill:CASTER===a?CAST_TYPE:null});
 }
 function deal(t,dmg,crit,src,linked=false){
   if(t.hp<=0||!Number.isFinite(dmg)||dmg<=0)return;
@@ -2633,7 +2641,7 @@ function deal(t,dmg,crit,src,linked=false){
   t.hp-=dmg; t.flash=1;
   if(t.heavyWard&&dmg>=t.max*.2&&!(t.heavyCd>S.fight.t)){t.heavyUntil=S.fight.t+2;t.heavyCd=S.fight.t+8;}
   if(!linked&&src&&src.team!==t.team&&dmg>0&&t.soulLink&&t.soulLink.until>S.fight.t){const link=t.soulLink;
-    if(link.src.hp>0)for(const other of link.members)if(other!==t&&other.hp>0&&other.soulLink===link)deal(other,dmg*link.share,false,link.src,true);
+    if(link.src.hp>0)for(const other of link.members)if(other!==t&&other.hp>0&&other.soulLink===link)withSkill(link.src,link.skill,()=>deal(other,dmg*link.share,false,link.src,true));
   }
   if(src&&raw>0){ const d=dist(src,t)||1;
     t.impactT=HURT_T; t.impactK=Math.min(1,(.25+raw/t.max*3+(crit?.18:0))*(dmg>0?1:.45));
@@ -2726,7 +2734,7 @@ function beginAttack(a){
 function tryCast(a,t,inRange){
   if(a.fateRecast>S.fight.t)return false;
   if(a.mp<a.mpMax||a.sil>0) return false;
-  if(a.root>0&&MOVE_SKILL[a.type]) return false;   // rooted: no dashing or spinning
+  if(a.root>0&&typesOf(a).some(id=>MOVE_SKILL[id])) return false;   // rooted: no dashing or spinning
   if(!a.heal&&!inRange) return false;
   const col=colorOf(a.type);
   a.mp=0; a.castT=CAST_T; a.castTgt=t; SND.play('cast');
@@ -2760,6 +2768,7 @@ const SKILL_FX={
 };
 // a fused hero may carry a healer's heal stat and cast without an enemy target: a damage skill still needs a living enemy
 const skillTgt=(a,id,t)=>U[id].heal>0||(t&&t.hp>0&&t.team!==a.team)?t:foes(a).sort((p,q)=>dist(a,p)-dist(a,q))[0]||t;
+function castFusionSkill(a,id,t){return withSkill(a,id,()=>{const target=skillTgt(a,id,t);if(SKILL_FX[id])SKILL_FX[id](a,target||a);SKILLS[id].cast(a,target);});}
 function releaseCast(a){
   let t=a.castTgt; if(t&&t.hp<=0) t=nearest(a,S.fight.f);
   if(!a.heal&&!t) return;
@@ -2767,15 +2776,15 @@ function releaseCast(a){
   if(a.star===3){ FXS=1.3; V({k:'rays',x:a.x,y:a.y+.3,c:'#ffe27a',r:1.6,m:.8}); V({k:'ring',x:a.x,y:a.y,r:1.1,c:'#fff3c0',m:.6}); burst(a.x,a.y-.4,'#ffe9a0',18,3.5,3,-2); }   // 3 stars: a golden flourish
   for(const m of S.fight.f) if(m.mimicMp&&m.team!==a.team&&m.hp>0) gainMp(m,m.mimicMp);   // Mimic class bonus
   if(a.hexUntil>S.fight.t){a.hexUntil=0;a.hexCastUntil=S.fight.t+4;}
-  CASTER=a; SND.skill(a); if(SKILL_FX[a.type]) SKILL_FX[a.type](a,t||a);   // healers have no target: effects use the caster
+  SND.skill(a);   // healers have no target: effects use the caster
   const accent=a.type==='nightreaper'?'#ff5276':BOSS_PALETTES[a.type]||colorOf(a.type);
   V({k:'sigilBloom',x:a.x,y:a.y+.2,c:accent,r:U[a.type].boss?1.3:.75,m:.65});
   if(t&&!(a.heal>0)) V({k:'impactBloom',x:t.x,y:t.y-.2,c:accent,r:U[a.type].boss?1.1:.65,m:.42});
   burst(a.x,a.y-.3,accent,10,3,3,0);
   V({k:'pillar',x:a.x,y:a.y+.35,c:colorOf(a.type),m:.4});   // light pillar on release
-  if(a.fuse){ pop({x:a.x,y:a.y-.6},'⚭ Combo!','#ffe27a',true); SKILLS[a.type].cast(a,skillTgt(a,a.type,t)); if(a.hp>0) SKILLS[a.fuse].cast(a,skillTgt(a,a.fuse,t)); }   // fused: both skills, lead first
-  else SKILLS[a.type].cast(a,t);
-  FXS=1; CASTER=null;
+  if(a.fuse){ pop({x:a.x,y:a.y-.6},'⚭ Combo!','#ffe27a',true); castFusionSkill(a,a.type,t);if(a.hp>0){SND.skill({type:a.fuse,x:a.x});castFusionSkill(a,a.fuse,t);} }   // fused: both skills, lead first
+  else castFusionSkill(a,a.type,t);
+  FXS=1; CASTER=null;CAST_TYPE=null;
   if(a.bellK){ for(const b of friends(a)) if(dist(a,b)<=2){ b.shield+=b.max*.08*a.bellK; V({k:'dome',x:b.x,y:b.y,c:'#ffe27a',r:.55,m:.5}); } SND.play('shield'); }   // Warding Bell
   if(a.quickcastK>0)a.quickcastT=3;
   if(a.rhythmK)a.rhythmLeft=3;
@@ -2786,7 +2795,7 @@ function step(dt){
   const F=S.fight; F.t+=dt;
   for(const tm of F.timers) tm.t-=dt;
   const due=F.timers.filter(tm=>tm.t<=0); F.timers=F.timers.filter(tm=>tm.t>0);
-  for(const tm of due){ CASTER=tm.c||null; tm.fn(); } CASTER=null;
+  for(const tm of due)withSkill(tm.c||null,tm.skill||null,tm.fn);
   const alive=F.f.filter(x=>x.hp>0);
   tickTactics(dt,alive);
   for(const x of F.f) if(x.hp<=0&&!x.graved){ x.graved=1;   // the fallen, for necromancers
@@ -2796,17 +2805,17 @@ function step(dt){
     for(const e of alive) if(e.team!==h.src.team&&Math.hypot(e.x-h.x,e.y-h.y)<=h.r){
       if(!U[e.type].boss){ const d=Math.hypot(h.x-e.x,h.y-e.y)||1, mv=Math.min(d,2.2*dt); e.x+=(h.x-e.x)/d*mv; e.y+=(h.y-e.y)/d*mv; }
       e.stun=Math.max(e.stun||0,.12); if(h.src.gAmp){ e.gAmp=h.src.gAmp; e.gT=3; }
-      if(h.tick>=.5) deal(e,h.src.atk*.5,false,h.src); }
+      if(h.tick>=.5)withSkill(h.src,h.skill||'eclipsewitch',()=>deal(e,h.src.atk*.5,false,h.src)); }
     if(h.tick>=.5) h.tick=0; }
   F.holes=F.holes.filter(h=>h.t>0);
   const song=Math.floor(F.t/4)%3;   // every bard sings the same song; it changes every 4s
-  if(song!==F.song){ F.song=song; for(const b of alive) if(U[b.type].cls==='bard'){ V({k:'ring',x:b.x,y:b.y,r:b.songR,c:SONGS[song].c,m:.6}); pop({x:b.x,y:b.y-.5},'♪ '+SONGS[song].name,SONGS[song].c); } }
+  if(song!==F.song){ F.song=song; for(const b of alive) if(hasClass(b,'bard')){ V({k:'ring',x:b.x,y:b.y,r:b.songR,c:SONGS[song].c,m:.6}); pop({x:b.x,y:b.y-.5},'♪ '+SONGS[song].name,SONGS[song].c); } }
   for(const b of alive) if(b.fontK||b.bannerK) for(const x of alive) if(x.team===b.team&&dist(b,x)<=2){   // Mana Fountain, War Banner
     if(b.fontK) gainMp(x,2*b.fontK*dt); if(b.bannerK) x.bannerAmp=Math.max(x.bannerAmp||0,.08*b.bannerK); }
   for(const x of alive){ x.sAS=0; x.sRed=0; x.sMp=0;
     if(x.cresc>0){ x.cresc-=dt; x.sAS=.4; x.sRed=.3; x.sMp=8; }
     if(x.enc){ if((x.enc.t-=dt)<=0) x.enc=null; else if(x.enc.song===0) x.sAS=Math.max(x.sAS,.4); else if(x.enc.song===1) x.sRed=Math.max(x.sRed,.3); else x.sMp=Math.max(x.sMp,8); } }
-  for(const b of alive) if(U[b.type].cls==='bard'&&!(b.stun>0)&&!(b.frz>0)) for(const x of alive) if(x.team===b.team&&dist(b,x)<=b.songR){ const k=b.songK;
+  for(const b of alive) if(hasClass(b,'bard')&&!(b.stun>0)&&!(b.frz>0)) for(const x of alive) if(x.team===b.team&&dist(b,x)<=b.songR){ const k=b.songK;
     if(song===0) x.sAS=Math.max(x.sAS,.2*k); else if(song===1) x.sRed=Math.max(x.sRed,.15*k); else x.sMp=Math.max(x.sMp,4*k); }
   for(const a of alive){
     if(a.hp<=0) continue;
@@ -2904,7 +2913,7 @@ function step(dt){
     F.walls=F.walls.filter(w=>{ const keep=(w.t-=dt)>0&&w.hp>0; if(!keep){ wallBreakFx(w,w.hp<=0); wallShatter(w); } return keep; }); }
   F.proj=F.proj.filter(p=>{
     if(p.t.hp<=0) return false;
-    const d=Math.hypot(p.t.x-p.bx,p.t.y-p.by); if(d<.25){ if(p.spr&&p.big) FX('blaze',p.t.x,p.t.y-.2,{s:.6,m:.45}); CASTER=p.big?p.src:null; hit(p.src,p.t,p.mult); if(p.onHit) p.onHit(p.t); CASTER=null; if(p.big){ V({k:'burst',x:p.t.x,y:p.t.y,r:.8,c:p.c}); burst(p.t.x,p.t.y,p.c,10,3,3,3); hitStop(.05); } return false; }
+    const d=Math.hypot(p.t.x-p.bx,p.t.y-p.by); if(d<.25){ if(p.spr&&p.big) FX('blaze',p.t.x,p.t.y-.2,{s:.6,m:.45}); withSkill(p.skill||p.big?p.src:null,p.skill||null,()=>{hit(p.src,p.t,p.mult);if(p.onHit)p.onHit(p.t);}); if(p.big){ V({k:'burst',x:p.t.x,y:p.t.y,r:.8,c:p.c}); burst(p.t.x,p.t.y,p.c,10,3,3,3); hitStop(.05); } return false; }
     p.tr.push({x:p.x,y:p.y}); if(p.tr.length>7) p.tr.shift();
     const mv=Math.min((p.big?7:p.arrow?11:9)*dt,d), ox=p.bx, oy=p.by; p.bx+=(p.t.x-p.bx)/d*mv; p.by+=(p.t.y-p.by)/d*mv;
     const wall=F.walls&&F.walls.find(w=>w.team!==p.src.team&&segX(ox,oy,p.bx,p.by,w.x1,w.y1,w.x2,w.y2));   // flew into an enemy Ice Wall
@@ -3092,7 +3101,7 @@ function rigPose(o,type,b){
   R.wingL=J(); R.wingR=J(); R.cloth=J(0,0,Math.sin(t*2.1)*.025);
   if(st==='roster'){
     R.armR.r=br*.025; R.armL.r=-br*.02; R.weapon.r=0;
-    const style=type==='watchkeeper'?'gun':ACTION_STYLE[b.cls]||'cast', big=o.rel>0, p=big?releasePhase(o):o.atkT>0?1-o.atkT/ATK_T:-1;
+    const style=bareFusion(type,o.fuse)?'punch':type==='watchkeeper'?'gun':ACTION_STYLE[b.cls]||'cast', big=o.rel>0, p=big?releasePhase(o):o.atkT>0?1-o.atkT/ATK_T:-1;
     if(p>=0) articulateAttack(R,p,style,big,o.swing===1);
     if(o.cast>0){const q=easeOut(1-o.cast/CAST_T);
       R.foreR.r-=.25*q;R.armR.r-=(style==='cast'?.55:.35)*q; R.armL.r+=.28*q;
@@ -3260,19 +3269,80 @@ function gripTransform(rig,R,target,g=rg){
   if(rig.piv.foreR){const f=R.foreR||{x:0,y:0,r:0},pe=rig.piv.foreR;g.translate(pe[0]-pa[0]+f.x,pe[1]-pa[1]+f.y);if(f.r)g.rotate(f.r);g.translate(ph[0]-pe[0],ph[1]-pe[1]);}
   else g.translate(ph[0]-pa[0],ph[1]-pa[1]);
 }
+// Prepare equipment only when a fusion needs it. Atlas topology keeps detached
+// blade/staff tips with the weapon instead of leaving them in a head/cloth layer.
+// These canvases are cached per source rig; combat frames do no pixel readback.
+const FUSION_PARTS=new WeakMap(),FUSION_PART_LRU=new Map();
+function clearFusionParts(){for(const {holder,key} of FUSION_PART_LRU.values())delete holder[key];FUSION_PART_LRU.clear();}
+
+const OFFHAND_GEAR=new Set(['knight','lordknight','bulwark','templar','axebrute','glacierwarden','aegispaladin','aegiscaptain','chieftain','nightreaper','assassin','assassincross']);
+// Connected blades/off-hand shields need a few silhouette cuts as well. These
+// masks use the original trimmed art dimensions, never another hero's anatomy.
+const BARE_GEAR_CUTS={
+  shogun:{w:191,polys:[[[0,.79],[.36,.58],[.37,.68],[.03,.92]]]},
+  chainwarden:{w:139,polys:[[[0,.25],[.23,.25],[.31,.44],[.26,.54],[.18,.55],[.16,.69],[0,.69]]]},
+  chieftain:{w:144,polys:[[[0,.29],[.25,.29],[.30,.48],[.22,.55],[0,.57]],[[.79,.31],[1,.31],[1,.62],[.91,.62],[.84,.49]]]},
+  aegiscaptain:{w:138,polys:[[[.51,.37],[.72,.34],[.87,.43],[.87,.73],[.75,.92],[.63,.82],[.56,.63]]]},
+};
+function fusionParts(source,unarmed=false){
+  let cached=FUSION_PARTS.get(source);if(!cached){cached={};FUSION_PARTS.set(source,cached);}const key=unarmed?'bare':'gear';if(cached[key]){const entry=FUSION_PART_LRU.get(cached[key]);FUSION_PART_LRU.delete(cached[key]);FUSION_PART_LRU.set(cached[key],entry);return cached[key];}
+  const fw=(source.fw||56)*(source.k||1),h=54*(source.k||1),n=source.img.width/fw|0,count=fw*h,wi=source.layers.indexOf('weapon');
+  if(wi<0)return source;
+  const canvas=document.createElement('canvas');canvas.width=source.img.width;canvas.height=h;const g=canvas.getContext('2d',{willReadFrequently:true});g.drawImage(source.img,0,0);
+  const image=g.getImageData(0,0,canvas.width,h),data=image.data,solid=new Uint8Array(count),labels=new Int32Array(count),queue=new Int32Array(count);
+  const offset=(frame,p)=>((p/fw|0)*canvas.width+frame*fw+p%fw)*4;
+  for(let p=0;p<count;p++)for(let frame=0;frame<source.layers.length;frame++)if(frame!==wi&&data[offset(frame,p)+3]>16){solid[p]=1;break;}
+  let component=0,largest=0,best=0;
+  for(let p=0;p<count;p++)if(solid[p]&&!labels[p]){let read=0,end=1;queue[0]=p;labels[p]=++component;
+    while(read<end){const q=queue[read++],x=q%fw,y=q/fw|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(nx<0||nx>=fw||ny<0||ny>=h)continue;const next=ny*fw+nx;if(solid[next]&&!labels[next]){labels[next]=component;queue[end++]=next;}}}
+    if(end>best){best=end;largest=component;}
+  }
+  // Reassign detached equipment pixels at their original atlas coordinates.
+  for(let p=0;p<count;p++)if(labels[p]&&labels[p]!==largest){const to=offset(wi,p);for(let frame=0;frame<n;frame++)if(frame!==wi){const from=offset(frame,p);if(data[from+3]){if(data[from+3]>data[to+3])for(let c=0;c<4;c++)data[to+c]=data[from+c];data[from+3]=0;}}}
+  g.putImageData(image,0,0);
+  if(unarmed){g.clearRect(wi*fw,0,fw,h);
+    const cuts=BARE_GEAR_CUTS[source.id];
+    if(cuts){const scale=(source.k||1)/3,ox=(fw-cuts.w*scale)/2;g.save();g.globalCompositeOperation='destination-out';
+      for(let frame=0;frame<n;frame++)for(const poly of cuts.polys){g.beginPath();poly.forEach(([x,y],i)=>g[i?'lineTo':'moveTo'](frame*fw+ox+x*cuts.w*scale,y*h));g.closePath();g.fill();}g.restore();}
+    if(source.id==='aegiscaptain'){
+      // The tower shield covered the torso in the source painting. Continue the
+      // lead's own visible armor across that area before placing its own arm.
+      const bi=source.layers.indexOf('body'),scale=(source.k||1)/3,w=138*scale,ox=(fw-w)/2;
+      if(bi>=0){g.save();g.translate(bi*fw+2*(ox+.53*w),0);g.scale(-1,1);
+        for(const name of ['body','cloth','legL']){const fi=source.layers.indexOf(name);if(fi>=0)g.drawImage(source.img,fi*fw+ox+.34*w,.42*h,.19*w,.43*h,ox+.34*w,.42*h,.19*w,.43*h);}g.restore();}
+    }
+    if(OFFHAND_GEAR.has(source.id)){const li=source.layers.indexOf('armL'),ri=source.layers.indexOf('armR'),fi=source.layers.indexOf('foreR'),k=source.k||1,center=(source.fw-56)/2;
+      if(li>=0&&ri>=0){const hand=document.createElement('canvas');hand.width=fw;hand.height=h;const hg=hand.getContext('2d');
+        const pl=source.piv.armL,pr=source.piv.armR;hg.translate((pl[0]+center)*k,pl[1]*k);hg.scale(-1,1);hg.translate(-(pr[0]+center)*k,-pr[1]*k);
+        hg.drawImage(canvas,ri*fw,0,fw,h,0,0,fw,h);if(fi>=0)hg.drawImage(canvas,fi*fw,0,fw,h,0,0,fw,h);
+        g.clearRect(li*fw,0,fw,h);g.drawImage(hand,li*fw,0);
+      }
+    }
+  }
+  // New weapon tips and the lead's own replacement off-hand need fresh crops.
+  const final=g.getImageData(0,0,canvas.width,h).data,rects=[];
+  for(let frame=0;frame<n;frame++){let x0=fw,y0=h,x1=-1,y1=-1;for(let y=0;y<h;y++)for(let x=0;x<fw;x++)if(final[(y*canvas.width+frame*fw+x)*4+3]){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}
+    if(x1<0)rects.push([0,0,0,0]);else{x0=Math.max(0,x0-2);y0=Math.max(0,y0-2);x1=Math.min(fw,x1+3);y1=Math.min(h,y1+3);rects.push([x0,y0,x1-x0,y1-y0]);}}
+  const result=cached[key]={...source,img:canvas,rects,sourceRig:source,unarmed};FUSION_PART_LRU.set(result,{holder:cached,key});
+  if(FUSION_PART_LRU.size>48){const [old,entry]=FUSION_PART_LRU.entries().next().value;delete entry.holder[entry.key];FUSION_PART_LRU.delete(old);}return result;
+}
+
 function buildRig(rig,R,tints,expr,mix,target){   // mix: a fused partner's rig, whose weapon and cape replace the lead's
+  if(mix){rig=fusionParts(rig,!!mix.unarmed);if(!mix.unarmed)mix=fusionParts(mix);}
   const brush=target?target.ctx:rg;
   const b=R.body||{x:0,y:0,r:0}; if(!target||!target.direct){brush.setTransform(RES,0,0,RES,0,0);brush.clearRect(0,0,168,162);} brush.imageSmoothingEnabled=!!rig.art;   // layers are k x detail: crisp for pixel sprites, smooth for hand-made pictures
   let order=rig.layers.map((g,i)=>i);
   if(R.front&&rig.piv.weapon){   // weapon held in front of the body: blade, then the hand gripping it, go just under the head
     const mv=order.filter(i=>rig.layers[i]==='weapon'||rig.layers[i]==='armR').sort((x,y)=>(rig.layers[x]==='armR')-(rig.layers[y]==='armR'));
     order=order.filter(i=>!mv.includes(i)); let h=order.length; while(h>0&&rig.layers[order[h-1]]!=='head') h--; order.splice(h?h-1:order.length,0,...mv); }   // before the last head layer (back hair is a head layer too)
-  const mixW=mix&&mix.img.naturalWidth&&mix.piv.weapon?mix.layers.map((g,i)=>g==='weapon'?i:-1).filter(i=>i>=0):[];
-  const mixC=mix&&mix.img.naturalWidth?mix.layers.map((g,i)=>g==='cape'?i:-1).filter(i=>i>=0):[];
+  const mixW=mix&&!mix.unarmed&&(mix.img.naturalWidth||mix.img.width)&&mix.piv.weapon?mix.layers.map((g,i)=>g==='weapon'?i:-1).filter(i=>i>=0):[];
+  const mixC=mix&&!mix.unarmed&&(mix.img.naturalWidth||mix.img.width)?mix.layers.map((g,i)=>g==='cape'?i:-1).filter(i=>i>=0):[];
   if(mixC.length){ const j=R.cape||b, p=rig.piv.cape||rig.piv.body, pm=mix.piv.cape||mix.piv.body;   // partner's cape goes behind everything
     for(const i of mixC){ brush.save(); brush.translate(56+p[0]+j.x+b.x,54+p[1]+j.y+b.y); if(j.r) brush.rotate(j.r); rigLayer(mix,i,pm,brush); brush.restore(); } }
   let mixDone=false;
   order.forEach(i=>{ const g=rig.layers[i];
+    if(g==='weapon'&&mix&&mix.unarmed)return;
+    if(g==='cape'&&mixC.length)return;
     if(g==='weapon'&&mixW.length){ if(mixDone) return; mixDone=true;   // the partner's weapon in the lead's hand
       const a=R.armR||b, w=R.weapon||b, pa=rig.piv.armR, ph=rig.piv.weapon, pm=mix.piv.weapon;
       for(const k of mixW){ brush.save(); gripTransform(rig,R,ph,brush); if(w.r) brush.rotate(w.r);
@@ -3357,7 +3427,7 @@ function drawUnit(type,star,px,py,o={}){
     ctx.translate(0,(im.naturalHeight-bounds.bottom)*(rig?54*u/im.naturalHeight:s));
     // The paired auras/rings, weapon and cape show fusion without recolouring
     // every pixel of every fused hero on every frame.
-    const joints=rig&&rigPose(o,type,b),tints=statusTints(o),expr=exprOf(o),mix=o.fuse&&SPR[o.fuse]&&SPR[o.fuse].rig;
+    const joints=rig&&rigPose(o,type,b),tints=statusTints(o),expr=exprOf(o),mix=fusionRig(type,o.fuse);
     // Untinted limbs can draw straight to the board: no canvas readback/upload per hero.
     // Tinting still uses an isolated surface so it never colours the arena or other units.
     const direct=rig&&!tints.length&&P.alpha>=1,rigImage=rig&&!direct?buildRig(rig,joints,tints,expr,mix,rigSurface(o.ref||o.rigKey)):null;
@@ -3450,7 +3520,7 @@ function drawVfx(v){
   const p=1-v.t/v.m, x=v.x*CELL, y=v.y*CELL;
   ctx.save(); ctx.globalAlpha=Math.max(0,Math.min(1,v.t/v.m*1.5));
   if(v.k==='phantomEcho'){
-    const sp=SPR[v.type];if(sp&&sp.img.complete){const h=54,w=sp.img.naturalWidth/sp.img.naturalHeight*h;ctx.translate(x,y+26);ctx.scale(v.face>0?-1:1,1);ctx.globalAlpha*=.22;ctx.drawImage(sp.img,-w/2,-h,w,h);}
+    const sp=SPR[v.type],im=v.fuse?fusedThumbImage(v.type,v.fuse):sp&&sp.img;if(im&&im.complete){const h=54,w=im.naturalWidth/im.naturalHeight*h;ctx.translate(x,y+26);ctx.scale(v.face>0?-1:1,1);ctx.globalAlpha*=.22;ctx.drawImage(im,-w/2,-h,w,h);}
   }
   else if(v.k==='sigilBloom'){
     const e=easeOut(p), r=v.r*CELL*(.45+.65*e); ctx.translate(x,y); ctx.scale(1,.42);
@@ -3684,12 +3754,21 @@ function renderBossHelp(){
       <b>${sk.names?sk.names.join(' / '):sk.name}</b>: ${sk.desc}<br>Brings: ${[...new Set(BOSS_MINIONS[id])].map(m=>U[m].name).join(', ')}<br><span class="tip">Tip: ${BOSS_TIPS[id]}</span></div></div>`; }).join('');
 }
 $('#howto').addEventListener('toggle',()=>{ if($('#howto').open) renderBossHelp(); });
-function thumbSrc(id){ const sp=SPR[id], rig=sp&&sp.rig; if(!sp) return null; if(sp.thumb) return sp.thumb;
+const FUSED_THUMBS=new Map(),FUSED_THUMB_IMAGES=new Map();
+function fusedThumbImage(id,fuse){const key=id+':'+fuse;if(FUSED_THUMB_IMAGES.has(key))return FUSED_THUMB_IMAGES.get(key);const im=new Image();im.src=fusedThumb(id,fuse);FUSED_THUMB_IMAGES.set(key,im);if(FUSED_THUMB_IMAGES.size>48)FUSED_THUMB_IMAGES.delete(FUSED_THUMB_IMAGES.keys().next().value);return im;}
+function thumbSrc(id,fuse){
+  if(fuse)return fusedThumb(id,fuse); const sp=SPR[id], rig=sp&&sp.rig; if(!sp) return null; if(sp.thumb) return sp.thumb;
   const st=U[id]&&animOf(id,U[id]); if(!rig||!rig.img.naturalWidth||!['slash','spear','gun'].includes(st)) return sp.img.src;
   buildRig(rig,rigPose({ph:-ANIM},id,U[id]),[],null); const fw=rig.fw||56, c=document.createElement('canvas'); c.width=fw*2; c.height=108; const g=c.getContext('2d'); g.imageSmoothingEnabled=true;   // 2x, to keep HD detail
   g.drawImage(RIG,(56-(fw-56)/2)*RES,54*RES,fw*RES,54*RES,0,0,fw*2,108); return sp.thumb=c.toDataURL(); }
-function thumbHTML(id,size){
-  const sp=SPR[id]; if(sp) return `<img src="${thumbSrc(id)}" alt=""${sp.img.naturalHeight>60?' style="image-rendering:auto"':''}>`;
+function fusedThumb(id,fuse){const key=id+':'+fuse;if(FUSED_THUMBS.has(key))return FUSED_THUMBS.get(key);
+  const sp=SPR[id],rig=sp&&sp.rig;if(!rig||!rig.img.naturalWidth)return thumbSrc(id);
+  buildRig(rig,rigPose({ph:-ANIM,fuse},id,U[id]),[],null,fusionRig(id,fuse));const fw=rig.fw||56,c=document.createElement('canvas');c.width=fw*2;c.height=108;
+  c.getContext('2d').drawImage(RIG,(56-(fw-56)/2)*RES,54*RES,fw*RES,54*RES,0,0,c.width,c.height);
+  const src=c.toDataURL();FUSED_THUMBS.set(key,src);if(FUSED_THUMBS.size>48)FUSED_THUMBS.delete(FUSED_THUMBS.keys().next().value);return src;
+}
+function thumbHTML(id,size,fuse){
+  const sp=SPR[id]; if(sp) return `<img src="${thumbSrc(id,fuse)}" alt=""${sp.img.naturalHeight>60?' style="image-rendering:auto"':''}>`;
   return `<div class="dot" style="background:${colorOf(id)};width:${size}px;height:${size}px"></div>`;
 }
 // live = a fighter in the current battle: shows its real HP, attack, mana and statuses
@@ -3697,7 +3776,7 @@ function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
   const u=U[id], m=STAR_MULT[star-1], sk=SKILLS[id], c=CLASSES[u.cls]||{name:u.boss?'Boss':u.cls==='summon'?'Summon':'Monster',color:colorOf(id)}, o=ORIGINS[u.org];
   const side=live?(live.team===0?'<span style="color:#7fd0ff">Ally</span>':'<span style="color:#ff8a80">Enemy</span>')+' · ':'';
   const st=live?['ward','frz','stun','taunt','crs','tstop','shock','root','sil','blind','slow','dis','shred','drain','wnd'].filter(k=>live[k]>0).map(k=>STATUS[k].icon+' '+STATUS[k].label+({slow:' (−40% move & attack speed)',shred:' (+25% damage taken)',ward:' (immune to physical, +20% magic damage)',drain:' (−50% mana gain)',wnd:' (−50% healing)'}[k]||'')).concat(live.psn?['☠️ Poisoned']:[]):[];
-  return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30)}</div><div><div class="un">${heroName(id,fuse)} ${fuse?'<span class="stars" style="color:#ff3a3a">★</span>':`<span class="stars">${'★'.repeat(star)}</span>`}</div>${fuse?`<div class="fz">⚭ ${u.name} + ${U[fuse].name}</div>`:''}
+  return `<div class="ih"><div class="th" style="--cc:${c.color}">${thumbHTML(id,30,fuse)}</div><div><div class="un">${heroName(id,fuse)} ${fuse?'<span class="stars" style="color:#ff3a3a">★</span>':`<span class="stars">${'★'.repeat(star)}</span>`}</div>${fuse?`<div class="fz">⚭ ${u.name} + ${U[fuse].name}</div>`:''}
     <div class="tags">${side}<span style="color:${c.color}">${c.name}</span>${o?` · <span style="color:${o.color}">${o.icon} ${o.name}</span>`:''}${u.cost&&u.cost<5?` · ${u.cost} gold`:''}</div></div></div>
     <div class="chips">${live?`<span>❤ ${Math.max(0,Math.round(live.hp))} / ${Math.round(live.max)}</span><span>⚔ ${Math.round(live.atk*live.dmgM)}</span>${live.mshield>1?`<span style="color:#d0a0ff">🔮 ${Math.round(live.mshield)}</span>`:''}${live.shield>1?`<span>🛡 ${Math.round(live.shield)}</span>`:''}${sk.mp<1e9?`<span>💧 ${Math.round(live.mp)} / ${Math.round(live.mpMax)}</span>`:''}`
       :`<span>❤ ${Math.round(u.hp*m)}</span><span>⚔ ${Math.round(u.atk*m)}</span>`}${u.heal?`<span>✚ ${Math.round(u.heal*m)}</span>`:''}<span>🎯 ${u.range}</span><span>⏱ ${u.as}s</span></div>
@@ -3707,7 +3786,7 @@ function infoHTML(id,star,items,live,fuse){ fuse=fuse||(live&&live.fuse);
       <i>One cast fires both, ${sk.name} first.</i></div>`
     :`<div class="sk">${sk.mp<1e9?`<b>${sk.names?sk.names.join(' / '):sk.name}</b> <span class="mp">${Math.round(sk.mp*((starPerk(u.cls,star)||{}).mana||1))} mana</span><br>${sk.desc}`:'No skill — fights until the battle ends.'}</div>`}`+
     (u.cost>=1&&u.cost<5&&CLASS_STAR[u.cls]?`<div class="stl">${['Base',...CLASS_STAR[u.cls].map(p=>p[0])].map((t,i)=>`<div class="${i<star?'on':''}">${i===star?'<b>Next:</b> ':''}${'★'.repeat(i+1)} ${t}</div>`).join('')}</div>`:'')+
-    (fuse?`<div class="fzi">Also counts as <span style="color:${colorOf(fuse)}">${CLASSES[U[fuse].cls].name}</span> · ${ORIGINS[U[fuse].org].icon} ${ORIGINS[U[fuse].org].name} · holds 2 items</div>`:'')+
+    (fuse?`<div class="fzi">Also counts as <span style="color:${colorOf(fuse)}">${CLASSES[U[fuse].cls].name}</span> · ${ORIGINS[U[fuse].org].icon} ${ORIGINS[U[fuse].org].name} · holds 2 items${bareFusion(id,fuse)?' · fights bare-handed':''}</div>`:'')+
     (items&&items.length?`<div class="held">Holding: ${items.map(k=>`<span class="hi" data-item="${k}">${IT(k).icon} ${INAME(k)}</span>`).join(' ')}</div>`:'');
 }
 function itemBuildTip(k){const p=buildForItem(k);if(!p)return '';const n=blessOwned(p.bless);

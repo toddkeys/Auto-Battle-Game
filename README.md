@@ -523,3 +523,25 @@ sells into three different Shop areas and checks full non-top-ten dialogs. It
 also decodes all 141 AAC effects and checks audible output while Ogg support is
 absent and HTML sound-effect playback is denied. These Chromium checks exercise
 Safari's codec/autoplay constraints; they do not constitute physical iPad testing.
+
+
+Fusion coverage includes Sentinel, Abjurer, Duelist and Soulbinder in both slots.
+The lead casts first, followed by the partner; delayed hits, skill projectiles,
+Soulbinder links and Eclipse fields retain their casting skill's physical/magic
+identity. Class traits, Bard auras and Engineer/Summoner opening units also work
+from the secondary slot. The lead still supplies basic attack range and stats.
+
+A secondary Monk removes the lead's equipment and uses the lead's own hands and
+punch motion, without importing Monk limbs or capes. Fusion portraits, lineup
+pictures and phantom echoes use the same equipment rules as the battlefield.
+Prepared equipment atlases are created on demand and held in a 48-entry LRU,
+large enough for two full nine-unit fused teams without rebuilding each frame;
+portraits have separate bounded caches. New runs release these pictures.
+
+```bash
+python tools/build_game.py
+python tools/check_fusions.py --preview /tmp/fusions.png
+```
+
+The fusion check covers 1,932 ordered new-class combinations, both skill releases,
+secondary traits, delayed damage types, and 2,080 equipment render combinations.
