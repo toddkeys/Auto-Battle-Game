@@ -1578,12 +1578,14 @@ function openModes(first){
     <button class="mode" data-m="normal"><div class="mi">⚔</div><div class="mn">Normal</div><div class="md">The classic run.</div><div class="mb">🏆 Best ${nb?'round '+nb.round:'–'}</div></button>
     <button class="mode" data-m="daily"><div class="mi">📅</div><div class="mn">Daily Challenge</div><div class="md">Everyone gets the same shops, enemies and events today (${today()}). Compare with friends!</div><div class="mb">🏆 Today ${db?'round '+db.round:'–'}</div></button>
     <button class="mode" data-m="hard" ${open?'':'disabled'}><div class="mi">💀</div><div class="mn">Hard</div><div class="md">${open?'Enemies 20% stronger, plus a run modifier you pick.':`Reach round ${HARD_UNLOCK} in Normal to unlock.`}</div><div class="mb">🏆 Best ${hb?'round '+hb.round:'–'}</div></button></div>
-    <button class="b" id="modesCodex">📖 Hero Codex</button> <button class="b" id="modesTop">🏆 Top 10</button> <button class="b" id="modesClose" ${first?'hidden':''}>Back to the current run</button>`;
+    <button class="b" id="modesCodex">📖 Hero Codex</button> <button class="b" id="modesTop">🏆 Top 10</button> ${readPendingScores().length?'<button class="b" id="modesPending">Retry saved scores</button> ':''}<button class="b" id="modesClose" ${first?'hidden':''}>Back to the current run</button>`;
   $('#modes').hidden=false;
 }
 $('#modesbox').addEventListener('click',e=>{
   if(e.target.closest('#modesCodex')) return openCodex();
   if(e.target.closest('#modesTop')) return openBoards();
+  if(e.target.closest('#modesPending')) return openPendingScores();
+  const retry=e.target.closest('[data-score-retry]');if(retry)return retryPendingScore(retry);
   const tab=e.target.closest('.lbtab'); if(tab) return openBoards(tab.dataset.lb);
   if(e.target.closest('#lbBack')) return openModes(!S||S.phase==='over');
   if(e.target.closest('#modesClose')){ $('#modes').hidden=true; return; }
@@ -1824,6 +1826,19 @@ const boardName=m=>({normal:'Normal',hard:'Hard',daily:'Daily '+today()})[m];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
 const lbBetter=(a,b)=>a.round!==b.round?a.round>b.round:a.bosses>b.bosses;   // does score a beat score b
 const lbHeaders=()=>({apikey:LB_KEY});
+// Failed submissions stay on this device and can be retried from Runs after reload.
+function readPendingScores(){try{const rows=JSON.parse(localStorage.getItem('ab_pending_scores')||'[]');return Array.isArray(rows)?rows.filter(s=>s&&typeof s.name==='string'&&typeof s.board==='string'&&Number.isInteger(s.round)&&s.round>0&&Number.isInteger(s.bosses)&&s.bosses>=0):[];}catch(e){return [];}}
+const scoreKey=s=>JSON.stringify([s.board,s.name,s.round,s.bosses,s.team||null]);
+function savePendingScore(score){try{const list=readPendingScores().filter(s=>scoreKey(s)!==scoreKey(score));list.push(score);localStorage.setItem('ab_pending_scores',JSON.stringify(list.slice(-20)));return true;}catch(e){return false;}}
+function forgetPendingScore(score){try{localStorage.setItem('ab_pending_scores',JSON.stringify(readPendingScores().filter(s=>scoreKey(s)!==scoreKey(score))));}catch(e){}}
+const missingTeam=e=>['PGRST204','42703'].includes(e.code)&&/\bteam\b/i.test(e.detail);
+async function scoreResponseError(r){let body={};try{body=await r.json();}catch(e){}const error=new Error('Leaderboard HTTP '+r.status);error.status=r.status;error.code=body.code||'';error.detail=[body.message,body.details,body.hint].filter(Boolean).join(' ');return error;}
+function scoreFailure(e,saved){const reason=e.code==='23514'&&/scores_(round|bosses)_check/.test(e.detail)?'The leaderboard needs a server update to accept longer runs.':e.status===429?'Too many requests. Please wait before retrying.':"Couldn't send your score. Please try again.";return reason+(saved?' Your score is saved on this device; retry here or from Runs.':' Keep this window open to retry.');}
+function openPendingScores(){const rows=readPendingScores();$('#modesbox').innerHTML='<h2>Saved scores</h2><p>Scores that have not been confirmed by the leaderboard.</p>'+rows.map(s=>`<div class="lbform"><b>${esc(s.name)} · ${esc(s.board)} · Round ${s.round} · ${s.bosses} bosses</b><button class="b" data-score-retry="${esc(scoreKey(s))}">Retry submission</button><span class="hint" data-score-status></span></div>`).join('')+'<button class="b" id="lbBack">Back to runs</button>';$('#modes').hidden=false;}
+async function retryPendingScore(button){if(button.disabled)return;const score=readPendingScores().find(s=>scoreKey(s)===button.dataset.scoreRetry);if(!score)return;button.disabled=true;const status=button.parentElement.querySelector('[data-score-status]');
+  try{await lbSubmit(score.board,score.name,score.round,score.bosses,score.team);forgetPendingScore(score);if(button.isConnected){button.textContent='Submitted';status.textContent='Score submitted.';}}
+  catch(e){if(button.isConnected){button.disabled=false;status.textContent=scoreFailure(e,true);}}
+}
 let LB_TEAM=null;   // does the online table have the line-up column (null = not checked yet)
 // the line-up a run ended with: [{t:type, s:stars, f:fused partner}] (the field, or the bench if the field is empty)
 const lineupOf=()=>{ const us=onBoard().length?onBoard():S.units; return us.slice(0,12).map(u=>({t:u.type,s:u.star,...(u.fuse?{f:u.fuse}:{})})); };
@@ -1837,9 +1852,9 @@ const lineupHTML=tm=>okTeam(tm).length?`<div class="lineup">${okTeam(tm).map(h=>
 async function lbFetch(board){
   if(!LB_ONLINE){ try{ return JSON.parse(localStorage.getItem('ab_lb_'+board)||'[]'); }catch(e){ return []; } }
   const q=cols=>fetch(`${LB_URL}/rest/v1/scores?board=eq.${encodeURIComponent(board)}&select=${cols}&order=round.desc,bosses.desc,created_at.asc&limit=10`,{headers:lbHeaders()});
-  let r=LB_TEAM!==false?await q('name,round,bosses,created_at,team'):null;
-  if(r&&r.ok) LB_TEAM=true; else { if(r) LB_TEAM=false; r=await q('name,round,bosses,created_at'); }   // older table without the line-up column
-  if(!r.ok) throw new Error('HTTP '+r.status);
+  let r=await q(LB_TEAM!==false?'name,round,bosses,created_at,team':'name,round,bosses,created_at');
+  if(!r.ok){const error=await scoreResponseError(r);if(LB_TEAM!==false&&missingTeam(error)){LB_TEAM=false;r=await q('name,round,bosses,created_at');}else throw error;}
+  if(!r.ok)throw await scoreResponseError(r);if(LB_TEAM!==false)LB_TEAM=true;
   return r.json();
 }
 async function lbSubmit(board,name,round,bosses,team){
@@ -1850,9 +1865,9 @@ async function lbSubmit(board,name,round,bosses,team){
     return;
   }
   const post=b=>fetch(`${LB_URL}/rest/v1/scores`,{method:'POST',headers:{...lbHeaders(),'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(b)});
-  let r=LB_TEAM!==false&&team?await post({board,name,round,bosses,team}):null;
-  if(!r||!r.ok){ if(r&&r.status>=400&&r.status<500) LB_TEAM=false; r=await post({board,name,round,bosses}); }   // the table may not have the line-up column yet
-  if(!r.ok) throw new Error('HTTP '+r.status);
+  const withTeam=LB_TEAM!==false&&!!team;let r=await post({board,name,round,bosses,...(withTeam?{team}:{})});
+  if(!r.ok){const error=await scoreResponseError(r);if(withTeam&&missingTeam(error)){LB_TEAM=false;r=await post({board,name,round,bosses});}else throw error;}
+  if(!r.ok)throw await scoreResponseError(r);
 }
 const qualifies=(list,sc)=>list.length<10||lbBetter(sc,list[list.length-1]);
 // ---- rewards for reaching the top 10, kept in this browser (no login: whoever earned it on this device keeps it) ----
@@ -1901,21 +1916,26 @@ function lbTable(list,mine){
 const lbHead=m=>`<h3>Leaderboard · ${boardName(m)}${LB_ONLINE?'':' <span class="hint">(this browser only)</span>'}</h3>`;
 async function lbRunOver(){   // after a run: show the board, plus a name box when the run made the top 10
   const el=$('#lb'); if(!el) return;
-  const run=S,mode=S.mode, board=boardId(mode), sc={round:S.round,bosses:S.bosses};
+  const run=S,mode=S.mode, board=boardId(mode), sc={round:S.round,bosses:S.bosses},team=lineupOf();
   let list; try{ list=await lbFetch(board); }catch(e){ el.innerHTML=lbHead(mode)+"<p>Couldn't reach the leaderboard.</p>"; return; }
   if(S!==run||!el.isConnected||$('#summary').hidden)return;
   if(!qualifies(list,sc)){ el.innerHTML=lbHead(mode)+lbTable(list); return; }
   let saved=''; try{ saved=localStorage.getItem('ab_lb_name')||''; }catch(e){}
   el.innerHTML=lbHead(mode)+`<div class="lbform"><b>You made the top 10!</b><input id="lbName" maxlength="16" placeholder="Your name" value="${esc(saved)}"><button class="b go" id="lbSend">Submit</button></div>`+lbTable(list);
+  const button=$('#lbSend'),input=$('#lbName'),form=el.querySelector('.lbform'),label=form.querySelector('b');let sending=false;
   const send=async()=>{
-    const name=$('#lbName').value.trim().replace(/\s+/g,' ').slice(0,16); if(!name) return $('#lbName').focus();
-    $('#lbSend').disabled=true; try{ localStorage.setItem('ab_lb_name',name); }catch(e){}
-    try{ await lbSubmit(board,name,sc.round,sc.bosses,lineupOf()); const fresh=await lbFetch(board); el.innerHTML=lbHead(mode)+lbTable(fresh,{name,...sc}); SND.play('star');
-      const rank=fresh.findIndex(e=>e.name===name&&e.round===sc.round&&e.bosses===sc.bosses)+1; if(rank>0) earnRank(rank,board); }
-    catch(e){ $('#lbSend').disabled=false; el.querySelector('.lbform b').textContent="Couldn't send — try again"; }
+    if(sending||button.disabled)return;const name=input.value.trim().replace(/\s+/g,' ').slice(0,16);if(!name)return input.focus();
+    sending=true;button.disabled=true;const score={board,name,...sc,team},stored=savePendingScore(score);try{localStorage.setItem('ab_lb_name',name);}catch(e){}
+    try{await lbSubmit(board,name,sc.round,sc.bosses,team);}
+    catch(e){sending=false;if(form.isConnected){button.disabled=false;label.textContent=scoreFailure(e,stored);}return;}
+    forgetPendingScore(score);if(S!==run||!form.isConnected)return;label.textContent='Score submitted.';button.textContent='Submitted';input.disabled=true;SND.play('star');
+    // A failed refresh must not turn an already accepted submission into a retry.
+    let fresh;try{fresh=await lbFetch(board);}catch(e){if(label.isConnected)label.textContent="Score submitted. Couldn't refresh rankings; check Top 10 from Runs.";return;}
+    if(S!==run||!form.isConnected)return;el.innerHTML=lbHead(mode)+lbTable(fresh,{name,...sc});
+    const rank=fresh.findIndex(e=>e.name===name&&e.round===sc.round&&e.bosses===sc.bosses)+1;if(rank>0)earnRank(rank,board);
   };
-  $('#lbSend').onclick=send;
-  $('#lbName').addEventListener('keydown',e=>{ e.stopPropagation(); if(e.key==='Enter') send(); });
+  button.onclick=()=>send();
+  input.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter')send();});
 }
 async function openBoards(m='normal'){   // browse the boards from the run menu
   const tabs=['normal','daily','hard'].map(k=>`<button class="b lbtab ${k===m?'on':''}" data-lb="${k}">${boardName(k)}</button>`).join(' ');

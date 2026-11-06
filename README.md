@@ -545,3 +545,17 @@ python tools/check_fusions.py --preview /tmp/fusions.png
 
 The fusion check covers 1,932 ordered new-class combinations, both skill releases,
 secondary traits, delayed damage types, and 2,080 equipment render combinations.
+
+
+For existing online leaderboards, run `tools/leaderboard_endless_runs.sql` in the
+Supabase SQL Editor. The original schema rejected rounds above 200 and boss
+counts above 50; endless runs now retain positive/nonnegative integer checks
+without those gameplay caps. Updating the HTML alone cannot change live database
+constraints. The complete `tools/leaderboard.sql` also includes this migration.
+
+Failed score submissions are saved locally (the latest 20) before sending and
+can be retried via **Runs → Retry saved scores**, including after reload. The
+client retries without lineup data only for a confirmed missing `team` column;
+constraint/network failures preserve the lineup. Successful submissions are not
+retried just because the following ranking refresh fails. Browser storage must
+be available to preserve failed submissions across reloads.
