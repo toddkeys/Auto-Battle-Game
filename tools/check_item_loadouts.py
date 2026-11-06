@@ -1,7 +1,8 @@
-"""Weighted equipment variety, direct loadout controls and four effects modes."""
+"""Weighted equipment variety, compact item controls and four effects modes."""
 import asyncio,functools,http.server,json,shutil,threading
 from playwright.async_api import async_playwright
 from check_progression import QuietHandler,ROOT
+from check_touch_controls import Fingers
 
 async def ready(page,url):
  await page.goto(url);await page.wait_for_function('Object.values(SPR).every(s=>s.img.complete&&s.bounds&&(!s.rig||s.rig.img.complete))')
@@ -52,30 +53,23 @@ async def main(server):
   for width,height in [(1024,768),(768,1024),(844,390),(852,393)]:
    context=await browser.new_context(viewport={'width':width,'height':height},has_touch=True,is_mobile=True);q=await context.new_page();q.on('pageerror',lambda e:errors.append(str(e)));await ready(q,url)
    await q.evaluate("()=>{SND.setMusic(0);SND.setSfx(0);S.gold=100;S.units=[{uid:1,type:'swordsman',star:1,items:['sword'],loc:{w:'board',cx:3,cy:5}},{uid:2,type:'crownduelist',fuse:'grandmaster',star:3,items:['plate'],loc:{w:'board',cx:4,cy:5}},{uid:3,type:'mage',star:1,items:[],loc:{w:'bench',i:0}}];S.uid=4;S.inv=['sword','lens','longbow','scroll'];renderUI()}")
-   await q.locator('#bTeamGear').tap();assert await q.locator('.gear-row').count()==3
-   await q.locator('[data-gear-key="sword"]').tap();assert 'Swordsman' in await q.locator('.gear-summary').inner_text()
-   assert await q.locator('[data-item-send]').count()==0,'held item was transferable for free'
-   await q.locator('[data-item-close]').tap()
-   await q.locator('#items [data-i="0"]').tap();assert 'Swordsman' in await q.locator('.gear-summary').inner_text()
-   await q.locator('[data-item-send="1"]').tap();assert await q.evaluate("S.units[0].items[0]==='sword:2'&&S.inv.length===3")
-   await q.locator('#items [data-i="0"]').tap();assert await q.locator('[data-item-send="1"]').is_disabled()
-   await q.locator('[data-item-send="2"]').tap();assert await q.evaluate("S.units[1].items.length===2&&S.units[1].items.includes('lens')")
-   await q.evaluate("S.units[0].items=['longbow:6'];renderUI()")
-   await q.locator('#items [data-i="0"]').tap();assert await q.locator('[data-item-send="1"]').is_disabled()
-   await q.locator('[data-item-send="3"]').tap();assert await q.evaluate("S.units[2].items[0]==='longbow'")
-   await q.locator('#items [data-i="0"]').tap();await q.locator('[data-item-send="2"]').tap();assert await q.evaluate("S.units[1].items.length===0&&S.inv.includes('plate')&&S.inv.includes('lens')&&!S.inv.includes('scroll')")
+   f=Fingers(q,await context.new_cdp_session(q))
+   assert await q.locator('#bTeamGear,.gear-row,[data-item-send]').count()==0
+   for cx,cy,bench in [(3,5,False),(4,5,False),(0,0,True),(4,5,False)]:
+    await q.locator('#items [data-i="0"]').tap()
+    assert await q.locator('#itemCard .tipi').is_visible()
+    await q.locator('[data-item-equip]').tap();await f.tap_cell(cx,cy,bench=bench)
+   assert await q.evaluate("S.units[0].items[0]==='sword:2'&&S.units[1].items.length===0&&S.units[2].items[0]==='longbow'&&S.inv.includes('plate')&&S.inv.includes('lens')&&!S.inv.includes('scroll')")
    await q.locator('#bEffects').tap();assert await q.locator('[data-effects-mode]').evaluate_all('(es)=>es.map(e=>e.dataset.effectsMode)')==['auto','full','tablet','minimal']
    await q.locator('[data-effects-mode="minimal"]').tap();assert await q.evaluate('effectsMode')=='minimal'
    await q.reload();await q.wait_for_selector('.mode[data-m=normal]');assert await q.evaluate('effectsMode')=='minimal'
    await q.locator('.mode[data-m=normal]').tap();await q.locator('[data-quick-buy]').first.tap();assert await q.evaluate('S.units.length')==1
-   await q.evaluate("startFight();S.fight.f.find(a=>a.team===0).items=['gem'];renderUI()");await q.locator('#bTeamGear').tap();assert await q.locator('.gear-row').count()>=1
-   assert await q.locator('[data-gear-key=gem]').count()>=1,'live equipment overview is stale'
-   await q.locator('[data-item-close]').tap();await q.locator('#bEffects').tap();assert await q.evaluate('S.fight.paused')
+   await q.evaluate("startFight();renderUI()");await q.locator('#bEffects').tap();assert await q.evaluate('S.fight.paused')
    await q.locator('[data-effects-mode=tablet]').tap();assert not await q.evaluate('S.fight.paused')
    assert await q.evaluate('document.documentElement.scrollWidth<=innerWidth')
    layouts.append(f'{width}x{height}');await context.close()
   assert not errors,errors
-  print(json.dumps({**result,'nativeTouchLayouts':layouts,'directEquipEnchantScroll':True},indent=2));await browser.close()
+  print(json.dumps({**result,'nativeTouchLayouts':layouts,'compactEquipEnchantScroll':True},indent=2));await browser.close()
 if __name__=='__main__':
  server=http.server.ThreadingHTTPServer(('127.0.0.1',0),functools.partial(QuietHandler,directory=str(ROOT)));threading.Thread(target=server.serve_forever,daemon=True).start()
  try:asyncio.run(main(server))

@@ -370,11 +370,12 @@ button,.hi,.bl,.cx,.pt,.pc{touch-action:manipulation}
 .touch-help{display:none;font-size:12px;color:var(--muted);margin:6px 0 0}
 .touch-task{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 10px;border:1px solid var(--brass);border-radius:6px;background:#302111;color:var(--text);font-size:13px;margin:6px 0}
 .touch-task[hidden],#itemCard[hidden]{display:none}
-#itemCard>.close-detail{position:sticky;top:0;z-index:3}.shophead{flex-wrap:wrap}.shophead .hint{flex:1 1 100px}.gear-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}.gear-row{border:1px solid #79532b;border-radius:7px;padding:8px;background:#271c13}.gear-hero{display:flex;align-items:center;gap:8px;min-width:0}.gear-hero img{width:42px;height:44px;object-fit:contain}.gear-hero b{overflow-wrap:anywhere}.gear-hero small{display:block;color:var(--muted)}.gear-held{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}.gear-held button{min-height:38px;padding:4px 7px!important;font-size:13px!important;white-space:normal!important}.gear-row>.b{min-height:44px;width:100%;font-size:16px;padding:6px;white-space:normal}.gear-row.match{border-color:var(--gold)}.gear-summary{font-size:13px;color:var(--gold);margin:10px 0}.touch-task button{flex:none}
+#itemCard>.close-detail{position:sticky;top:0;z-index:3}.shophead{flex-wrap:wrap}.shophead .hint{flex:1 1 100px}.touch-task button{flex:none}
 .su{touch-action:none}.su,.items .it,.pc,.pt,#cv,#cropCv{-webkit-touch-callout:none}
 #cropCv{touch-action:none}.pc img,.pt img{-webkit-user-drag:none;pointer-events:none}
 body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
 .itemcard{position:fixed;z-index:72;left:50%;top:50%;transform:translate(-50%,-50%);width:min(390px,94vw);max-height:88vh;overflow:auto;padding:18px 14px 12px;border:3px solid var(--ink);border-radius:12px;background:linear-gradient(180deg,#3a2614,#1e1309);box-shadow:inset 0 0 0 2px var(--brass),0 18px 50px #000b;color:var(--text);font-size:14px}
+@media(min-width:601px){body.touch-input #itemCard{left:auto;right:max(8px,env(safe-area-inset-right));width:254px;transform:translateY(-50%)}}
 .itemcard .close-detail{float:right}.itemcard .tipi>b{display:block;font:400 26px var(--pixel);color:var(--gold);margin-right:36px}
 .itemcard .buildnote{color:#dcc49b}.itemcard .next,.itemcard .sub{margin-top:8px;color:#bce3ba}.itemcard .ench{margin-top:6px;font-size:12px;color:var(--muted)}
 .detail-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.detail-actions .b{font-size:18px}
@@ -426,7 +427,7 @@ body.touch-input .su:hover,body.touch-input .items .it:hover{transform:none}
       <button class="b go" id="bFight">⚔ Start battle</button>
     </div>
     <div class="card"><h3>Hero</h3><div id="info"></div></div>
-    <div class="card"><h3 class="shophead">Items <button class="b lockbtn" id="bTeamGear">Team gear</button><span class="hint">tap an item to equip</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="itemTask" class="touch-task" hidden></div><div id="items" class="items"></div></div>
+    <div class="card"><h3 class="shophead">Items <span class="hint">tap an item to equip</span><button class="b lockbtn" id="bScroll" data-tip="Buy an Unbinding Scroll: drag it onto a hero to take its item off">📜 Buy scroll (50💰)</button></h3><div id="itemTask" class="touch-task" hidden></div><div id="items" class="items"></div></div>
     <div class="card">
       <details id="howto"><summary>How to play</summary>
       <ol class="help">
@@ -1426,7 +1427,7 @@ const W=COLS*CELL, BOARD_H=ROWS*CELL, BENCH_Y=BOARD_H+20, H=BENCH_Y+CELL+4;
 const U = Object.fromEntries([...UNITS,...SUMMONS,...MONSTERS].map(u=>[u.id,u]));
 const colorOf=t=>(CLASSES[U[t].cls]||{color:U[t].cls==='summon'?'#7fe8d0':'#c8a070'}).color;
 const $ = s=>document.querySelector(s);
-const cv=$('#cv');let ctx=cv.getContext('2d');
+const cv=$('#cv'),cvCtx=cv.getContext('2d');let ctx=cvCtx;
 const directTouch=e=>e.pointerType==='touch'||e.pointerType==='pen';
 let touchInput=false;
 function setInputMode(e){touchInput=directTouch(e);document.body.classList.toggle('touch-input',touchInput);}
@@ -1780,7 +1781,7 @@ for(const event of ['pointerup','pointercancel','lostpointercapture'])trainingCa
 
 // ====== Hero detail card: click a hero in the Codex or the Team Plan ======
 // closes on a click anywhere outside it, on its ✕, or on Escape
-let heroCardFor=null,heroCardContext=null,itemCardContext=null;
+let heroCardFor=null,heroCardContext=null,itemCardContext=null,equipmentFocusKey=null;
 function openHeroCard(id,context={}){closeItemCard(); const u=U[id]; if(!u) return; const cl=CLASSES[u.cls], o=ORIGINS[u.org], n=readCodex()[id], m=readMarks().includes(id);
   const owned=context.uid&&S.units.find(v=>v.uid===context.uid),live=context.fighter;
   const tiers=d=>d.map((s,i)=>`<div>${['②','③'][i]||''} ${s}</div>`).join('');
@@ -1821,27 +1822,15 @@ function itemEquipError(u,k){if(!u||!k||!IT(k))return 'Item or hero is no longer
   const held=u.items[itemEnchantIndex(u,k)];if(held){if(ILV(held)>=MAX_ILV)return `${INAME(held)} is already fully enchanted`;if(ILV(held)+ILV(k)>MAX_ILV)return `Together they would go past +${MAX_ILV-1} — use a smaller one`;return '';}
   return u.items.length>=itemSlots(u)?`${U[u.type].name} has no free item slot. Use a scroll to remove equipment first.`:'';
 }
-function gearUnits(){const active=['fight','result'].includes(S.phase)&&S.fight,live=new Map((active?S.fight.f:[]).filter(a=>a.team===0&&!a.summon&&a.unitUid!==undefined).map(a=>[a.unitUid,a]));return S.units.map(u=>({...u,items:live.get(u.uid)?.items||u.items}));}
-function gearRows(k,bag=false){return gearUnits().sort((a,b)=>(a.loc.w==='bench')-(b.loc.w==='bench')||a.uid-b.uid).map(u=>{
-  const match=k&&u.items.some(h=>IT(h)===IT(k)),error=bag?itemEquipError(u,k):'',action=k&&IT(k).use?'Use scroll':match?'Enchant':'Equip';
-  return `<div class="gear-row ${match?'match':''}"><div class="gear-hero">${thumbHTML(u.type,42,u.fuse)}<div><b>${esc(heroName(u.type,u.fuse))} ${u.fuse?'★':'★'.repeat(u.star)}</b><small>${u.loc.w==='board'?'Field':'Bench'} · ${u.items.length} / ${itemSlots(u)} slots</small></div></div><div class="gear-held">${u.items.length?u.items.map(h=>`<button class="b" data-gear-key="${esc(h)}">${IT(h).icon} ${esc(INAME(h))}</button>`).join(''):'<span class="hint">No equipment</span>'}</div>${bag?`<button class="b" data-item-send="${u.uid}" ${S.phase!=='prep'||error?'disabled':''}>${error?esc(error):action+' '+IT(k).icon+' '+esc(INAME(k))}</button>`:''}</div>`;
- }).join('')||'<p class="hint">Buy a hero to start equipping your team.</p>';}
-function openTeamGear(){cancelTouchAction();closeHeroCard();hideBubble();itemCardContext={teamGear:true};$('#itemCard').innerHTML='<button class="b close-detail" data-item-close aria-label="Close team gear">✕</button><h3>Team gear</h3><p class="help">Field and bench equipment. Tap an item to see who uses it. Equip a bag item from its details; held equipment still requires an Unbinding Scroll to remove.</p><div class="gear-list">'+gearRows()+'</div>';$('#itemCard').hidden=false;}
-$('#bTeamGear').onclick=()=>openTeamGear();
-function closeItemCard(){ $('#itemCard').hidden=true;itemCardContext=null; }
+function closeItemCard(){ $('#itemCard').hidden=true;itemCardContext=null;equipmentFocusKey=null; }
 function openItemCard(i,key){closeHeroCard();const k=key||S.inv[i];if(!k)return;hideBubble();
-  const bag=Number.isInteger(i),prep=S.phase==='prep';itemCardContext={i,key:k};
+  cancelTouchAction();const bag=Number.isInteger(i),prep=S.phase==='prep';itemCardContext={i,key:k};equipmentFocusKey=touchInput||matchMedia('(any-pointer:coarse)').matches?k.split(':')[0]:null;
   $('#itemCard').innerHTML=`<button class="b close-detail" data-item-close aria-label="Close item details">✕</button>${itemTip(k)}`+
     (bag?`<div class="detail-actions"><button class="b" data-item-equip ${prep?'':'disabled'}>${IT(k).use?'Use scroll':'Equip / enchant'}</button>${IT(k).use?'':`<button class="b" data-item-combine>Combine</button><button class="b" data-item-reroll ${prep&&S.gold>=REROLL_COST?'':'disabled'}>Reroll · ${REROLL_COST} gold</button>`}<button class="b" data-item-sell ${prep?'':'disabled'}>Sell · ${itemValue(k)} gold</button></div>`:'<p class="help">Use an Unbinding Scroll to remove held equipment.</p>');
-  const holders=gearUnits().filter(u=>u.items.some(h=>IT(h)===IT(k)));
-  $('#itemCard').insertAdjacentHTML('beforeend',`<div class="gear-summary">Using this item: ${holders.length?holders.map(u=>esc(heroName(u.type,u.fuse))).join(', '):'No heroes yet'}</div><button class="b" data-team-gear>View all team gear</button>${bag?`<h4>Send to a hero</h4><div class="gear-list">${gearRows(k,true)}</div>`:''}`);
-  $('#itemCard').hidden=false;
+  $('#itemCard').hidden=false;$('#itemCard').scrollTop=0;
 }
 document.addEventListener('pointerdown',e=>{if(e.isPrimary!==false&&itemCardContext&&!e.target.closest('#itemCard'))closeItemCard();},true);
 $('#itemCard').onclick=e=>{if(e.target.closest('[data-item-close]'))return closeItemCard();
-  if(e.target.closest('[data-team-gear]'))return openTeamGear();
-  const held=e.target.closest('[data-gear-key]');if(held)return openItemCard(undefined,held.dataset.gearKey);
-  const send=e.target.closest('[data-item-send]');if(send){const c=itemCardContext,u=S.units.find(u=>u.uid===+send.dataset.itemSend);if(S.phase!=='prep'||!c||S.inv[c.i]!==c.key||!u)return;const error=itemEquipError(u,c.key);if(error)return msg(error);cancelTouchAction();giveItem(u,c.i);closeItemCard();render();renderUI();return;}
 if(!e.target.closest('[data-item-equip],[data-item-combine],[data-item-reroll],[data-item-sell]'))return;const c=itemCardContext;
   if(!c||!Number.isInteger(c.i)||S.inv[c.i]!==c.key)return closeItemCard();
   if(e.target.closest('[data-item-equip]')){closeItemCard();beginTouchAction({kind:'item',i:c.i,key:c.key});}
@@ -1856,11 +1845,11 @@ function touchActionText(){const a=S.touchAction;if(!a)return '';
 }
 function renderTouchAction(){for(const name of ['touchAction','itemTask']){const el=$('#'+name),show=!!S.touchAction&&(name==='touchAction'||S.touchAction.kind==='combine');
   el.hidden=!show;if(show)el.innerHTML=`<span>${touchActionText()}</span><button class="b" data-touch-cancel>Cancel</button>`;}}
-function beginTouchAction(action){if(S.phase!=='prep'&&action.kind!=='combine')return;S.touchAction=action;S.selItem=null;renderTouchAction();
+function beginTouchAction(action){if(S.phase!=='prep'&&action.kind!=='combine')return;S.touchAction=action;S.selItem=null;equipmentFocusKey=action.kind==='item'?action.key.split(':')[0]:null;renderTouchAction();
   if(action.kind!=='combine')$('.center').scrollIntoView({block:'start',behavior:'smooth'});
   else $('#items').scrollIntoView({block:'nearest',behavior:'smooth'});
 }
-function cancelTouchAction(){S.touchAction=null;renderTouchAction();}
+function cancelTouchAction(){S.touchAction=null;if(!itemCardContext)equipmentFocusKey=null;renderTouchAction();}
 for(const name of ['touchAction','itemTask'])$('#'+name).onclick=e=>{if(e.target.closest('[data-touch-cancel]'))cancelTouchAction();};
 addEventListener('keydown',e=>{if(e.key==='Escape'){closeItemCard();if(S)cancelTouchAction();}});
 function applyTouchCell(e,l){const a=S.touchAction;if(!a)return false;
@@ -2342,6 +2331,18 @@ function isShopDrop(e){const r=shopCard.getBoundingClientRect(),x=e.clientX,y=e.
   return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom&&document.elementsFromPoint(x,y).some(el=>el===shopCard||shopCard.contains(el));
 }
 
+const EQUIPMENT_HITS=[];let equipmentHitCount=0,equipmentHitScale=1;
+function equipmentAt(e){const p=canvasPos(e);let best=null,distance=Infinity;for(let i=0;i<equipmentHitCount;i++){const h=EQUIPMENT_HITS[i];if(!h.owner?.items?.includes(h.key)||h.owner.hp<=0)continue;const dx=p.x-h.x,dy=p.y-h.y,d=dx*dx+dy*dy;if(Math.abs(dx)<=h.w/2&&Math.abs(dy)<=h.h/2&&d<distance){best=h;distance=d;}}return best;}
+function drawEquipmentFocus(k,x,y){ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#21170ff2';ctx.strokeStyle='#f3d48a';ctx.lineWidth=1.5;ctx.fillRect(x-22,y-25,44,50);ctx.strokeRect(x-22,y-25,44,50);drawIcon(IT(k).icon,x,y-6,30);ctx.font="bold 16px 'Jersey 10',system-ui";ctx.fillStyle='#ffe27a';ctx.fillText('+'+(ILV(k)-1),x,y+17);ctx.restore();}
+function drawEquipment(items,px,py,o){const focused=equipmentFocusKey&&o.team===0&&items.some(k=>k.split(':')[0]===equipmentFocusKey),gap=focused?48:items.some(k=>ILV(k)>1)?22:12;
+  const width=focused?44+(items.length-1)*gap:12+(items.length-1)*gap,center=focused?Math.max(width/2+2,Math.min(W-width/2-2,px)):px;
+  ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+  for(let i=0;i<items.length;i++){const k=items[i],large=!!(focused&&k.split(':')[0]===equipmentFocusKey),x=center+(i-(items.length-1)/2)*gap,y=large?Math.min(H-29,py+29):py+31;
+    if(large){if(ctx!==cvCtx)drawEquipmentFocus(k,x,y);}
+    else{drawIcon(IT(k).icon,x,y,11);if(ILV(k)>1){ctx.font="13px 'Jersey 10',system-ui";ctx.fillStyle='#ffe27a';ctx.fillText('+'+(ILV(k)-1),x+11,y-2);}}
+    const owner=o.ref||o.rigKey;if(ctx===cvCtx&&o.team===0&&owner){const h=EQUIPMENT_HITS[equipmentHitCount]||(EQUIPMENT_HITS[equipmentHitCount]={});Object.assign(h,{key:k,owner,x,y,large,w:Math.max(large?44:14,22*equipmentHitScale),h:Math.max(large?50:14,22*equipmentHitScale)});equipmentHitCount++;}
+  }ctx.restore();
+}
 function inspectFighter(e,touch){
   const l=cellAt(e);hoverId=null;
   if(l&&l.w==='bench'){const u=S.units.find(v=>sameLoc(v.loc,l));S.inspect=null;S.sel=u?u.uid:null;renderInfo();render();if(touch&&u)openHeroCard(u.type,{uid:u.uid});return;}
@@ -2354,6 +2355,7 @@ cv.addEventListener('pointerdown',e=>{
   if(e.button!==0||e.isPrimary===false)return;
   if(S.phase==='over'){newGame(S.mode,S.mod);return;}
   hoverId=null;
+  if(directTouch(e)&&!S.touchAction&&['prep','fight','result'].includes(S.phase)){const h=equipmentAt(e);if(h){canvasTap={pointerId:e.pointerId,x:e.clientX,y:e.clientY,moved:false,itemKey:h.key,itemOwner:h.owner};capturePointer(cv,e);return;}}
   if(S.fight&&S.phase!=='prep'){
     if(directTouch(e)){canvasTap={pointerId:e.pointerId,x:e.clientX,y:e.clientY,moved:false};capturePointer(cv,e);}else inspectFighter(e,false);return;
   }
@@ -2407,6 +2409,7 @@ cv.addEventListener('pointermove',e=>{
 });
 cv.addEventListener('pointerup',e=>{
   if(canvasTap&&canvasTap.pointerId===e.pointerId){const tap=canvasTap;canvasTap=null;if(tap.moved)return;
+    if(tap.itemKey){if(tap.itemOwner.items?.includes(tap.itemKey)&&!(tap.itemOwner.hp<=0))openItemCard(undefined,tap.itemKey);return;}
     if(S.fight&&S.phase!=='prep')inspectFighter(e,true);
     else if(S.phase==='prep'){const l=cellAt(e);if(!applyTouchCell(e,l)){if(l)clickCell(l);else S.sel=null;render();renderUI();}}return;
   }
@@ -3657,10 +3660,7 @@ function drawUnit(type,star,px,py,o={}){
   ctx.restore();
   if(o.die!==undefined||o.spawn>1) return;
   px+=P.dx*.5;
-  if(o.items&&o.items.length){ ctx.font='10px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    const gap=o.items.some(k=>ILV(k)>1)?22:12;   // room for a '+N' tag beside an enchanted item
-    o.items.forEach((k,i)=>{ const x=px+(i-(o.items.length-1)/2)*gap; drawIcon(IT(k).icon,x,py+31,11);
-      if(ILV(k)>1){ ctx.font="13px 'Jersey 10',system-ui"; ctx.fillStyle='#ffe27a'; ctx.fillText('+'+(ILV(k)-1),x+11,py+29); ctx.font='10px system-ui'; } }); ctx.textBaseline='alphabetic'; }
+  if(o.items&&o.items.length)drawEquipment(o.items,px,py,o);
   py+=oy;
   if(o.shield>0){ ctx.strokeStyle='rgba(255,226,122,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(px,py,24,30,0,0,Math.PI*2); ctx.stroke(); }   // physical shield: gold
   if(o.mshield>0){ ctx.strokeStyle=`rgba(190,120,255,${.75+.2*Math.sin(ANIM*5)})`; ctx.lineWidth=2; ctx.setLineDash([5,3]); ctx.beginPath(); ctx.ellipse(px,py,27,33,0,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]); }   // magic shield: violet
@@ -3816,6 +3816,7 @@ function drawVfx(v){
 }
 /*ICE_WALL_ART*/
 function render(training=false){
+  if(!training){for(let i=0;i<equipmentHitCount;i++)EQUIPMENT_HITS[i].owner=null;equipmentHitCount=0;equipmentHitScale=W/(cv.clientWidth||W);}
   ctx.setTransform(RES,0,0,RES,0,0); ctx.clearRect(0,0,W,H);
   ctx.imageSmoothingEnabled=false; ctx.drawImage(BG,0,0); if(!training){drawSanctuary();drawAmbient();}else drawTrainingGrid();
   if(S.fight&&S.fight.holes) for(const h of S.fight.holes){ const x=h.x*CELL, y=h.y*CELL, R=h.r*CELL, k=Math.min(1,(h.T-h.t)*4,h.t*4);   // black hole
@@ -3938,6 +3939,7 @@ function render(training=false){
       ctx.fillStyle='#000'; ctx.fillText(f.txt,1,1); ctx.fillStyle=f.c; ctx.fillText(f.txt,0,0); ctx.restore(); }
     ctx.restore();
   }
+  if(!training)for(let i=0;i<equipmentHitCount;i++){const h=EQUIPMENT_HITS[i];if(h.large)drawEquipmentFocus(h.key,h.x,h.y);}
   if(S.phase==='result'||S.phase==='over'){
     const win=S.result.startsWith('Victory')&&S.phase!=='over', band=ctx.createLinearGradient(0,BOARD_H/2-42,0,BOARD_H/2+42);   // result banner
     band.addColorStop(0,'rgba(10,6,4,.2)'); band.addColorStop(.5,'rgba(10,6,4,.82)'); band.addColorStop(1,'rgba(10,6,4,.2)');

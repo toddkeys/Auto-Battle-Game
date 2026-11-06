@@ -392,16 +392,25 @@ Rerolls still cost 30 gold and retain enchant levels. Common rerolls can produce
 Lucky Gem; otherwise rarity is preserved. Chest payout probabilities and reward
 quantities are unchanged. Daily offers/rerolls retain seeded reproducibility.
 
-**Team gear** lists equipment on all field and bench heroes. An item's details
-show its current holders; bag items also list heroes with direct **Equip**,
-**Enchant** or **Use scroll** buttons. Full slots and invalid enchantments are
-disabled. Fused heroes retain two slots and can enchant a second matching item
-when the first is maxed. Held items still require a consumed Unbinding Scroll to
-remove; the overview provides no free transfer. During combat it shows live
-held equipment, including changes from Pilfer, and cannot equip items.
+Item details use the compact description/action card, without a team roster or
+recipient list. On wide touch screens the compact card sits beside the field,
+keeping the equipped icons visible. On touch screens, tapping a bag item or an equipped icon enlarges
+matching equipment on friendly heroes in preparation, combat and on the bench.
+Each highlighted icon shows its own +0 through +5 enchantment, including both
+slots of fused heroes. Badges render above fighters and stay inside canvas edges.
+Touch hit areas follow the painted equipment and use live fighter items during
+combat, so stripped equipment is not shown as still held. Closing the card clears
+the highlight; an equip/scroll targeting action retains it until used/cancelled.
+
+Equip/enchant and scroll actions again select a hero on the field or bench.
+Fused heroes retain two slots and can enchant a second matching item when the
+first is maxed. Held items still require a consumed Unbinding Scroll to remove.
+Inspection does not transfer items, spend gold, pause combat or change simulation.
+Hit boxes reuse bounded records and clear unused fighter references on redraw.
 
 ```bash
 python tools/check_item_loadouts.py
+python tools/check_equipment_focus.py
 ```
 
 This check samples 40,000 rewards, exercises real merchant/chest/reroll paths,
@@ -476,9 +485,11 @@ Tap an owned hero for its actual star level and equipment; use **Move / swap /
 fuse** then tap a destination, or drag it. The detail card also provides **Sell**
 immediately on touch screens; mouse sales retain confirmation. Fighters and bosses can be inspected during combat.
 
-Tap a bag item for its description, current holders and direct recipient buttons,
-or use equip/enchant, combine, reroll or sell actions. Equip/use-scroll can also
-ask for a hero on the field; combine asks for another matching bag item. Combining works during combat; equipping, rerolling and selling wait for
+Tap a bag item for its description and equip/enchant, combine, reroll or sell
+actions. Matching held icons enlarge with their enchant level. Equipped icons on
+the field, in combat and on the bench can also be tapped directly for details.
+Equip/use-scroll asks for a hero on the field or bench; combine asks for another
+matching bag item. Combining works during combat; equipping, rerolling and selling wait for
 preparation. Held equipment and blessings also have persistent touch details.
 
 Team Plan supports tap-to-add, up/down ordering, remove and saved presets.
